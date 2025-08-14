@@ -193,7 +193,3 @@ LOGGING = {
         },
     },
 }
-
-print("\n=== Google OAuth Configuration ===")
-print(f"Client ID: {SOCIALACCOUNT_PROVIDERS['google']['APP']['client_id']}")
-print("===============================\n")
