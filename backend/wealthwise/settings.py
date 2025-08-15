@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.google",
     # Your apps
     "users",
+    "financial_data",
 ]
 
 MIDDLEWARE = [
@@ -165,6 +166,14 @@ REST_FRAMEWORK = {
 
 # Email Backend (for development)
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# Cache Configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
+}
 
 # Logging
 LOGGING = {
