@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { authService } from '../services/authService';
+import { useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { authService } from "../services/authService";
 
 const OAuthCallback = () => {
   const navigate = useNavigate();
@@ -10,26 +10,30 @@ const OAuthCallback = () => {
 
   useEffect(() => {
     const handleCallback = async () => {
-      const error = searchParams.get('error');
+      const error = searchParams.get("error");
+      console.log(error);
+      console.log("some error");
+
       if (error) {
-        const reason = searchParams.get('reason') || 'unknown';
-        const message = searchParams.get('message') || 'Authentication failed';
+        const reason = searchParams.get("reason") || "unknown";
+        const message = searchParams.get("message") || "Authentication failed";
         navigate(`/login?error=${error}&reason=${reason}&message=${message}`);
         return;
       }
 
       try {
         const result = authService.handleOAuthCallback();
+        console.log(result);
+        console.log("hello result printed");
 
-        if (result && result.user) {
+        if (result) {
           setUser(result.user);
-          navigate('/dashboard');
+          navigate("/dashboard");
         } else {
-          console.error('OAuth callback params missing or invalid:', [...searchParams.entries()]);
-          navigate('/login?error=auth_failed&reason=no_token');
+          navigate("/login?error=auth_failed&reason=no_token");
         }
       } catch (error) {
-        console.error('OAuth callback error:', error, [...searchParams.entries()]);
+        console.error("hello world");
         navigate(`/login?error=callback_error&message=${error.message}`);
       }
     };
