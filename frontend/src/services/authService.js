@@ -2,13 +2,13 @@ import { API_BASE_URL } from '../utils/constants';
 
 class AuthService {
   async googleLogin() {
-  // Add state parameter to protect against CSRF
-  const state = Math.random().toString(36).substring(2);
-  localStorage.setItem('oauth_state', state);
-  
-  // Redirect directly to Google OAuth with state
-  window.location.href = `${API_BASE_URL}/auth/google/login/`;
-}
+    // Add state parameter to protect against CSRF
+    const state = Math.random().toString(36).substring(2);
+    localStorage.setItem('oauth_state', state);
+
+    // Redirect directly to Google OAuth
+    window.location.href = `${API_BASE_URL}/auth/google/login/`;
+  }
 
   async verifyToken(token) {
     try {
@@ -24,8 +24,7 @@ class AuthService {
         throw new Error('Token verification failed');
       }
 
-      const data = await response.json();
-      return data;
+      return await response.json();
     } catch (error) {
       throw error;
     }
@@ -41,38 +40,36 @@ class AuthService {
           'Content-Type': 'application/json',
         },
       });
-      localStorage.removeItem('token');
-      localStorage.removeItem('refresh_token');
     } catch (error) {
-      // Even if logout fails, clear local storage
+      console.error('Logout error:', error);
+    } finally {
       localStorage.removeItem('token');
       localStorage.removeItem('refresh_token');
     }
   }
 
-  // Handle OAuth callback (call this from a callback route)
-  // authservice.js
   handleOAuthCallback() {
-  const urlParams = new URLSearchParams(window.location.search);
-  
-  // Get tokens and user data from URL
-  const token = urlParams.get('token');
-  const refreshToken = urlParams.get('refresh');
-  const userJson = urlParams.get('user');
+    const urlParams = new URLSearchParams(window.location.search);
 
-  if (token && userJson) {
+    const token = urlParams.get('token');
+    const refreshToken = urlParams.get('refresh');
+    const userJson = urlParams.get('user');
+
+    if (!token || !userJson) {
+      console.error('OAuth callback missing token or user:', [...urlParams.entries()]);
+      return null;
+    }
+
     try {
       const user = JSON.parse(decodeURIComponent(userJson));
       localStorage.setItem('token', token);
-      localStorage.setItem('refresh_token', refreshToken);
+      if (refreshToken) localStorage.setItem('refresh_token', refreshToken);
       return { user, token };
     } catch (error) {
-      console.error('Error parsing user data:', error);
+      console.error('Error parsing user JSON from OAuth callback:', error, userJson);
+      return null;
     }
   }
-  
-  return null;
-}
 }
 
 export const authService = new AuthService();

@@ -20,14 +20,16 @@ const OAuthCallback = () => {
 
       try {
         const result = authService.handleOAuthCallback();
-        if (result) {
+
+        if (result && result.user) {
           setUser(result.user);
           navigate('/dashboard');
         } else {
+          console.error('OAuth callback params missing or invalid:', [...searchParams.entries()]);
           navigate('/login?error=auth_failed&reason=no_token');
         }
       } catch (error) {
-        console.error('OAuth callback error:', error);
+        console.error('OAuth callback error:', error, [...searchParams.entries()]);
         navigate(`/login?error=callback_error&message=${error.message}`);
       }
     };
