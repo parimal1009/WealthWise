@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import OAuthCallback from './pages/OAuthCallback';
+import ZerodhaCallback from './pages/ZerodhaCallback';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/auth/callback" element={<OAuthCallback />} />
+            <Route path="/zerodha/callback" element={<ZerodhaCallback />} />
             <Route 
               path="/dashboard" 
               element={
