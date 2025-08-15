@@ -1,4 +1,5 @@
 import { useAuth } from '../context/AuthContext';
+import ZerodhaCard from '../components/ZerodhaCard';
 
 const DashboardPage = () => {
   const { user } = useAuth();
@@ -53,6 +54,8 @@ const DashboardPage = () => {
                 Coming Soon
               </button>
             </div>
+
+            <ZerodhaCard />
           </div>
         </div>
       </div>
