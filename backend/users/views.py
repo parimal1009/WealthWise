@@ -1,4 +1,4 @@
-# ========== users/views.py ==========
+import os
 from django.shortcuts import redirect
 from django.contrib.auth import authenticate, login, logout
 from django.http import JsonResponse
@@ -21,57 +21,64 @@ def google_login(request):
     """Directly redirect to Google OAuth without intermediate page"""
     # Build the direct Google OAuth URL
     params = {
-        'process': 'login',
-        'next': request.build_absolute_uri(reverse('oauth_callback'))
+        "process": "login",
+        "next": request.build_absolute_uri(reverse("oauth_callback")),
     }
     google_login_url = f"/accounts/google/login/?{urlencode(params)}"
     return redirect(google_login_url)
 
-@csrf_exempt 
+
+@csrf_exempt
 def oauth_callback(request):
     """Handle OAuth callback and create JWT token"""
+    site_url = os.environ.get("SITE_URL", "http://localhost:3000")
     if not request.user.is_authenticated:
-        return redirect("http://localhost:3000/login?error=auth_failed&reason=user_not_authenticated")
-    
+        return redirect(
+            f"{site_url}/login?error=auth_failed&reason=user_not_authenticated"
+        )
+
     try:
         refresh = RefreshToken.for_user(request.user)
         user_data = {
-            'id': request.user.id,
-            'email': request.user.email,
-            'name': request.user.get_full_name() or request.user.username,
+            "id": request.user.id,
+            "email": request.user.email,
+            "name": request.user.get_full_name() or request.user.username,
         }
-        
+
         # URL encode the user data
         user_json = json.dumps(user_data)
         user_encoded = quote(user_json)
-        
+
         redirect_url = (
-            f"http://localhost:3000/auth/callback?"
+            f"{site_url}/auth/callback?"
             f"token={str(refresh.access_token)}&"
             f"refresh={str(refresh)}&"
             f"user={user_encoded}"
         )
         return redirect(redirect_url)
-        
+
     except Exception as e:
         return redirect(
-            f"http://localhost:3000/login?"
-            f"error=auth_failed&reason=exception&message={str(e)}"
+            f"{site_url}/login?" f"error=auth_failed&reason=exception&message={str(e)}"
         )
 
-@api_view(['GET'])
+
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def verify_token(request):
     """Verify JWT token and return user data"""
     user = request.user
-    return Response({
-        'id': user.id,
-        'email': user.email,
-        'name': user.get_full_name() or user.username,
-    })
+    return Response(
+        {
+            "id": user.id,
+            "email": user.email,
+            "name": user.get_full_name() or user.username,
+        }
+    )
 
-@api_view(['POST'])
+
+@api_view(["POST"])
 def logout_view(request):
     """Logout user"""
     logout(request)
-    return Response({'message': 'Logged out successfully'})
+    return Response({"message": "Logged out successfully"})
