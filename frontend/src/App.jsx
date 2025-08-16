@@ -13,16 +13,33 @@ import ProfilePage from "./pages/ProfilePage";
 
 function App() {
   const [userData, setUserData] = useState({
+    // Basic Information
+    name: "",
+    email: "",
     age: "",
-    currentSavings: "",
-    monthlyIncome: "",
-    pensionAmount: "",
-    spouseAge: "",
-    riskTolerance: "moderate",
-    goals: [],
+    dateOfBirth: "",
+    gender: "",
+    location: "",
+    maritalStatus: "",
+    numberOfDependants: "",
+    
+    // Income Status
+    currentSalary: "",
+    yearsOfService: "",
+    employerType: "",
+    pensionScheme: "",
+    pensionBalance: "",
+    employerContribution: "",
+    
+    // Retirement Information
+    plannedRetirementAge: "",
+    retirementLifestyle: "",
+    monthlyRetirementExpense: "",
+    legacyGoal: "",
   });
 
   const [scenarios, setScenarios] = useState([]);
+  
   return (
     <AuthProvider>
       <Router>
