@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   User,
   Briefcase,
@@ -13,13 +13,124 @@ import {
   Mail,
   Users,
   Camera,
+  Settings,
+  Link,
+  Shield,
+  Bell,
+  Trash2,
+  LogOut,
+  ExternalLink,
+  AlertTriangle,
+  RefreshCw,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { zerodhaService } from "../services/zerodhaService";
 
 export default function ProfilePage() {
   const { user } = useAuth();
   const [editing, setEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("personal");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [zerodhaStatus, setZerodhaStatus] = useState({
+    connected: false,
+    profile: null,
+    loading: true,
+    error: null
+  });
+
+  // Hash navigation effect
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.substring(1);
+      const validTabs = ["personal", "employment", "retirement", "settings"];
+      if (hash && validTabs.includes(hash)) {
+        setActiveTab(hash);
+      }
+    };
+
+    // Set initial tab from hash
+    handleHashChange();
+
+    // Listen for hash changes
+    window.addEventListener('hashchange', handleHashChange);
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, []);
+
+  // Update hash when tab changes
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    window.location.hash = tabId;
+  };
+
+  useEffect(() => {
+    checkZerodhaConnectionStatus();
+  }, []);
+
+  const checkZerodhaConnectionStatus = async () => {
+    try {
+      setZerodhaStatus(prev => ({ ...prev, loading: true }));
+      const status = await zerodhaService.checkConnectionStatus();
+      setZerodhaStatus({
+        connected: status.connected,
+        profile: status.profile,
+        loading: false,
+        error: status.error || null
+      });
+    } catch (error) {
+      setZerodhaStatus({
+        connected: false,
+        profile: null,
+        loading: false,
+        error: error.message
+      });
+    }
+  };
+
+  const handleZerodhaConnect = async () => {
+    try {
+      setZerodhaStatus(prev => ({ ...prev, loading: true }));
+      const loginUrl = await zerodhaService.getLoginUrl();
+      window.location.href = loginUrl;
+    } catch (error) {
+      setZerodhaStatus(prev => ({ 
+        ...prev, 
+        loading: false, 
+        error: error.message 
+      }));
+    }
+  };
+
+  const handleZerodhaDisconnect = async () => {
+    if (window.confirm('Are you sure you want to disconnect your Zerodha account?')) {
+      try {
+        setZerodhaStatus(prev => ({ ...prev, loading: true }));
+        await zerodhaService.disconnect();
+        setZerodhaStatus({
+          connected: false,
+          profile: null,
+          loading: false,
+          error: null
+        });
+      } catch (error) {
+        setZerodhaStatus(prev => ({ 
+          ...prev, 
+          loading: false, 
+          error: error.message 
+        }));
+      }
+    }
+  };
+  const [settings, setSettings] = useState({
+    emailNotifications: true,
+    pushNotifications: false,
+    marketAlerts: true,
+    twoFactorAuth: false,
+    dataVisibility: "private",
+  });
+  
   const [profile, setProfile] = useState({
     fullName: user.name,
     email: user.email,
@@ -38,9 +149,31 @@ export default function ProfilePage() {
     setProfile({ ...profile, [e.target.name]: e.target.value });
   };
 
+  const handleSettingChange = (setting) => {
+    setSettings({ ...settings, [setting]: !settings[setting] });
+  };
+
   const handleSave = () => {
     setEditing(false);
     console.log("Saved profile:", profile);
+  };
+
+  const handleLinkZerodha = () => {
+    // This function is no longer needed as we're using the new Zerodha integration
+    if (zerodhaStatus.connected) {
+      handleZerodhaDisconnect();
+    } else {
+      handleZerodhaConnect();
+    }
+  };
+
+  const handleLogout = () => {
+    console.log("Logging out...");
+  };
+
+  const handleDeleteAccount = () => {
+    console.log("Deleting account...");
+    setShowDeleteConfirm(false);
   };
 
   const calculateAge = () => {
@@ -63,6 +196,7 @@ export default function ProfilePage() {
     { id: "personal", label: "Personal", icon: User },
     { id: "employment", label: "Employment", icon: Briefcase },
     { id: "retirement", label: "Retirement", icon: Target },
+    { id: "settings", label: "Settings", icon: Settings },
   ];
 
   const Field = ({ label, name, type = "text", options, className = "" }) => (
@@ -74,7 +208,7 @@ export default function ProfilePage() {
             name={name}
             value={profile[name]}
             onChange={handleChange}
-            className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm transition-all"
+            className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-white shadow-sm transition-all"
           >
             {options.map((opt) => (
               <option key={opt} value={opt}>
@@ -88,7 +222,7 @@ export default function ProfilePage() {
             name={name}
             value={profile[name]}
             onChange={handleChange}
-            className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all"
+            className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary shadow-sm transition-all"
           />
         )
       ) : (
@@ -108,6 +242,29 @@ export default function ProfilePage() {
     </div>
   );
 
+  const ToggleSwitch = ({ enabled, onChange, label, description }) => (
+    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
+      <div className="flex-1">
+        <h4 className="font-medium text-slate-900">{label}</h4>
+        {description && (
+          <p className="text-sm text-slate-600 mt-1">{description}</p>
+        )}
+      </div>
+      <button
+        onClick={onChange}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+          enabled ? "bg-primary" : "bg-slate-300"
+        }`}
+      >
+        <span
+          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+            enabled ? "translate-x-6" : "translate-x-1"
+          }`}
+        />
+      </button>
+    </div>
+  );
+
   const PersonalTab = () => (
     <div className="space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -123,9 +280,9 @@ export default function ProfilePage() {
         <Field label="Spouse Name" name="spouseName" />
       </div>
 
-      <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl">
+              <div className="p-6 bg-gradient-to-r from-primary-50 to-blue-50 border border-primary/20 rounded-2xl">
         <div className="flex items-center space-x-3 mb-3">
-          <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
             <User className="w-5 h-5 text-white" />
           </div>
           <h4 className="font-semibold text-slate-800 text-lg">
@@ -200,6 +357,168 @@ export default function ProfilePage() {
     </div>
   );
 
+  const SettingsTab = () => (
+    <div className="space-y-8">
+      {/* Account Integrations */}
+      <div>
+        <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
+          <Link className="w-5 h-5 mr-2" />
+          Account Integrations
+        </h3>
+        <div className="space-y-4">
+          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className={`w-10 h-10 ${zerodhaStatus.connected ? 'bg-success-600' : 'bg-primary'} rounded-lg flex items-center justify-center`}>
+                  <ExternalLink className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <h4 className="font-medium text-slate-900">Zerodha</h4>
+                    <div className={`w-2 h-2 rounded-full ${zerodhaStatus.connected ? 'bg-success-500' : 'bg-red-500'}`}></div>
+                  </div>
+                  {zerodhaStatus.loading ? (
+                    <p className="text-sm text-slate-600">Checking connection...</p>
+                  ) : zerodhaStatus.connected && zerodhaStatus.profile ? (
+                    <div>
+                      <p className="text-sm text-success-600 font-medium">Connected</p>
+                      <p className="text-xs text-slate-600">{zerodhaStatus.profile.user_name} ({zerodhaStatus.profile.user_id})</p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-600">Connect your trading account</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                {zerodhaStatus.connected && (
+                  <button
+                    onClick={checkZerodhaConnectionStatus}
+                    disabled={zerodhaStatus.loading}
+                    className="p-2 text-slate-600 hover:text-slate-800 disabled:opacity-50"
+                    title="Refresh status"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${zerodhaStatus.loading ? 'animate-spin' : ''}`} />
+                  </button>
+                )}
+                <button
+                  onClick={zerodhaStatus.connected ? handleZerodhaDisconnect : handleZerodhaConnect}
+                  disabled={zerodhaStatus.loading}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 ${
+                    zerodhaStatus.connected
+                      ? "bg-red-100 text-red-700 hover:bg-red-200"
+                      : "bg-primary text-white hover:bg-primary-600"
+                  }`}
+                >
+                  {zerodhaStatus.loading ? (
+                    <div className="flex items-center space-x-2">
+                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                      <span>{zerodhaStatus.connected ? 'Disconnecting...' : 'Connecting...'}</span>
+                    </div>
+                  ) : (
+                    zerodhaStatus.connected ? "Disconnect" : "Connect"
+                  )}
+                </button>
+              </div>
+            </div>
+            {zerodhaStatus.error && (
+              <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-800 text-sm">{zerodhaStatus.error}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Notifications */}
+      <div>
+        <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
+          <Bell className="w-5 h-5 mr-2" />
+          Notifications
+        </h3>
+        <div className="space-y-4">
+          <ToggleSwitch
+            enabled={settings.emailNotifications}
+            onChange={() => handleSettingChange("emailNotifications")}
+            label="Email Notifications"
+            description="Receive updates and alerts via email"
+          />
+          <ToggleSwitch
+            enabled={settings.pushNotifications}
+            onChange={() => handleSettingChange("pushNotifications")}
+            label="Push Notifications"
+            description="Get real-time notifications on your device"
+          />
+          <ToggleSwitch
+            enabled={settings.marketAlerts}
+            onChange={() => handleSettingChange("marketAlerts")}
+            label="Market Alerts"
+            description="Notifications for market movements and opportunities"
+          />
+        </div>
+      </div>
+
+      {/* Security */}
+      <div>
+        <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
+          <Shield className="w-5 h-5 mr-2" />
+          Security & Privacy
+        </h3>
+        <div className="space-y-4">
+          <ToggleSwitch
+            enabled={settings.twoFactorAuth}
+            onChange={() => handleSettingChange("twoFactorAuth")}
+            label="Two-Factor Authentication"
+            description="Add an extra layer of security to your account"
+          />
+          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-slate-900">Profile Visibility</h4>
+                <p className="text-sm text-slate-600 mt-1">
+                  Control who can see your profile information
+                </p>
+              </div>
+              <select
+                value={settings.dataVisibility}
+                onChange={(e) => setSettings({...settings, dataVisibility: e.target.value})}
+                className="px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="private">Private</option>
+                <option value="friends">Friends Only</option>
+                <option value="public">Public</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Account Actions */}
+      <div>
+        <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
+          <User className="w-5 h-5 mr-2" />
+          Account Actions
+        </h3>
+        <div className="space-y-4">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-colors font-medium"
+          >
+            <LogOut className="w-5 h-5" />
+            <span>Sign Out</span>
+          </button>
+          
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-red-50 text-red-700 rounded-xl hover:bg-red-100 transition-colors font-medium border border-red-200"
+          >
+            <Trash2 className="w-5 h-5" />
+            <span>Delete Account</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderTabContent = () => {
     switch (activeTab) {
       case "personal":
@@ -208,6 +527,8 @@ export default function ProfilePage() {
         return <EmploymentTab />;
       case "retirement":
         return <RetirementTab />;
+      case "settings":
+        return <SettingsTab />;
       default:
         return <PersonalTab />;
     }
@@ -233,10 +554,6 @@ export default function ProfilePage() {
               {/* Profile Photo */}
               <div className="relative group">
                 <div className="w-36 h-36 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl overflow-hidden flex items-center justify-center text-4xl font-bold text-white shadow-2xl border-4 border-white">
-                  {/* {profile.fullName
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")} */}
                   <img src="/profile-default.png" />
                 </div>
               </div>
@@ -259,12 +576,12 @@ export default function ProfilePage() {
                   <StatItem
                     label="Current Age"
                     value={`${calculateAge()}`}
-                    color="text-blue-600"
+                    color="text-primary"
                   />
                   <StatItem
                     label="Experience"
                     value={`${profile.yearsOfService} years`}
-                    color="text-emerald-600"
+                    color="text-success-600"
                   />
                   <StatItem
                     label="To Retirement"
@@ -316,11 +633,12 @@ export default function ProfilePage() {
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex-1 flex items-center justify-center space-x-3 px-6 py-4 rounded-xl text-sm font-semibold transition-all ${activeTab === tab.id
+                    onClick={() => handleTabChange(tab.id)}
+                    className={`flex-1 flex items-center justify-center space-x-3 px-6 py-4 rounded-xl text-sm font-semibold transition-all ${
+                      activeTab === tab.id
                         ? "bg-primary text-white shadow-lg"
                         : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                      }`}
+                    }`}
                   >
                     <Icon size={18} />
                     <span>{tab.label}</span>
@@ -348,6 +666,39 @@ export default function ProfilePage() {
           </p>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-md mx-4">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-slate-900">
+                Delete Account
+              </h3>
+            </div>
+            <p className="text-slate-600 mb-6">
+              Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed.
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
