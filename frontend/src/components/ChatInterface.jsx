@@ -83,21 +83,6 @@ const ChatInterface = ({ userData, setUserData, scenarios, setScenarios }) => {
 
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center justify-center w-10 h-10 bg-primary-600 rounded-full">
-            <Sparkles className="h-6 w-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">WealthWise AI</h1>
-            <p className="text-sm text-gray-600">
-              Your Pension Benefit Optimizer
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Messages */}
       <div className="flex-1 overflow-y-auto chat-scroll px-4 py-6">
         <div className="max-w-4xl mx-auto space-y-6">
