@@ -9,6 +9,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import OAuthCallback from "./pages/OAuthCallback";
 import ZerodhaCallback from "./pages/ZerodhaCallback";
 import ChatInterface from "./components/ChatInterface";
+import ProfilePage from "./pages/ProfilePage";
 
 function App() {
   const [userData, setUserData] = useState({
@@ -37,6 +38,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
                 </ProtectedRoute>
               }
             />
