@@ -132,17 +132,18 @@ export default function ProfilePage() {
   });
   
   const [profile, setProfile] = useState({
-    fullName: user.name,
-    email: user.email,
-    dob: "1999-05-12",
-    gender: "Male",
-    location: "Pune, India",
+    fullName: user?.name ?? "Not Provided",
+    email: user?.email ?? "Not Provided",
+    dob: user?.birthday ?? "01-01-1970",
+    gender: user?.gender ?? "Prefer not to say",
+    location: "India",
     employmentStatus: "Software Developer",
     company: "Augrade",
     yearsOfService: 5,
     retirementAge: 60,
     spouseName: "",
     goal: "Maintain lifestyle and leave legacy",
+    profilePicUrl: user?.profile_picture ?? "/profile-default.png"
   });
 
   const handleChange = (e) => {
@@ -554,7 +555,11 @@ export default function ProfilePage() {
               {/* Profile Photo */}
               <div className="relative group">
                 <div className="w-36 h-36 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl overflow-hidden flex items-center justify-center text-4xl font-bold text-white shadow-2xl border-4 border-white">
-                  <img src="/profile-default.png" />
+                  <img 
+                    src={profile.profilePicUrl} 
+                    alt={`${profile.name}'s profile`}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               </div>
 
