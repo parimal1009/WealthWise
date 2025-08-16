@@ -11,8 +11,6 @@ const OAuthCallback = () => {
   useEffect(() => {
     const handleCallback = async () => {
       const error = searchParams.get("error");
-      console.log(error);
-      console.log("some error");
 
       if (error) {
         const reason = searchParams.get("reason") || "unknown";

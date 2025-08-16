@@ -137,7 +137,13 @@ LOGOUT_REDIRECT_URL = SITE_URL
 # Google OAuth Provider
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
-        "SCOPE": ["profile", "email"],
+        "SCOPE": [
+            "profile",
+            "email",
+            "openid",
+            "https://www.googleapis.com/auth/user.birthday.read",
+            "https://www.googleapis.com/auth/user.gender.read",
+        ],
         "AUTH_PARAMS": {"access_type": "online"},
         "OAUTH_PKCE_ENABLED": True,
         "APP": {

@@ -1,4 +1,5 @@
 import os
+import json
 from django.shortcuts import redirect
 from django.contrib.auth import authenticate, login, logout
 from django.http import JsonResponse
@@ -9,7 +10,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from allauth.socialaccount.models import SocialApp
-import json
 from django.shortcuts import redirect
 from django.urls import reverse
 from urllib.parse import urlencode
