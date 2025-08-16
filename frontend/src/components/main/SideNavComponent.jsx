@@ -1,25 +1,36 @@
-import React from "react";
-import { Home, MessageCircle, BookOpen, Settings, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { User, Home, MessageCircle, BookOpen, Settings } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import { Link, useNavigate } from "react-router-dom";
-
-const SideNavComponent = ({ userData }) => {
-    const { user } = useAuth();
+import { APP_NAME } from "../../utils/constants";
+const SideNavComponent = ({ userData, onNavClick }) => {
+    const { user, logout } = useAuth();
     const navigate = useNavigate();
     const navItems = [
-        { name: "Dashboard", path: "/dashboard", icon: <Home className="w-5 h-5" /> },
-        { name: "Chat", icon: <MessageCircle className="w-5 h-5" /> },
-        { name: "Learn", icon: <BookOpen className="w-5 h-5" /> },
-        { name: "Settings", icon: <Settings className="w-5 h-5" /> },
+        { name: "Dashboard", path: "dashboard", icon: <Home className="w-5 h-5" /> },
+        { name: "Chat", path: "home", icon: <MessageCircle className="w-5 h-5" /> },
+        { name: "Learn", path: "learn", icon: <BookOpen className="w-5 h-5" /> },
     ];
-    const handleClick = () => {
-        navigate("/profile");
-    }
 
     const hasAvatar = userData.avatar && userData.avatar.trim() !== "";
 
+    const handleLogout = () => {
+        logout();
+        navigate("/");
+    };
+
     return (
         <div className="bg-white overflow-hidden">
+            {/* Logo / App Name */}
+            <div className="flex items-center mb-4">
+                <div
+                    className="flex items-center gap-2 group cursor-pointer"
+                    onClick={() => onNavClick("dashboard")}
+                >
+                    <img src="/logo.jpg" className="w-12 h-12" />
+                    <h1 className="text-2xl font-bold text-primary">{APP_NAME}</h1>
+                </div>
+            </div>
+
             {/* Profile Section */}
             <div className="bg-gradient-to-br rounded-2xl from-blue-600/40 via-indigo-600/70 to-purple-700/70 p-6 text-white relative">
                 {/* Decorations */}
@@ -29,7 +40,7 @@ const SideNavComponent = ({ userData }) => {
                 <div className="text-center relative z-10">
                     <div className="relative inline-block mb-6">
                         <div className="w-24 h-24 bg-white/20 rounded-full p-1 backdrop-blur-sm flex items-center justify-center overflow-hidden">
-                            {!hasAvatar ? (
+                            {hasAvatar ? (
                                 <img
                                     src={userData.avatar}
                                     alt={userData.name}
@@ -48,7 +59,10 @@ const SideNavComponent = ({ userData }) => {
                     <h3 className="font-bold text-xl mb-1">{user.name}</h3>
                     <p className="text-blue-100 text-sm opacity-90">{user.email}</p>
 
-                    <button onClick={handleClick} className="w-full mt-6 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold py-3 px-4 rounded-2xl transition-all duration-200 border border-white/20">
+                    <button
+                        onClick={() => navigate("/profile")}
+                        className="w-full mt-6 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold py-3 px-4 rounded-2xl transition-all duration-200 border border-white/20"
+                    >
                         View Full Profile
                     </button>
                 </div>
@@ -58,22 +72,31 @@ const SideNavComponent = ({ userData }) => {
             <nav className="p-6">
                 <ul className="space-y-3">
                     {navItems.map((item, idx) => (
-                        <Link
+                        <li
                             key={idx}
-                            to={item.path}
-                            className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition">
-                            <li
-                                key={idx}
-                                className="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-700 cursor-pointer transition"
-                            >
-                                {item.icon}
-                                <span className="text-sm font-medium">{item.name}</span>
-                            </li>
-                        </Link>
+                            onClick={() => onNavClick(item.path)}
+                            className="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-700 cursor-pointer transition"
+                        >
+                            {item.icon}
+                            <span className="text-sm font-medium">{item.name}</span>
+                        </li>
                     ))}
+                    <li
+                        onClick={() => navigate("/profile#settings")}
+                        className="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-700 cursor-pointer transition"
+                    >
+                        <Settings className="w-5 h-5" />
+                        <span className="text-sm font-medium">Settings</span>
+                    </li>
+                    <button
+                        onClick={handleLogout}
+                        className="mt-4 w-full border border-1 border-red-500 hover:bg-red-500 text-red-500 hover:text-white cursor-pointer px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md"
+                    >
+                        Logout
+                    </button>
                 </ul>
             </nav>
-        </div >
+        </div>
     );
 };
 

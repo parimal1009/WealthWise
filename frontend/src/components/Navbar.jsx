@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { APP_NAME } from '../utils/constants';
-import { TrendingUp, Menu, X } from 'lucide-react';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { APP_NAME } from "../utils/constants";
+import { TrendingUp, Menu, X } from "lucide-react";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -11,22 +11,18 @@ const Navbar = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate("/");
   };
 
   return (
     <nav className="bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200/50 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-6">
+      <div className="mx-auto px-6">
         <div className="flex justify-between items-center h-16">
           {/* Logo/Brand */}
           <div className="flex items-center">
-            <Link to="/" className="flex items-center group">
-              <div className="bg-gradient-to-br from-blue-600 to-indigo-600 w-8 h-8 rounded-lg flex items-center justify-center mr-3 group-hover:scale-105 transition-transform">
-                <TrendingUp className="w-5 h-5 text-white" />
-              </div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                {APP_NAME}
-              </h1>
+            <Link to="/" className="flex gap-2 items-center group">
+              <img src="/logo.jpg" className="w-12 h-12" />
+              <h1 className="text-2xl font-bold text-primary">{APP_NAME}</h1>
             </Link>
           </div>
 
@@ -68,11 +64,15 @@ const Navbar = () => {
 
           {/* Mobile menu button */}
           <div className="md:hidden">
-            <button 
+            <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="text-slate-600 hover:text-blue-600 focus:outline-none p-2 rounded-lg hover:bg-blue-50 transition-all duration-200"
             >
-              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {isMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
             </button>
           </div>
         </div>
