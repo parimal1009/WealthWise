@@ -22,7 +22,7 @@ const LoginPage = () => {
     try {
       await authService.googleLogin();
     } catch (error) {
-      setError("Login failed. Please try again.");
+      setError("Login failed. Please try again. " + error);
       setLoading(false);
     }
   };
