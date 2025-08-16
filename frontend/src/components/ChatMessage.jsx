@@ -1,8 +1,9 @@
 import React from "react";
 import { Bot, User } from "lucide-react";
 import WelcomeComponent from "./chat/WelcomeComponent";
-import ProfileFormComponent from "./chat/ProfileFormComponent";
-import RiskAssessmentComponent from "./chat/RiskAssessmentComponent";
+import BasicInfoFormComponent from "./chat/BasicInfoFormComponent";
+import IncomeStatusFormComponent from "./chat/IncomeStatusFormComponent";
+import RetirementInfoFormComponent from "./chat/RetirementInfoFormComponent";
 import ScenarioVisualizationComponent from "./chat/ScenarioVisualizationComponent";
 import ComparisonChartComponent from "./chat/ComparisonChartComponent";
 import RecommendationComponent from "./chat/RecommendationComponent";
@@ -23,17 +24,25 @@ const ChatMessage = ({
     switch (message.component) {
       case "welcome":
         return <WelcomeComponent onAction={onFormSubmit} />;
-      case "profile-form":
+      case "basic-info-form":
         return (
-          <ProfileFormComponent
+          <BasicInfoFormComponent
             userData={userData}
             onSubmit={onFormSubmit}
             onUpdate={onUpdateUserData}
           />
         );
-      case "risk-assessment":
+      case "income-status-form":
         return (
-          <RiskAssessmentComponent
+          <IncomeStatusFormComponent
+            userData={userData}
+            onSubmit={onFormSubmit}
+            onUpdate={onUpdateUserData}
+          />
+        );
+      case "retirement-info-form":
+        return (
+          <RetirementInfoFormComponent
             userData={userData}
             onSubmit={onFormSubmit}
             onUpdate={onUpdateUserData}

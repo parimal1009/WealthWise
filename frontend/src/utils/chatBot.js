@@ -1,4 +1,5 @@
-// Chatbot logic for generating responses and determining components to render
+// Updated Chatbot logic for the new three-step flow
+// Basic Information → Income Status → Retirement Information
 
 export const generateBotResponse = async (
   userMessage,
@@ -8,35 +9,47 @@ export const generateBotResponse = async (
 ) => {
   const message = userMessage?.toLowerCase() || "";
 
-  // Profile setup flow
+  // Step 1: Basic Information
   if (
     message.includes("basic information") ||
     message.includes("start") ||
-    message.includes("profile")
+    message.includes("profile") ||
+    message.includes("get started") ||
+    (!userData.name && !userData.email && !userData.age)
   ) {
     return {
       content:
-        "Great! Let's start by collecting some basic information about you. This will help me create personalized retirement scenarios.",
-      component: "profile-form",
+        "Great! Let's start by collecting your basic information. This will help me personalize your retirement planning.",
+      component: "basic-info-form",
     };
   }
 
-  // After profile form submission
-  if (formData && (formData.age || formData.pensionAmount)) {
+  // After basic info form submission
+  if (formData && (formData.name || formData.email || formData.age) && !formData.currentSalary) {
     return {
       content:
-        "Perfect! Now let's understand your risk tolerance and retirement goals. This will help me recommend the most suitable strategies for you.",
-      component: "risk-assessment",
+        "Perfect! Now let's understand your current income and employment details. This information is crucial for calculating your retirement scenarios.",
+      component: "income-status-form",
       updateUserData: formData,
     };
   }
 
-  // After risk assessment
-  if (formData && (formData.riskTolerance || formData.goals)) {
+  // After income status form submission
+  if (formData && formData.currentSalary && !formData.plannedRetirementAge) {
+    return {
+      content:
+        "Excellent! Now let's plan your retirement goals and lifestyle preferences. This final step will help me create the perfect retirement strategy for you.",
+      component: "retirement-info-form",
+      updateUserData: formData,
+    };
+  }
+
+  // After retirement info form submission - Generate scenarios
+  if (formData && formData.plannedRetirementAge) {
     const scenarios = generateScenarios(userData, formData);
     return {
       content:
-        "Excellent! Based on your profile, I've generated personalized retirement scenarios. Here's what I recommend:",
+        "Fantastic! Based on all your information, I've generated personalized retirement scenarios tailored to your goals and preferences. Here's what I recommend:",
       component: "scenario-visualization",
       data: { scenarios },
       updateUserData: formData,
@@ -61,8 +74,8 @@ export const generateBotResponse = async (
     } else {
       return {
         content:
-          "I'd be happy to show you comparison charts! First, let me generate some scenarios for you.",
-        component: "profile-form",
+          "I'd be happy to show you comparison charts! First, let me collect your information to generate scenarios.",
+        component: "basic-info-form",
       };
     }
   }
@@ -99,59 +112,37 @@ export const generateBotResponse = async (
     };
   }
 
-  // Market conditions
-  if (
-    message.includes("market") ||
-    message.includes("inflation") ||
-    message.includes("economy")
-  ) {
-    return {
-      content:
-        "Current market conditions significantly impact retirement planning. Here's my analysis:",
-      component: "recommendation",
-      data: getMarketRecommendation(),
-    };
-  }
-
-  // General pension questions
-  if (
-    message.includes("pension") ||
-    message.includes("retirement") ||
-    message.includes("options")
-  ) {
-    return {
-      content:
-        "I can explain different pension payout options and help you choose the best strategy. Here are the main approaches:",
-      component: "recommendation",
-      data: getPensionOptionsRecommendation(),
-    };
-  }
-
-  // Planning factors
-  if (
-    message.includes("factors") ||
-    message.includes("consider") ||
-    message.includes("planning")
-  ) {
-    return {
-      content:
-        "There are several key factors to consider in retirement planning. Let me break them down for you:",
-      component: "recommendation",
-      data: getPlanningFactorsRecommendation(),
-    };
-  }
-
-  // Update profile
+  // Update profile - redirect to appropriate step
   if (
     message.includes("update") ||
     message.includes("change") ||
     message.includes("modify")
   ) {
-    return {
-      content:
-        "I can help you update your profile information. What would you like to change?",
-      component: "profile-form",
-    };
+    if (!userData.name || !userData.email) {
+      return {
+        content:
+          "Let's update your basic information:",
+        component: "basic-info-form",
+      };
+    } else if (!userData.currentSalary) {
+      return {
+        content:
+          "Let's update your income and employment details:",
+        component: "income-status-form",
+      };
+    } else if (!userData.plannedRetirementAge) {
+      return {
+        content:
+          "Let's update your retirement planning information:",
+        component: "retirement-info-form",
+      };
+    } else {
+      return {
+        content:
+          "Which section would you like to update? I can help you modify your basic information, income details, or retirement goals.",
+        component: "quick-actions",
+      };
+    }
   }
 
   // Sample data or demo requests
@@ -170,161 +161,189 @@ export const generateBotResponse = async (
     };
   }
 
-  // Quick demo with specific data
-  if (
-    message.includes("58 years old") ||
-    message.includes("20,00,000") ||
-    message.includes("₹20,00,000")
-  ) {
-    const demoUserData = {
-      age: "58",
-      pensionAmount: "2000000",
-      riskTolerance: "moderate",
-      goals: ["Maximize monthly income", "Ensure spouse coverage"],
-    };
-    const demoScenarios = generateScenarios(demoUserData, demoUserData);
-    return {
-      content:
-        "Perfect! I've created scenarios based on your sample data. Here's what I recommend for a 58-year-old with ₹20 lakh pension:",
-      component: "scenario-visualization",
-      data: { scenarios: demoScenarios },
-      updateUserData: demoUserData,
-      updateScenarios: demoScenarios,
-    };
-  }
+  // Check if user has completed all steps
+  const hasBasicInfo = userData.name && userData.email && userData.age;
+  const hasIncomeInfo = userData.currentSalary && userData.pensionBalance;
+  const hasRetirementInfo = userData.plannedRetirementAge && userData.retirementLifestyle;
 
   // Show demo component for first-time users
-  if (!userData.age && !userData.pensionAmount) {
+  if (!hasBasicInfo) {
     return {
       content:
-        "I'm here to help with your retirement planning! You can try the demo or start with your own information:",
-      component: "demo",
+        "Welcome! I'm here to help create your personalized retirement plan. Let's start by getting to know you:",
+      component: "basic-info-form",
+    };
+  } else if (!hasIncomeInfo) {
+    return {
+      content:
+        "I have your basic information. Now let's gather your income and employment details:",
+      component: "income-status-form",
+    };
+  } else if (!hasRetirementInfo) {
+    return {
+      content:
+        "Great progress! Let's finalize your retirement planning preferences:",
+      component: "retirement-info-form",
     };
   }
 
-  // Default response with quick actions
+  // Default response with quick actions for completed profiles
   return {
     content:
-      "I'm here to help with your retirement planning! Here are some things I can assist you with:",
+      "I have all your information! Here are some things I can help you with:",
     component: "quick-actions",
   };
 };
 
 const generateScenarios = (userData, formData) => {
-  const pensionAmount = parseInt(
-    userData.pensionAmount || formData.pensionAmount
+  const pensionBalance = parseInt(
+    userData.pensionBalance || formData.pensionBalance
   );
-  const age = parseInt(userData.age || formData.age);
-  const riskTolerance = formData.riskTolerance || userData.riskTolerance;
-  const goals = formData.goals || userData.goals || [];
+  const currentAge = parseInt(userData.age || formData.age);
+  const retirementAge = parseInt(userData.plannedRetirementAge || formData.plannedRetirementAge);
+  const monthlyExpense = parseInt(userData.monthlyRetirementExpense || formData.monthlyRetirementExpense);
+  const retirementLifestyle = userData.retirementLifestyle || formData.retirementLifestyle;
+  const legacyGoal = userData.legacyGoal || formData.legacyGoal;
 
-  const lifeExpectancy = 80;
-  const yearsInRetirement = lifeExpectancy - age;
+  const yearsToRetirement = retirementAge - currentAge;
+  const yearsInRetirement = 80 - retirementAge; // Assuming life expectancy of 80
 
+  // Calculate scenarios based on new data structure
   const scenarios = [
     {
       id: "lump-sum",
       name: "Lump Sum Withdrawal",
-      description: "Take the entire amount now and invest it yourself",
-      totalValue: pensionAmount,
-      monthlyIncome: Math.round((pensionAmount * 0.05) / 12),
-      taxImplication: Math.round(pensionAmount * 0.3),
+      description: "Take the entire pension amount and manage investments yourself",
+      totalValue: pensionBalance,
+      monthlyIncome: Math.round((pensionBalance * 0.05) / 12),
+      taxImplication: Math.round(pensionBalance * 0.3),
       pros: [
-        "Full control over investments",
-        "Liquidity for emergencies",
+        "Complete control over investments",
+        "Flexibility for emergencies",
         "Potential for higher returns",
+        "Can leave larger inheritance"
       ],
       cons: [
-        "Market risk",
-        "High immediate tax burden",
-        "Risk of outliving money",
+        "High market risk",
+        "Immediate heavy tax burden",
+        "Risk of outliving savings",
+        "Requires investment expertise"
       ],
       riskLevel: "High",
-      suitability:
-        riskTolerance === "aggressive"
-          ? 95
-          : riskTolerance === "moderate"
-          ? 70
-          : 45,
+      suitability: calculateSuitability("lump-sum", retirementLifestyle, legacyGoal, monthlyExpense, Math.round((pensionBalance * 0.05) / 12)),
     },
     {
       id: "annuity",
       name: "Life Annuity",
-      description: "Guaranteed monthly income for life",
-      totalValue: pensionAmount,
-      monthlyIncome: Math.round(
-        (pensionAmount / (yearsInRetirement * 12)) * 1.1
-      ),
-      taxImplication: Math.round(pensionAmount * 0.1),
+      description: "Convert pension to guaranteed monthly income for life",
+      totalValue: pensionBalance,
+      monthlyIncome: Math.round((pensionBalance / (yearsInRetirement * 12)) * 1.1),
+      taxImplication: Math.round(pensionBalance * 0.1),
       pros: [
         "Guaranteed income for life",
         "Protection against longevity risk",
         "Lower tax burden",
+        "Peace of mind"
       ],
       cons: [
-        "No liquidity",
+        "No liquidity access",
         "Fixed payments (inflation risk)",
         "No inheritance value",
+        "Lower potential returns"
       ],
       riskLevel: "Low",
-      suitability:
-        riskTolerance === "conservative"
-          ? 95
-          : riskTolerance === "moderate"
-          ? 80
-          : 60,
+      suitability: calculateSuitability("annuity", retirementLifestyle, legacyGoal, monthlyExpense, Math.round((pensionBalance / (yearsInRetirement * 12)) * 1.1)),
     },
     {
       id: "phased",
       name: "Phased Withdrawal",
-      description: "Systematic withdrawal over time with remaining invested",
-      totalValue: pensionAmount,
-      monthlyIncome: Math.round((pensionAmount * 0.04) / 12),
-      taxImplication: Math.round(pensionAmount * 0.15),
+      description: "Systematic withdrawal with remaining amount invested",
+      totalValue: pensionBalance,
+      monthlyIncome: Math.round((pensionBalance * 0.04) / 12),
+      taxImplication: Math.round(pensionBalance * 0.15),
       pros: [
-        "Balanced approach",
+        "Balanced risk approach",
         "Some liquidity maintained",
         "Potential for growth",
+        "Moderate inheritance"
       ],
       cons: [
-        "Market risk on remaining amount",
-        "Complex management",
+        "Market risk on remaining balance",
+        "Complex management required",
         "Sequence of returns risk",
+        "Not guaranteed for life"
       ],
       riskLevel: "Medium",
-      suitability: riskTolerance === "moderate" ? 95 : 75,
+      suitability: calculateSuitability("phased", retirementLifestyle, legacyGoal, monthlyExpense, Math.round((pensionBalance * 0.04) / 12)),
     },
   ];
 
-  // Add joint-life if spouse exists
-  if (userData.spouseAge || formData.spouseAge) {
+  // Add joint-life if married
+  if (userData.maritalStatus === "married" || formData.maritalStatus === "married") {
     scenarios.push({
       id: "joint-life",
       name: "Joint Life Annuity",
-      description: "Guaranteed income for both you and your spouse",
-      totalValue: pensionAmount,
-      monthlyIncome: Math.round(
-        (pensionAmount / (yearsInRetirement * 12)) * 0.9
-      ),
-      taxImplication: Math.round(pensionAmount * 0.1),
+      description: "Guaranteed income for both spouse and you",
+      totalValue: pensionBalance,
+      monthlyIncome: Math.round((pensionBalance / (yearsInRetirement * 12)) * 0.9),
+      taxImplication: Math.round(pensionBalance * 0.1),
       pros: [
-        "Spouse protection",
-        "Guaranteed income for both lives",
-        "Peace of mind",
+        "Spouse protection guaranteed",
+        "Income for both lives",
+        "Lower tax burden",
+        "Family security"
       ],
       cons: [
         "Lower monthly payments",
-        "No liquidity",
+        "No liquidity access",
         "Complex survivor benefits",
+        "No inheritance"
       ],
       riskLevel: "Low",
-      suitability: goals.includes("Ensure spouse coverage") ? 95 : 70,
+      suitability: calculateSuitability("joint-life", retirementLifestyle, legacyGoal, monthlyExpense, Math.round((pensionBalance / (yearsInRetirement * 12)) * 0.9)),
     });
   }
 
   return scenarios;
 };
 
+const calculateSuitability = (scenarioType, lifestyle, legacyGoal, monthlyExpense, scenarioIncome) => {
+  let score = 50; // Base score
+
+  // Income adequacy check
+  const incomeRatio = scenarioIncome / monthlyExpense;
+  if (incomeRatio >= 1.2) score += 25;
+  else if (incomeRatio >= 1.0) score += 15;
+  else if (incomeRatio >= 0.8) score += 5;
+  else score -= 10;
+
+  // Lifestyle matching
+  if (lifestyle === "minimalistic") {
+    if (scenarioType === "annuity" || scenarioType === "joint-life") score += 20;
+    if (scenarioType === "lump-sum") score -= 10;
+  } else if (lifestyle === "comfortable") {
+    if (scenarioType === "phased") score += 20;
+    if (scenarioType === "annuity") score += 10;
+  } else if (lifestyle === "lavish") {
+    if (scenarioType === "lump-sum") score += 20;
+    if (scenarioType === "phased") score += 10;
+    if (scenarioType === "annuity") score -= 10;
+  }
+
+  // Legacy goal matching
+  if (legacyGoal === "maximize-income") {
+    if (scenarioType === "annuity") score += 15;
+  } else if (legacyGoal === "substantial-legacy") {
+    if (scenarioType === "lump-sum") score += 20;
+    if (scenarioType === "annuity") score -= 15;
+  } else if (legacyGoal === "moderate-legacy") {
+    if (scenarioType === "phased") score += 15;
+  }
+
+  return Math.min(Math.max(score, 10), 95); // Keep between 10-95%
+};
+
+// Keep existing recommendation functions
 const getScenarioRecommendation = (scenarioType, scenarios) => {
   const scenario = scenarios?.find((s) => s.id === scenarioType);
 
@@ -415,129 +434,6 @@ const getTaxRecommendation = (scenarios, userData) => {
   };
 };
 
-const getMarketRecommendation = () => {
-  return {
-    title: "Market Conditions Impact",
-    subtitle: "How current economic conditions affect your retirement",
-    main: {
-      type: "info",
-      title: "Market Volatility Considerations",
-      content:
-        "Current market conditions create both opportunities and risks for retirement planning.",
-    },
-    points: [
-      {
-        type: "warning",
-        title: "Inflation Risk",
-        content:
-          "Rising inflation erodes purchasing power over time, especially for fixed income strategies",
-      },
-      {
-        type: "info",
-        title: "Interest Rates",
-        content:
-          "Current interest rate environment affects annuity payouts and bond returns",
-      },
-      {
-        type: "success",
-        title: "Diversification Benefits",
-        content:
-          "Mixed strategies can help balance market risks with guaranteed income",
-      },
-    ],
-    actions: [
-      "Consider inflation-protected investments",
-      "Review and rebalance regularly",
-      "Maintain emergency fund",
-      "Stay informed about economic trends",
-    ],
-  };
-};
-
-const getPensionOptionsRecommendation = () => {
-  return {
-    title: "Pension Payout Options Explained",
-    subtitle: "Understanding your choices for retirement income",
-    main: {
-      type: "info",
-      title: "Multiple Strategies Available",
-      content:
-        "Each pension payout option has unique advantages and trade-offs based on your situation.",
-    },
-    points: [
-      {
-        type: "success",
-        title: "Lump Sum",
-        content:
-          "Maximum control and flexibility, but requires active management and carries market risk",
-      },
-      {
-        type: "success",
-        title: "Annuity",
-        content:
-          "Guaranteed lifetime income with no market risk, but limited flexibility",
-      },
-      {
-        type: "success",
-        title: "Phased Withdrawal",
-        content:
-          "Balanced approach combining guaranteed income with growth potential",
-      },
-    ],
-    actions: [
-      "Assess your risk tolerance",
-      "Consider your health and longevity",
-      "Evaluate your other income sources",
-      "Think about legacy goals",
-    ],
-  };
-};
-
-const getPlanningFactorsRecommendation = () => {
-  return {
-    title: "Key Retirement Planning Factors",
-    subtitle: "Essential considerations for your retirement strategy",
-    main: {
-      type: "info",
-      title: "Comprehensive Planning Required",
-      content:
-        "Successful retirement planning involves balancing multiple factors unique to your situation.",
-    },
-    points: [
-      {
-        type: "warning",
-        title: "Longevity Risk",
-        content:
-          "Risk of outliving your money - consider your health, family history, and life expectancy",
-      },
-      {
-        type: "warning",
-        title: "Inflation Impact",
-        content:
-          "Rising costs over time can significantly erode purchasing power",
-      },
-      {
-        type: "info",
-        title: "Healthcare Costs",
-        content:
-          "Medical expenses typically increase with age and can be substantial",
-      },
-      {
-        type: "success",
-        title: "Family Considerations",
-        content:
-          "Spouse needs, dependent care, and legacy planning affect strategy choice",
-      },
-    ],
-    actions: [
-      "Estimate your life expectancy realistically",
-      "Plan for healthcare cost inflation",
-      "Consider spouse and family needs",
-      "Build in flexibility for changing circumstances",
-    ],
-  };
-};
-
 const generateSampleScenarios = () => {
   return [
     {
@@ -599,26 +495,6 @@ const generateSampleScenarios = () => {
       ],
       riskLevel: "Medium",
       suitability: 85,
-    },
-    {
-      id: "joint-life",
-      name: "Joint Life Annuity",
-      description: "Guaranteed income for both you and your spouse",
-      totalValue: 2000000,
-      monthlyIncome: 35000,
-      taxImplication: 200000,
-      pros: [
-        "Spouse protection",
-        "Guaranteed income for both lives",
-        "Peace of mind",
-      ],
-      cons: [
-        "Lower monthly payments",
-        "No liquidity",
-        "Complex survivor benefits",
-      ],
-      riskLevel: "Low",
-      suitability: 80,
     },
   ];
 };
