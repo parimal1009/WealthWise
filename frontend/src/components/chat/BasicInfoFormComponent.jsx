@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { Save, AlertCircle } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
 
 const BasicInfoFormComponent = ({ userData, onSubmit, onUpdate }) => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
-    name: userData.name || "",
-    email: userData.email || "",
+    name: user.name || "",
+    email: user.email || "",
     age: userData.age || "",
     dateOfBirth: userData.dateOfBirth || "",
     gender: userData.gender || "",
