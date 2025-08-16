@@ -1,13 +1,20 @@
 import React from "react";
 import { Home, MessageCircle, BookOpen, Settings, User } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
-const ProfileComponent = ({ userData }) => {
+const SideNavComponent = ({ userData }) => {
+    const { user } = useAuth();
+    const navigate = useNavigate();
     const navItems = [
         { name: "Dashboard", icon: <Home className="w-5 h-5" /> },
         { name: "Chat", icon: <MessageCircle className="w-5 h-5" /> },
         { name: "Learn", icon: <BookOpen className="w-5 h-5" /> },
         { name: "Settings", icon: <Settings className="w-5 h-5" /> },
     ];
+    const handleClick = () => {
+        navigate("/profile");
+    }
 
     const hasAvatar = userData.avatar && userData.avatar.trim() !== "";
 
@@ -38,10 +45,10 @@ const ProfileComponent = ({ userData }) => {
                         </div>
                     </div>
 
-                    <h3 className="font-bold text-xl mb-1">{userData.name}</h3>
-                    <p className="text-blue-100 text-sm opacity-90">{userData.email}</p>
+                    <h3 className="font-bold text-xl mb-1">{user.name}</h3>
+                    <p className="text-blue-100 text-sm opacity-90">{user.email}</p>
 
-                    <button className="w-full mt-6 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold py-3 px-4 rounded-2xl transition-all duration-200 border border-white/20">
+                    <button onClick={handleClick} className="w-full mt-6 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold py-3 px-4 rounded-2xl transition-all duration-200 border border-white/20">
                         View Full Profile
                     </button>
                 </div>
@@ -65,4 +72,4 @@ const ProfileComponent = ({ userData }) => {
     );
 };
 
-export default ProfileComponent;
+export default SideNavComponent;

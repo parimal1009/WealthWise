@@ -14,13 +14,15 @@ import {
   Users,
   Camera,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 export default function ProfilePage() {
+  const { user } = useAuth();
   const [editing, setEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("personal");
   const [profile, setProfile] = useState({
-    fullName: "Miran Firdausi",
-    email: "miran@example.com",
+    fullName: user.name,
+    email: user.email,
     dob: "1999-05-12",
     gender: "Male",
     location: "Pune, India",
@@ -315,11 +317,10 @@ export default function ProfilePage() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex-1 flex items-center justify-center space-x-3 px-6 py-4 rounded-xl text-sm font-semibold transition-all ${
-                      activeTab === tab.id
+                    className={`flex-1 flex items-center justify-center space-x-3 px-6 py-4 rounded-xl text-sm font-semibold transition-all ${activeTab === tab.id
                         ? "bg-primary text-white shadow-lg"
                         : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                    }`}
+                      }`}
                   >
                     <Icon size={18} />
                     <span>{tab.label}</span>
