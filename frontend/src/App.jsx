@@ -23,7 +23,7 @@ function App() {
     location: "",
     maritalStatus: "",
     numberOfDependants: "",
-    
+
     // Income Status
     currentSalary: "",
     yearsOfService: "",
@@ -31,7 +31,7 @@ function App() {
     pensionScheme: "",
     pensionBalance: "",
     employerContribution: "",
-    
+
     // Retirement Information
     plannedRetirementAge: "",
     retirementLifestyle: "",
@@ -40,7 +40,7 @@ function App() {
   });
 
   const [scenarios, setScenarios] = useState([]);
-  
+
   return (
     <AuthProvider>
       <Router>
@@ -67,20 +67,8 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/chat"
-              element={
-                <ProtectedRoute>
-                  <ChatInterface
-                    userData={userData}
-                    setUserData={setUserData}
-                    scenarios={scenarios}
-                    setScenarios={setScenarios}
-                  />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/landing" element={<ParentComponent />} />
+
+            <Route path="/home" element={<ProtectedRoute><ParentComponent /></ProtectedRoute>} />
           </Routes>
         </div>
       </Router>
