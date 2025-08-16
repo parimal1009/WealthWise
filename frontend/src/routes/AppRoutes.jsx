@@ -10,7 +10,7 @@ import OAuthCallback from "../pages/OAuthCallback";
 import ZerodhaCallback from "../pages/ZerodhaCallback";
 import ProfilePage from "../pages/ProfilePage";
 import ParentComponent from "../components/main/ParentComponent";
-import { useAuth } from "../context/AuthContext";
+import LearnPage from "../pages/LearnPage.jsx"; // Import LearnPage
 
 function AppRoutes() {
   const { user } = useAuth();
@@ -84,6 +84,19 @@ function AppRoutes() {
         />
         <Route
           path="/home"
+          element={
+            <ProtectedRoute>
+              <ParentComponent
+                userData={userData}
+                setUserData={setUserData}
+                scenarios={scenarios}
+                setScenarios={setScenarios}
+              />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/learn"
           element={
             <ProtectedRoute>
               <ParentComponent

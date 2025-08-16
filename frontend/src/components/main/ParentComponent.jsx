@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import SideNavComponent from "./SideNavComponent";
 import SummaryComponent from "./SummaryComponent";
 import ChatInterface from "../ChatInterface";
-import Dashboard from "../../pages/DashboardPage.jsx"; // ✅ Import Dashboard
+import Dashboard from "../../pages/DashboardPage.jsx";
+import LearnPage from "../../pages/LearnPage.jsx";// ✅ Import Dashboard
 
 const ParentComponent = ({ userData, setUserData, scenarios, setScenarios }) => {
     const [activePage, setActivePage] = useState("home"); // default page → chat
