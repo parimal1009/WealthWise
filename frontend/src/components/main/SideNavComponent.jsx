@@ -1,9 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { User, Home, MessageCircle, BookOpen, Settings } from "lucide-react";
-import { useAuth } from "../../context/AuthContext";
 import { APP_NAME } from "../../utils/constants";
 const SideNavComponent = ({ userData, onNavClick }) => {
-    const { user, logout } = useAuth();
     const navigate = useNavigate();
     const navItems = [
         { name: "Dashboard", path: "dashboard", icon: <Home className="w-5 h-5" /> },
@@ -56,8 +54,8 @@ const SideNavComponent = ({ userData, onNavClick }) => {
                         </div>
                     </div>
 
-                    <h3 className="font-bold text-xl mb-1">{user.name}</h3>
-                    <p className="text-blue-100 text-sm opacity-90">{user.email}</p>
+                    <h3 className="font-bold text-xl mb-1">{userData.name}</h3>
+                    <p className="text-blue-100 text-sm opacity-90">{userData.email}</p>
 
                     <button
                         onClick={() => navigate("/profile")}
@@ -90,7 +88,7 @@ const SideNavComponent = ({ userData, onNavClick }) => {
                     </li>
                     <button
                         onClick={handleLogout}
-                        className="mt-4 w-full border border-1 border-red-500 hover:bg-red-500 text-red-500 hover:text-white cursor-pointer px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md"
+                        className="mt-4 w-full border-1 border-red-500 hover:bg-red-500 text-red-500 hover:text-white cursor-pointer px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md"
                     >
                         Logout
                     </button>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import { useLocation } from "react-router";
 import Navbar from "../components/Navbar";
@@ -13,15 +13,16 @@ import ParentComponent from "../components/main/ParentComponent";
 import LearnPage from "../pages/LearnPage.jsx"; // Import LearnPage
 
 function AppRoutes() {
+  const { user } = useAuth();
   const [userData, setUserData] = useState({
-    // Basic Information
+    // keep initial placeholders so UI doesn’t break
     name: "Full Name",
     email: "abc@gmail.com",
     avatar: "/profile-default.png",
     age: "",
     dateOfBirth: "",
-    gender: "",
-    location: "",
+    gender: "Prefer not to say",
+    location: "India",
     maritalStatus: "",
     numberOfDependants: "",
 
@@ -39,9 +40,23 @@ function AppRoutes() {
     monthlyRetirementExpense: "",
     legacyGoal: "",
   });
-  const [scenarios, setScenarios] = useState([]);
 
+  const [scenarios, setScenarios] = useState([]);
   const location = useLocation();
+
+  // ✅ Update userData when user is available
+  useEffect(() => {
+    if (user) {
+      setUserData((prev) => ({
+        ...prev,
+        name: user?.name ?? "Full Name",
+        email: user?.email ?? "abc@gmail.com",
+        avatar: user?.profile_picture ?? "/profile-default.png",
+        dateOfBirth: user?.birthday ?? "",
+        gender: user?.gender ?? "Prefer not to say",
+      }));
+    }
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-gray-50">
