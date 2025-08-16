@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import ProfileComponent from "./ProfileComponent";
+import ProfileComponent from "./SideNavComponent";
 import SummaryComponent from "./SummaryComponent";
 import ChatInterface from "../ChatInterface";
 
