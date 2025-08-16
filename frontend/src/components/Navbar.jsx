@@ -40,10 +40,10 @@ const Navbar = () => {
                     Welcome, {user.name || user.email}
                   </span>
                   <Link
-                    to="/dashboard"
+                    to="/home"
                     className="text-slate-600 hover:text-blue-600 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-blue-50"
                   >
-                    Dashboard
+                    Home
                   </Link>
                   <button
                     onClick={handleLogout}
@@ -88,11 +88,11 @@ const Navbar = () => {
                   Welcome, {user.name || user.email}
                 </div>
                 <Link
-                  to="/dashboard"
+                  to="/home"
                   className="block text-slate-600 hover:text-blue-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-blue-50"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Dashboard
+                  Home
                 </Link>
                 <button
                   onClick={() => {
