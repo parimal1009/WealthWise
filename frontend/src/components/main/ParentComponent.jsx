@@ -12,7 +12,7 @@ const ParentComponent = ({
   return (
     <div className="h-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Main Layout */}
-      <div className="flex h-[calc(100vh-65px)]">
+      <div className="flex h-[calc(100vh-65px)] overflow-hidden">
         {/* Left Sidebar - Profile */}
         <div className="w-80 bg-white/70 backdrop-blur-sm border-r border-gray-200 shadow-xl">
           <div className="p-6">
@@ -35,8 +35,8 @@ const ParentComponent = ({
         </div>
 
         {/* Right Sidebar - Summary */}
-        <div className="w-80 bg-white/70 backdrop-blur-sm border-l border-gray-200 shadow-xl">
-          <div className="p-6 border-b border-gray-100">
+        <div className="w-90 p-6  bg-white/70 backdrop-blur-sm border-l border-gray-200 shadow-xl overflow-y-auto ">
+          <div className="border-b border-gray-100">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
@@ -47,7 +47,7 @@ const ParentComponent = ({
             </div>
           </div>
 
-          <div className="p-6">
+          <div className="mt-6">
             <SummaryComponent userData={userData} scenarios={scenarios} />
           </div>
         </div>
