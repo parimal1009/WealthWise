@@ -1,15 +1,14 @@
 import { User, Home, MessageCircle, BookOpen, Settings } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { APP_NAME } from "../../utils/constants";
-
+import { useNavigate } from "react-router-dom";
 const SideNavComponent = ({ userData, onNavClick }) => {
     const { user } = useAuth();
-
+    const navigate = useNavigate();
     const navItems = [
         { name: "Dashboard", path: "dashboard", icon: <Home className="w-5 h-5" /> },
         { name: "Chat", path: "home", icon: <MessageCircle className="w-5 h-5" /> },
         { name: "Learn", path: "learn", icon: <BookOpen className="w-5 h-5" /> },
-        { name: "Settings", path: "settings", icon: <Settings className="w-5 h-5" /> },
     ];
 
     const hasAvatar = userData.avatar && userData.avatar.trim() !== "";
@@ -53,7 +52,7 @@ const SideNavComponent = ({ userData, onNavClick }) => {
                     <p className="text-blue-100 text-sm opacity-90">{user.email}</p>
 
                     <button
-                        onClick={() => onNavClick("profile")}
+                        onClick={() => navigate("/profile")}
                         className="w-full mt-6 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold py-3 px-4 rounded-2xl transition-all duration-200 border border-white/20"
                     >
                         View Full Profile
@@ -74,6 +73,13 @@ const SideNavComponent = ({ userData, onNavClick }) => {
                             <span className="text-sm font-medium">{item.name}</span>
                         </li>
                     ))}
+                    <li
+                        onClick={() => navigate("/profile#settings")}
+                        className="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-700 cursor-pointer transition"
+                    >
+                        <Settings className="w-5 h-5" />
+                        <span className="text-sm font-medium">Settings</span>
+                    </li>
                 </ul>
             </nav>
         </div>

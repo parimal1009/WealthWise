@@ -1,38 +1,24 @@
-
 import React, { useState } from "react";
 import SideNavComponent from "./SideNavComponent";
 import SummaryComponent from "./SummaryComponent";
 import ChatInterface from "../ChatInterface";
-import Dashboard from "../../pages/DashboardPage.jsx"; // ✅ Import your Dashboard component
+import Dashboard from "../../pages/DashboardPage.jsx"; // ✅ Import Dashboard
 
-const ParentComponent = ({
-    userData,
-    setUserData,
-    scenarios,
-    setScenarios,
-}) => {
-    const [activePage, setActivePage] = useState("chat"); // default page is chat
-    return (
-        <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 overflow-hidden">
-            {/* Main Layout */}
-            <div className="flex max-h-screen ">
-                {/* Left Sidebar - Profile */}
-                <div className="w-80 bg-white/70 backdrop-blur-sm border-r border-gray-200 shadow-xl">
-                    <div className="p-6">
-                        <div className="mb-8">
-                            <SideNavComponent userData={userData} onNavClick={setActivePage} />
-                        </div>
-                    </div>
-                </div>
+const ParentComponent = ({ userData, setUserData, scenarios, setScenarios }) => {
+    const [activePage, setActivePage] = useState("home"); // default page → chat
 
-                {/* Center + Right Section */}
-                {activePage === "dashboard" ? (
-                    // ✅ Show Dashboard Component
+    // ✅ Helper renderer
+    const renderContent = () => {
+        switch (activePage) {
+            case "dashboard":
+                return (
                     <div className="flex-1 flex flex-col overflow-y-auto">
                         <Dashboard userData={userData} scenarios={scenarios} />
                     </div>
-                ) : (
-                    // ✅ Default: Show Chat + Summary
+                );
+
+            case "home": // Chat Page
+                return (
                     <>
                         {/* Center - Chat Interface */}
                         <div className="flex-1 flex flex-col">
@@ -64,7 +50,34 @@ const ParentComponent = ({
                             </div>
                         </div>
                     </>
-                )}
+                );
+
+            case "learn":
+                return (
+                    <div className="flex-1 flex flex-col overflow-y-auto">
+                        <LearnPage />
+                    </div>
+                );
+            default:
+                return null;
+        }
+    };
+
+    return (
+        <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 overflow-hidden">
+            <div className="flex max-h-screen">
+                {/* Left Sidebar */}
+                <div className="w-80 bg-white/70 backdrop-blur-sm border-r border-gray-200 shadow-xl">
+                    <div className="p-6">
+                        <div className="mb-8">
+                            {/* Pass setActivePage to SideNav */}
+                            <SideNavComponent userData={userData} onNavClick={setActivePage} />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Render based on activePage */}
+                {renderContent()}
             </div>
         </div>
     );
