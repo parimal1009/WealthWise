@@ -64,6 +64,7 @@ class AuthService {
       const user = JSON.parse(decodeURIComponent(userJson));
       localStorage.setItem('token', token);
       if (refreshToken) localStorage.setItem('refresh_token', refreshToken);
+      console.log("user: ", user)
       return { user, token };
     } catch (error) {
       console.error('Error parsing user JSON from OAuth callback:', error, userJson);
