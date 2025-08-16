@@ -31,7 +31,7 @@ const ZerodhaCallback = () => {
         
         // Show success message for 2 seconds, then redirect
         setTimeout(() => {
-          navigate('/dashboard', { replace: true });
+          navigate('/profile', { replace: true });
         }, 2000);
         
       } catch (error) {
