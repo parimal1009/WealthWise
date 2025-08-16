@@ -1,13 +1,13 @@
 import React from "react";
 import { Home, MessageCircle, BookOpen, Settings, User } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const SideNavComponent = ({ userData }) => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const navItems = [
-        { name: "Dashboard", icon: <Home className="w-5 h-5" /> },
+        { name: "Dashboard", path: "/dashboard", icon: <Home className="w-5 h-5" /> },
         { name: "Chat", icon: <MessageCircle className="w-5 h-5" /> },
         { name: "Learn", icon: <BookOpen className="w-5 h-5" /> },
         { name: "Settings", icon: <Settings className="w-5 h-5" /> },
@@ -58,13 +58,18 @@ const SideNavComponent = ({ userData }) => {
             <nav className="p-6">
                 <ul className="space-y-3">
                     {navItems.map((item, idx) => (
-                        <li
+                        <Link
                             key={idx}
-                            className="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-700 cursor-pointer transition"
-                        >
-                            {item.icon}
-                            <span className="text-sm font-medium">{item.name}</span>
-                        </li>
+                            to={item.path}
+                            className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition">
+                            <li
+                                key={idx}
+                                className="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-700 cursor-pointer transition"
+                            >
+                                {item.icon}
+                                <span className="text-sm font-medium">{item.name}</span>
+                            </li>
+                        </Link>
                     ))}
                 </ul>
             </nav>
