@@ -15,8 +15,9 @@ import ParentComponent from "./components/main/ParentComponent";
 function App() {
   const [userData, setUserData] = useState({
     // Basic Information
-    name: "",
-    email: "",
+    name: "Full Name",
+    email: "abc@gmail.com",
+    avatar: "/profile-default.png",
     age: "",
     dateOfBirth: "",
     gender: "",
@@ -68,7 +69,19 @@ function App() {
               }
             />
 
-            <Route path="/home" element={<ProtectedRoute><ParentComponent /></ProtectedRoute>} />
+            <Route
+              path="/home"
+              element={
+                <ProtectedRoute>
+                  <ParentComponent
+                    userData={userData}
+                    setUserData={setUserData}
+                    scenarios={scenarios}
+                    setScenarios={setScenarios}
+                  />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </div>
       </Router>

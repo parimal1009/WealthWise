@@ -84,7 +84,7 @@ const ChatInterface = ({ userData, setUserData, scenarios, setScenarios }) => {
   return (
     <div className="flex flex-col h-full ">
       {/* Messages */}
-      <div className="flex-1 chat-scroll px-4 py-6">
+      <div className="flex-1 chat-scroll px-4 py-6 overflow-y-auto">
         <div className="max-w-4xl mx-auto space-y-6">
           {messages.map((message) => (
             <ChatMessage
@@ -121,29 +121,32 @@ const ChatInterface = ({ userData, setUserData, scenarios, setScenarios }) => {
       <div className="bg-white border-t border-gray-200 px-4 py-4">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-end space-x-3">
-            <div className="flex-1 relative">
+            <div className="flex-1 flex gap-2 relative items-center">
               <textarea
                 ref={inputRef}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Ask me about your retirement options, tax implications, or any financial planning questions..."
-                className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
                 rows="1"
-                style={{ minHeight: "48px", maxHeight: "120px" }}
+                style={{
+                  minHeight: "48px",
+                  maxHeight: "120px",
+                }}
               />
               <button
                 onClick={() => handleSendMessage(inputValue)}
                 disabled={!inputValue.trim() || isTyping}
-                className="absolute right-2 bottom-2 p-2 bg-primary-600 text-white rounded-full hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-4 bg-primary-600 text-white rounded-xl hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <Send className="h-4 w-4" />
               </button>
             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-2 text-center">
+          {/* <p className="text-xs text-gray-500 mt-2 text-center">
             Press Enter to send • Shift+Enter for new line
-          </p>
+          </p> */}
         </div>
       </div>
     </div>
