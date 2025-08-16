@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import ProfileComponent from "./SideNavComponent";
 import SummaryComponent from "./SummaryComponent";
 import ChatInterface from "../ChatInterface";
@@ -10,9 +9,9 @@ const ParentComponent = ({
   setScenarios,
 }) => {
   return (
-    <div className="h-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 overflow-hidden">
       {/* Main Layout */}
-      <div className="flex h-[calc(100vh-65px)] overflow-hidden">
+      <div className="flex h-full">
         {/* Left Sidebar - Profile */}
         <div className="w-80 bg-white/70 backdrop-blur-sm border-r border-gray-200 shadow-xl">
           <div className="p-6">

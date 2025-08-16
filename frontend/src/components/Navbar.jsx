@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { APP_NAME } from '../utils/constants';
-import { TrendingUp, Menu, X } from 'lucide-react';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { APP_NAME } from "../utils/constants";
+import { TrendingUp, Menu, X } from "lucide-react";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -11,12 +11,12 @@ const Navbar = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate("/");
   };
 
   return (
     <nav className="bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200/50 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-6">
+      <div className="mx-auto px-6">
         <div className="flex justify-between items-center h-16">
           {/* Logo/Brand */}
           <div className="flex items-center">
@@ -68,11 +68,15 @@ const Navbar = () => {
 
           {/* Mobile menu button */}
           <div className="md:hidden">
-            <button 
+            <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="text-slate-600 hover:text-blue-600 focus:outline-none p-2 rounded-lg hover:bg-blue-50 transition-all duration-200"
             >
-              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {isMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
             </button>
           </div>
         </div>
