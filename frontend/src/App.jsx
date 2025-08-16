@@ -9,6 +9,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import OAuthCallback from "./pages/OAuthCallback";
 import ZerodhaCallback from "./pages/ZerodhaCallback";
 import ChatInterface from "./components/ChatInterface";
+import ParentComponent from "./components/main/ParentComponent";
 
 function App() {
   const [userData, setUserData] = useState({
@@ -53,6 +54,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="/landing" element={<ParentComponent />} />
           </Routes>
         </div>
       </Router>

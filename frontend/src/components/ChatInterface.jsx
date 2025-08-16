@@ -82,9 +82,9 @@ const ChatInterface = ({ userData, setUserData, scenarios, setScenarios }) => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="flex flex-col h-full ">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto chat-scroll px-4 py-6">
+      <div className="flex-1 chat-scroll px-4 py-6">
         <div className="max-w-4xl mx-auto space-y-6">
           {messages.map((message) => (
             <ChatMessage
