@@ -5,13 +5,17 @@ import SummaryComponent from "./SummaryComponent";
 import ChatInterface from "../ChatInterface";
 import Dashboard from "../../pages/DashboardPage.jsx"; // ✅ Import your Dashboard component
 
-const ParentComponent = ({ userData, setUserData, scenarios, setScenarios }) => {
+const ParentComponent = ({
+    userData,
+    setUserData,
+    scenarios,
+    setScenarios,
+}) => {
     const [activePage, setActivePage] = useState("chat"); // default page is chat
-
     return (
-        <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 overflow-hidden">
+        <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 overflow-hidden">
             {/* Main Layout */}
-            <div className="flex h-full">
+            <div className="flex max-h-screen ">
                 {/* Left Sidebar - Profile */}
                 <div className="w-80 bg-white/70 backdrop-blur-sm border-r border-gray-200 shadow-xl">
                     <div className="p-6">
