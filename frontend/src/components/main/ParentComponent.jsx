@@ -9,9 +9,9 @@ const ParentComponent = ({
   setScenarios,
 }) => {
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 overflow-hidden">
+    <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 overflow-hidden">
       {/* Main Layout */}
-      <div className="flex h-full">
+      <div className="flex max-h-screen ">
         {/* Left Sidebar - Profile */}
         <div className="w-80 bg-white/70 backdrop-blur-sm border-r border-gray-200 shadow-xl">
           <div className="p-6">
@@ -34,7 +34,7 @@ const ParentComponent = ({
         </div>
 
         {/* Right Sidebar - Summary */}
-        <div className="w-90 p-6  bg-white/70 backdrop-blur-sm border-l border-gray-200 shadow-xl overflow-y-auto ">
+        <div className="w-90 p-6 bg-white/70 backdrop-blur-sm border-l border-gray-200 shadow-xl overflow-y-auto">
           <div className="border-b border-gray-100">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">

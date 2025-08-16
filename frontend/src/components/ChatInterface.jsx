@@ -82,7 +82,7 @@ const ChatInterface = ({ userData, setUserData, scenarios, setScenarios }) => {
   };
 
   return (
-    <div className="flex flex-col h-full ">
+    <div className="h-screen flex flex-col">
       {/* Messages */}
       <div className="flex-1 chat-scroll px-4 py-6 overflow-y-auto">
         <div className="max-w-4xl mx-auto space-y-6">
