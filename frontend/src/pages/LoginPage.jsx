@@ -12,7 +12,7 @@ const LoginPage = () => {
 
   // Redirect if already logged in
   if (user) {
-    navigate('/dashboard');
+    navigate('/home');
     return null;
   }
 
