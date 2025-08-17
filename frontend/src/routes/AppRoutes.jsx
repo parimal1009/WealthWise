@@ -11,6 +11,7 @@ import ZerodhaCallback from "../pages/ZerodhaCallback";
 import ProfilePage from "../pages/ProfilePage";
 import ParentComponent from "../components/main/ParentComponent";
 import { useAuth } from "../context/AuthContext";
+import LearnPage from "../pages/LearnPage";
 
 function AppRoutes() {
   const { user } = useAuth();
@@ -71,6 +72,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/learn"
+          element={
+            <ProtectedRoute>
+              <LearnPage />
             </ProtectedRoute>
           }
         />
