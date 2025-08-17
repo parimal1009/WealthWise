@@ -1,7 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { User, Home, MessageCircle, BookOpen, Settings } from "lucide-react";
 import { APP_NAME } from "../../utils/constants";
+import { useAuth } from "../../context/AuthContext";
 const SideNavComponent = ({ userData, onNavClick }) => {
+    const {logout} = useAuth();
     const navigate = useNavigate();
     const navItems = [
         { name: "Dashboard", path: "dashboard", icon: <Home className="w-5 h-5" /> },

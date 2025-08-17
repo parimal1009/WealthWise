@@ -11,6 +11,7 @@ import ZerodhaCallback from "../pages/ZerodhaCallback";
 import ProfilePage from "../pages/ProfilePage";
 import ParentComponent from "../components/main/ParentComponent";
 import LearnPage from "../pages/LearnPage.jsx"; // Import LearnPage
+import { useAuth } from "../context/AuthContext.jsx";
 
 function AppRoutes() {
   const { user } = useAuth();
