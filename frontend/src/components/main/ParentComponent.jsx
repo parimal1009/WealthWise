@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import SideNavComponent from "./SideNavComponent";
 import SummaryComponent from "./SummaryComponent";
 import ChatInterface from "../ChatInterface";
-import Dashboard from "../../pages/DashboardPage.jsx";
-import LearnPage from "../../pages/LearnPage.jsx";
+import Dashboard from "../../pages/DashboardPage";
+import LearnPage from "../../pages/LearnPage";
 
 const ParentComponent = ({
   userData,
