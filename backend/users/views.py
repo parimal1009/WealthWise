@@ -160,7 +160,7 @@ def logout_view(request):
 # NEW: Income Status APIs
 # ==========================
 @api_view(["POST"])
-# @permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])
 def add_income_status(request):
     """Save income status"""
     serializer = IncomeStatusSerializer(data=request.data)
@@ -171,7 +171,7 @@ def add_income_status(request):
 
 
 @api_view(["GET"])
-# @permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])
 def list_income_status(request):
     """List all income status records"""
     records = IncomeStatus.objects.all()
