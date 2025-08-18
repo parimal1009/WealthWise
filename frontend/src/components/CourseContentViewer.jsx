@@ -61,7 +61,7 @@ const CourseContentViewer = ({ topic }) => {
   if (!topic) return null;
 
   return (
-    <div className="flex-1 bg-white rounded-lg shadow-sm p-6">
+    <div className="flex-1 bg-white rounded-lg shadow-sm p-6 h-fit">
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
           {getContentIcon(topic.type)}

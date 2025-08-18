@@ -4,12 +4,12 @@ import {
   ChevronRight,
   CheckCircle,
   Clock,
-  Award,
   BookOpen,
 } from "lucide-react";
 import courseData from "../data/pensionLearningData.json";
 import { getContentIcon } from "../utils/learnPage";
 import CourseContentViewer from "../components/CourseContentViewer";
+import CourseHeader from "../components/Learn/CourseHeader";
 import {
   setSelectedTopic,
   setExpandedModules,
@@ -38,60 +38,9 @@ const LearnPage = () => {
   return (
     <div className="min-h-screen flex-1 overflow-y-auto">
       {/* Header */}
+      <CourseHeader courseData={courseData} />
 
-      <div className="w-full p-12 shadow-lg border-b bg-white border-gray-200/80">
-        <div className="space-y-1 mb-6">
-          <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mb-3">
-            Featured Course
-          </div>
-          <h1 className="text-4xl lg:text-3xl font-bold text-gray-900 mb-3 leading-tight bg-gradient-to-r from-gray-900 via-gray-800 to-blue-900 bg-clip-text text-transparent">
-            {courseData.title}
-          </h1>
-          <p className="text-gray-700 text-lg lg:text-xl mb-8 leading-relaxed font-light max-w-3xl">
-            {courseData.description}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-8 text-base">
-          <div className="flex items-center gap-3 px-4 py-2 bg-white/70 backdrop-blur-sm rounded-xl border border-gray-200/60 shadow-sm hover:shadow-md transition-all duration-200">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <BookOpen className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <span className="font-semibold text-gray-900">
-                {courseData.totalModules}
-              </span>
-              <span className="text-gray-600 ml-1">Modules</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 px-4 py-2 bg-white/70 backdrop-blur-sm rounded-xl border border-gray-200/60 shadow-sm hover:shadow-md transition-all duration-200">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <Clock className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <span className="font-semibold text-gray-900">
-                {courseData.estimatedTime}
-              </span>
-              <span className="text-gray-600 ml-1">Duration</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 px-4 py-2 bg-white/70 backdrop-blur-sm rounded-xl border border-gray-200/60 shadow-sm hover:shadow-md transition-all duration-200">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <Award className="w-5 h-5 text-orange-600" />
-            </div>
-            <div>
-              <span className="font-semibold text-gray-900">
-                {courseData.difficulty}
-              </span>
-              <span className="text-gray-600 ml-1">Level</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex gap-8">
           {/* Sidebar - Course Roadmap */}
           <div className="w-96 bg-white rounded-lg shadow-sm h-fit">
@@ -188,7 +137,7 @@ const LearnPage = () => {
           {selectedTopic ? (
             <CourseContentViewer topic={selectedTopic} />
           ) : (
-            <div className="flex-1 bg-white rounded-lg shadow-sm p-12 text-center">
+            <div className="flex-1 bg-white rounded-lg shadow-sm px-12 py-24 text-center h-fit">
               <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
                 Welcome to Pension Planning & Retirement
