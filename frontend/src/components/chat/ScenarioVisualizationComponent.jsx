@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   TrendingUp,
   TrendingDown,
@@ -8,7 +8,7 @@ import {
   BarChart3,
 } from "lucide-react";
 
-const ScenarioVisualizationComponent = ({ scenarios, userData, onAction }) => {
+const ScenarioVisualizationComponent = ({ scenarios, onAction }) => {
   const [selectedScenario, setSelectedScenario] = useState(null);
 
   if (!scenarios || scenarios.length === 0) {

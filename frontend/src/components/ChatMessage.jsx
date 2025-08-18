@@ -1,4 +1,3 @@
-import React from "react";
 import { Bot, User } from "lucide-react";
 import WelcomeComponent from "./chat/WelcomeComponent";
 import BasicInfoFormComponent from "./chat/BasicInfoFormComponent";
@@ -12,10 +11,8 @@ import DemoComponent from "./chat/DemoComponent";
 
 const ChatMessage = ({
   message,
-  userData,
   scenarios,
   onFormSubmit,
-  onUpdateUserData,
   onUpdateScenarios,
 }) => {
   const isBot = message.type === "bot";
@@ -25,34 +22,15 @@ const ChatMessage = ({
       case "welcome":
         return <WelcomeComponent onAction={onFormSubmit} />;
       case "basic-info-form":
-        return (
-          <BasicInfoFormComponent
-            userData={userData}
-            onSubmit={onFormSubmit}
-            onUpdate={onUpdateUserData}
-          />
-        );
+        return <BasicInfoFormComponent onSubmit={onFormSubmit} />;
       case "income-status-form":
-        return (
-          <IncomeStatusFormComponent
-            userData={userData}
-            onSubmit={onFormSubmit}
-            onUpdate={onUpdateUserData}
-          />
-        );
+        return <IncomeStatusFormComponent onSubmit={onFormSubmit} />;
       case "retirement-info-form":
-        return (
-          <RetirementInfoFormComponent
-            userData={userData}
-            onSubmit={onFormSubmit}
-            onUpdate={onUpdateUserData}
-          />
-        );
+        return <RetirementInfoFormComponent onSubmit={onFormSubmit} />;
       case "scenario-visualization":
         return (
           <ScenarioVisualizationComponent
             scenarios={message.data?.scenarios || scenarios}
-            userData={userData}
             onAction={onFormSubmit}
           />
         );

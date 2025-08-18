@@ -1,7 +1,11 @@
 import React, { useState } from "react";
 import { Save, AlertCircle } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { setUserData } from "../../redux/slices/userDataSlice";
 
-const IncomeStatusFormComponent = ({ userData, onSubmit, onUpdate }) => {
+const IncomeStatusFormComponent = ({ onSubmit }) => {
+  const userData = useSelector((state) => state.userData);
+
   const [formData, setFormData] = useState({
     currentSalary: userData.currentSalary || "",
     yearsOfService: userData.yearsOfService || "",
@@ -11,6 +15,7 @@ const IncomeStatusFormComponent = ({ userData, onSubmit, onUpdate }) => {
     employerContribution: userData.employerContribution || "",
   });
   const [errors, setErrors] = useState({});
+  const dispatch = useDispatch();
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -48,7 +53,7 @@ const IncomeStatusFormComponent = ({ userData, onSubmit, onUpdate }) => {
 
   const handleSubmit = () => {
     if (validateForm()) {
-      onUpdate((prev) => ({ ...prev, ...formData }));
+      dispatch(setUserData({ ...formData }));
       onSubmit("I've completed my income status information", formData);
     }
   };
@@ -72,7 +77,9 @@ const IncomeStatusFormComponent = ({ userData, onSubmit, onUpdate }) => {
             </label>
             <input
               type="number"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.currentSalary ? "border-red-500" : "border-gray-300"}`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.currentSalary ? "border-red-500" : "border-gray-300"
+              }`}
               value={formData.currentSalary}
               onChange={(e) => handleChange("currentSalary", e.target.value)}
               placeholder="e.g., 150000"
@@ -91,7 +98,9 @@ const IncomeStatusFormComponent = ({ userData, onSubmit, onUpdate }) => {
             </label>
             <input
               type="number"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.yearsOfService ? "border-red-500" : "border-gray-300"}`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.yearsOfService ? "border-red-500" : "border-gray-300"
+              }`}
               value={formData.yearsOfService}
               onChange={(e) => handleChange("yearsOfService", e.target.value)}
               placeholder="e.g., 15"
@@ -110,7 +119,9 @@ const IncomeStatusFormComponent = ({ userData, onSubmit, onUpdate }) => {
               Employer Type *
             </label>
             <select
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.employerType ? "border-red-500" : "border-gray-300"}`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.employerType ? "border-red-500" : "border-gray-300"
+              }`}
               value={formData.employerType}
               onChange={(e) => handleChange("employerType", e.target.value)}
             >
@@ -133,7 +144,9 @@ const IncomeStatusFormComponent = ({ userData, onSubmit, onUpdate }) => {
               Pension Scheme *
             </label>
             <select
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.pensionScheme ? "border-red-500" : "border-gray-300"}`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.pensionScheme ? "border-red-500" : "border-gray-300"
+              }`}
               value={formData.pensionScheme}
               onChange={(e) => handleChange("pensionScheme", e.target.value)}
             >
@@ -157,7 +170,9 @@ const IncomeStatusFormComponent = ({ userData, onSubmit, onUpdate }) => {
             </label>
             <input
               type="number"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.pensionBalance ? "border-red-500" : "border-gray-300"}`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.pensionBalance ? "border-red-500" : "border-gray-300"
+              }`}
               value={formData.pensionBalance}
               onChange={(e) => handleChange("pensionBalance", e.target.value)}
               placeholder="e.g., 2000000"
@@ -178,7 +193,9 @@ const IncomeStatusFormComponent = ({ userData, onSubmit, onUpdate }) => {
               type="number"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               value={formData.employerContribution}
-              onChange={(e) => handleChange("employerContribution", e.target.value)}
+              onChange={(e) =>
+                handleChange("employerContribution", e.target.value)
+              }
               placeholder="e.g., 15000"
             />
           </div>
@@ -189,9 +206,16 @@ const IncomeStatusFormComponent = ({ userData, onSubmit, onUpdate }) => {
             Information Note:
           </h4>
           <ul className="text-xs text-blue-800 space-y-1">
-            <li>• OPS: Provides fixed pension after retirement based on last drawn salary</li>
-            <li>• NPS: Market-linked returns with annuity and lump sum options</li>
-            <li>• EPF: Fixed returns with tax benefits, withdrawable after 5 years</li>
+            <li>
+              • OPS: Provides fixed pension after retirement based on last drawn
+              salary
+            </li>
+            <li>
+              • NPS: Market-linked returns with annuity and lump sum options
+            </li>
+            <li>
+              • EPF: Fixed returns with tax benefits, withdrawable after 5 years
+            </li>
           </ul>
         </div>
 
