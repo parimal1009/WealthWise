@@ -6,4 +6,8 @@ urlpatterns = [
     path('callback/', views.oauth_callback, name='oauth_callback'),
     path('verify/', views.verify_token, name='verify_token'),
     path('logout/', views.logout_view, name='logout'),
+    path("income/add/", views.add_income_status, name="add_income_status"),
+    path("income/list/", views.list_income_status, name="list_income_status"),
+    path("retirement/add/", views.add_retirement_info, name="add_retirement_info"),
+    path("retirement/list/", views.list_retirement_info, name="list_retirement_info"),
 ]
