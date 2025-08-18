@@ -1,53 +1,67 @@
 import React, { useState } from "react";
 import { AlertCircle, ArrowRight } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { setUserData } from "../../redux/slices/userDataSlice";
 
-const RetirementInfoFormComponent = ({ userData, onSubmit, onUpdate }) => {
-  // Initialize with safe defaults
+const RetirementInfoFormComponent = ({ onSubmit }) => {
+  const { userData } = useSelector((state) => state.userData);
   const safeUserData = userData || {};
   const currentAge = parseInt(safeUserData.age) || 25;
-  
+
   const [formData, setFormData] = useState({
     plannedRetirementAge: safeUserData.plannedRetirementAge || "",
     retirementLifestyle: safeUserData.retirementLifestyle || "",
     monthlyRetirementExpense: safeUserData.monthlyRetirementExpense || "",
     legacyGoal: safeUserData.legacyGoal || "",
   });
-  
+
   const [errors, setErrors] = useState({});
+  const dispatch = useDispatch();
 
   // Simplified handleChange function
   const handleChange = (field, value) => {
     try {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [field]: value
+        [field]: value,
       }));
-      
+
       // Clear error for this field
       if (errors[field]) {
-        setErrors(prev => ({
+        setErrors((prev) => ({
           ...prev,
-          [field]: null
+          [field]: null,
         }));
       }
     } catch (error) {
-      console.error('Error in handleChange:', error);
+      console.error("Error in handleChange:", error);
     }
   };
 
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.plannedRetirementAge || formData.plannedRetirementAge <= currentAge || formData.plannedRetirementAge > 75) {
-      newErrors.plannedRetirementAge = `Please enter a valid retirement age (${currentAge + 1}-75)`;
+    if (
+      !formData.plannedRetirementAge ||
+      formData.plannedRetirementAge <= currentAge ||
+      formData.plannedRetirementAge > 75
+    ) {
+      newErrors.plannedRetirementAge = `Please enter a valid retirement age (${
+        currentAge + 1
+      }-75)`;
     }
 
     if (!formData.retirementLifestyle) {
-      newErrors.retirementLifestyle = "Please select your desired retirement lifestyle";
+      newErrors.retirementLifestyle =
+        "Please select your desired retirement lifestyle";
     }
 
-    if (!formData.monthlyRetirementExpense || formData.monthlyRetirementExpense <= 0) {
-      newErrors.monthlyRetirementExpense = "Please enter your expected monthly retirement expenses";
+    if (
+      !formData.monthlyRetirementExpense ||
+      formData.monthlyRetirementExpense <= 0
+    ) {
+      newErrors.monthlyRetirementExpense =
+        "Please enter your expected monthly retirement expenses";
     }
 
     if (!formData.legacyGoal) {
@@ -61,15 +75,18 @@ const RetirementInfoFormComponent = ({ userData, onSubmit, onUpdate }) => {
   const handleSubmit = () => {
     try {
       if (validateForm()) {
-        if (typeof onUpdate === 'function') {
-          onUpdate(prev => ({ ...prev, ...formData }));
+        if (typeof setUserData === "function") {
+          dispatch(setUserData({ ...formData }));
         }
-        if (typeof onSubmit === 'function') {
-          onSubmit("I've completed my retirement planning information", formData);
+        if (typeof onSubmit === "function") {
+          onSubmit(
+            "I've completed my retirement planning information",
+            formData
+          );
         }
       }
     } catch (error) {
-      console.error('Error in handleSubmit:', error);
+      console.error("Error in handleSubmit:", error);
     }
   };
 
@@ -78,20 +95,20 @@ const RetirementInfoFormComponent = ({ userData, onSubmit, onUpdate }) => {
       value: "minimalistic",
       title: "Minimalistic",
       description: "Basic needs covered, simple living",
-      monthlyRange: "₹30,000 - ₹50,000"
+      monthlyRange: "₹30,000 - ₹50,000",
     },
     {
       value: "comfortable",
       title: "Comfortable",
       description: "Comfortable lifestyle with moderate luxuries",
-      monthlyRange: "₹50,000 - ₹1,00,000"
+      monthlyRange: "₹50,000 - ₹1,00,000",
     },
     {
       value: "lavish",
       title: "Lavish",
       description: "Premium lifestyle with luxury amenities",
-      monthlyRange: "₹1,00,000+"
-    }
+      monthlyRange: "₹1,00,000+",
+    },
   ];
 
   return (
@@ -113,9 +130,15 @@ const RetirementInfoFormComponent = ({ userData, onSubmit, onUpdate }) => {
             </label>
             <input
               type="number"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.plannedRetirementAge ? "border-red-500" : "border-gray-300"}`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                errors.plannedRetirementAge
+                  ? "border-red-500"
+                  : "border-gray-300"
+              }`}
               value={formData.plannedRetirementAge}
-              onChange={(e) => handleChange("plannedRetirementAge", e.target.value)}
+              onChange={(e) =>
+                handleChange("plannedRetirementAge", e.target.value)
+              }
               placeholder="e.g., 60"
               min={currentAge + 1}
               max="75"
@@ -134,9 +157,15 @@ const RetirementInfoFormComponent = ({ userData, onSubmit, onUpdate }) => {
             </label>
             <input
               type="number"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.monthlyRetirementExpense ? "border-red-500" : "border-gray-300"}`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                errors.monthlyRetirementExpense
+                  ? "border-red-500"
+                  : "border-gray-300"
+              }`}
               value={formData.monthlyRetirementExpense}
-              onChange={(e) => handleChange("monthlyRetirementExpense", e.target.value)}
+              onChange={(e) =>
+                handleChange("monthlyRetirementExpense", e.target.value)
+              }
               placeholder="e.g., 75000"
             />
             {errors.monthlyRetirementExpense && (
@@ -155,9 +184,11 @@ const RetirementInfoFormComponent = ({ userData, onSubmit, onUpdate }) => {
           </label>
           <div className="space-y-3">
             {lifestyleOptions.map((option) => (
-              <div 
+              <div
                 key={option.value}
-                onClick={() => handleChange("retirementLifestyle", option.value)}
+                onClick={() =>
+                  handleChange("retirementLifestyle", option.value)
+                }
                 className={`p-4 border-2 rounded-lg transition-colors cursor-pointer ${
                   formData.retirementLifestyle === option.value
                     ? "border-blue-500 bg-blue-50"
@@ -199,14 +230,22 @@ const RetirementInfoFormComponent = ({ userData, onSubmit, onUpdate }) => {
             Legacy Goal *
           </label>
           <select
-            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.legacyGoal ? "border-red-500" : "border-gray-300"}`}
+            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              errors.legacyGoal ? "border-red-500" : "border-gray-300"
+            }`}
             value={formData.legacyGoal}
             onChange={(e) => handleChange("legacyGoal", e.target.value)}
           >
             <option value="">Select your legacy preference</option>
-            <option value="maximize-income">Maximize my retirement income</option>
-            <option value="moderate-legacy">Modest inheritance for family</option>
-            <option value="substantial-legacy">Substantial wealth transfer</option>
+            <option value="maximize-income">
+              Maximize my retirement income
+            </option>
+            <option value="moderate-legacy">
+              Modest inheritance for family
+            </option>
+            <option value="substantial-legacy">
+              Substantial wealth transfer
+            </option>
             <option value="charitable-giving">Charitable giving focus</option>
             <option value="no-preference">No specific preference</option>
           </select>
@@ -225,11 +264,24 @@ const RetirementInfoFormComponent = ({ userData, onSubmit, onUpdate }) => {
           <div className="text-xs text-green-800 space-y-1">
             <div>• Current Age: {currentAge} years</div>
             {formData.plannedRetirementAge && (
-              <div>• Years to Retirement: {formData.plannedRetirementAge - currentAge} years</div>
+              <div>
+                • Years to Retirement:{" "}
+                {formData.plannedRetirementAge - currentAge} years
+              </div>
             )}
-            <div>• Current Pension Balance: ₹{safeUserData.pensionBalance ? parseInt(safeUserData.pensionBalance).toLocaleString('en-IN') : '0'}</div>
+            <div>
+              • Current Pension Balance: ₹
+              {safeUserData.pensionBalance
+                ? parseInt(safeUserData.pensionBalance).toLocaleString("en-IN")
+                : "0"}
+            </div>
             {formData.monthlyRetirementExpense && (
-              <div>• Target Monthly Expense: ₹{parseInt(formData.monthlyRetirementExpense).toLocaleString('en-IN')}</div>
+              <div>
+                • Target Monthly Expense: ₹
+                {parseInt(formData.monthlyRetirementExpense).toLocaleString(
+                  "en-IN"
+                )}
+              </div>
             )}
           </div>
         </div>

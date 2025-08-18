@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import { useLocation } from "react-router";
+import { useDispatch } from "react-redux";
 import Navbar from "../components/Navbar";
 import HomePage from "../pages/HomePage";
 import LoginPage from "../pages/LoginPage";
@@ -14,52 +15,29 @@ import ChatPage from "../pages/ChatPage";
 import Dashboard from "../pages/DashboardPage";
 import LearnPage from "../pages/LearnPage";
 import { useAuth } from "../context/AuthContext";
+import { setUserData } from "../redux/slices/userDataSlice";
 
 function AppRoutes() {
   const { user } = useAuth();
-  const [userData, setUserData] = useState({
-    // keep initial placeholders so UI doesn’t break
-    name: "Full Name",
-    email: "abc@gmail.com",
-    avatar: "/profile-default.png",
-    age: "",
-    dateOfBirth: "",
-    gender: "Prefer not to say",
-    location: "India",
-    maritalStatus: "",
-    numberOfDependants: "",
-
-    // Income Status
-    currentSalary: "",
-    yearsOfService: "",
-    employerType: "",
-    pensionScheme: "",
-    pensionBalance: "",
-    employerContribution: "",
-
-    // Retirement Information
-    plannedRetirementAge: "",
-    retirementLifestyle: "",
-    monthlyRetirementExpense: "",
-    legacyGoal: "",
-  });
+  const dispatch = useDispatch();
 
   const [scenarios, setScenarios] = useState([]);
   const location = useLocation();
 
-  // ✅ Update userData when user is available
+  // Update userData when user is available
   useEffect(() => {
     if (user) {
-      setUserData((prev) => ({
-        ...prev,
-        name: user?.name ?? "Full Name",
-        email: user?.email ?? "abc@gmail.com",
-        avatar: user?.profile_picture ?? "/profile-default.png",
-        dateOfBirth: user?.birthday ?? "",
-        gender: user?.gender ?? "Prefer not to say",
-      }));
+      dispatch(
+        setUserData({
+          name: user?.name ?? "Full Name",
+          email: user?.email ?? "abc@gmail.com",
+          avatar: user?.profile_picture ?? "/profile-default.png",
+          dateOfBirth: user?.birthday ?? "",
+          gender: user?.gender ?? "Prefer not to say",
+        })
+      );
     }
-  }, [user]);
+  }, [user, dispatch]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -89,19 +67,14 @@ function AppRoutes() {
           path="/home/*"
           element={
             <ProtectedRoute>
-              <ParentComponent userData={userData} />
+              <ParentComponent />
             </ProtectedRoute>
           }
         >
           <Route
             index
             element={
-              <ChatPage
-                userData={userData}
-                setUserData={setUserData}
-                scenarios={scenarios}
-                setScenarios={setScenarios}
-              />
+              <ChatPage scenarios={scenarios} setScenarios={setScenarios} />
             }
           />
           <Route path="dashboard" element={<Dashboard />} />

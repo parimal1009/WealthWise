@@ -1,8 +1,10 @@
+import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { User, Home, MessageCircle, BookOpen, Settings } from "lucide-react";
 import { APP_NAME } from "../../utils/constants";
 import { useAuth } from "../../context/AuthContext";
-const SideNavComponent = ({ userData, onNavClick }) => {
+const SideNavComponent = ({ onNavClick }) => {
+  const { userData } = useSelector((state) => state.userData);
   const { logout } = useAuth();
   const navigate = useNavigate();
   const navItems = [

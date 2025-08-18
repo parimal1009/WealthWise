@@ -1,9 +1,12 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Sparkles } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Send, Bot } from "lucide-react";
 import ChatMessage from "./ChatMessage";
 import { generateBotResponse } from "../utils/chatBot";
+import { setUserData } from "../redux/slices/userDataSlice";
 
-const ChatInterface = ({ userData, setUserData, scenarios, setScenarios }) => {
+const ChatInterface = ({ scenarios, setScenarios }) => {
+  const dispatch = useDispatch();
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -14,6 +17,7 @@ const ChatInterface = ({ userData, setUserData, scenarios, setScenarios }) => {
       component: "welcome",
     },
   ]);
+  const { userData } = useSelector((state) => state.userData);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
@@ -66,7 +70,7 @@ const ChatInterface = ({ userData, setUserData, scenarios, setScenarios }) => {
 
       // Update app state if needed
       if (botResponse.updateUserData) {
-        setUserData((prev) => ({ ...prev, ...botResponse.updateUserData }));
+        dispatch(setUserData({ ...botResponse.updateUserData }));
       }
       if (botResponse.updateScenarios) {
         setScenarios(botResponse.updateScenarios);
@@ -90,10 +94,8 @@ const ChatInterface = ({ userData, setUserData, scenarios, setScenarios }) => {
             <ChatMessage
               key={message.id}
               message={message}
-              userData={userData}
               scenarios={scenarios}
               onFormSubmit={handleSendMessage}
-              onUpdateUserData={setUserData}
               onUpdateScenarios={setScenarios}
             />
           ))}

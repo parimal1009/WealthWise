@@ -1,9 +1,12 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Save, AlertCircle } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { useDispatch, useSelector } from "react-redux";
+import { setUserData } from "../../redux/slices/userDataSlice";
 
-const BasicInfoFormComponent = ({ userData, onSubmit, onUpdate }) => {
+const BasicInfoFormComponent = ({ onSubmit }) => {
   const { user } = useAuth();
+  const { userData } = useSelector((state) => state.userData);
   const [formData, setFormData] = useState({
     name: user.name || "",
     email: user.email || "",
@@ -15,6 +18,7 @@ const BasicInfoFormComponent = ({ userData, onSubmit, onUpdate }) => {
     numberOfDependants: userData.numberOfDependants || "",
   });
   const [errors, setErrors] = useState({});
+  const dispatch = useDispatch();
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -56,7 +60,7 @@ const BasicInfoFormComponent = ({ userData, onSubmit, onUpdate }) => {
 
   const handleSubmit = () => {
     if (validateForm()) {
-      onUpdate((prev) => ({ ...prev, ...formData }));
+      dispatch(setUserData({ ...formData }));
       onSubmit("Income Status", formData);
     }
   };
@@ -68,7 +72,8 @@ const BasicInfoFormComponent = ({ userData, onSubmit, onUpdate }) => {
           Basic Information
         </h3>
         <p className="text-sm text-gray-600">
-          Let's start with your basic details to personalize your retirement planning
+          Let's start with your basic details to personalize your retirement
+          planning
         </p>
       </div>
 
@@ -80,7 +85,9 @@ const BasicInfoFormComponent = ({ userData, onSubmit, onUpdate }) => {
             </label>
             <input
               type="text"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.name ? "border-red-500" : "border-gray-300"}`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.name ? "border-red-500" : "border-gray-300"
+              }`}
               value={formData.name}
               onChange={(e) => handleChange("name", e.target.value)}
               placeholder="Enter your full name"
@@ -99,7 +106,9 @@ const BasicInfoFormComponent = ({ userData, onSubmit, onUpdate }) => {
             </label>
             <input
               type="email"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.email ? "border-red-500" : "border-gray-300"}`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.email ? "border-red-500" : "border-gray-300"
+              }`}
               value={formData.email}
               onChange={(e) => handleChange("email", e.target.value)}
               placeholder="your.email@example.com"
@@ -118,7 +127,9 @@ const BasicInfoFormComponent = ({ userData, onSubmit, onUpdate }) => {
             </label>
             <input
               type="number"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.age ? "border-red-500" : "border-gray-300"}`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.age ? "border-red-500" : "border-gray-300"
+              }`}
               value={formData.age}
               onChange={(e) => handleChange("age", e.target.value)}
               placeholder="e.g., 45"
@@ -148,7 +159,9 @@ const BasicInfoFormComponent = ({ userData, onSubmit, onUpdate }) => {
               Gender *
             </label>
             <select
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.gender ? "border-red-500" : "border-gray-300"}`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.gender ? "border-red-500" : "border-gray-300"
+              }`}
               value={formData.gender}
               onChange={(e) => handleChange("gender", e.target.value)}
             >
@@ -172,7 +185,9 @@ const BasicInfoFormComponent = ({ userData, onSubmit, onUpdate }) => {
             </label>
             <input
               type="text"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.location ? "border-red-500" : "border-gray-300"}`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.location ? "border-red-500" : "border-gray-300"
+              }`}
               value={formData.location}
               onChange={(e) => handleChange("location", e.target.value)}
               placeholder="City, State"
@@ -190,7 +205,9 @@ const BasicInfoFormComponent = ({ userData, onSubmit, onUpdate }) => {
               Marital Status *
             </label>
             <select
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.maritalStatus ? "border-red-500" : "border-gray-300"}`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.maritalStatus ? "border-red-500" : "border-gray-300"
+              }`}
               value={formData.maritalStatus}
               onChange={(e) => handleChange("maritalStatus", e.target.value)}
             >
@@ -216,7 +233,9 @@ const BasicInfoFormComponent = ({ userData, onSubmit, onUpdate }) => {
               type="number"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               value={formData.numberOfDependants}
-              onChange={(e) => handleChange("numberOfDependants", e.target.value)}
+              onChange={(e) =>
+                handleChange("numberOfDependants", e.target.value)
+              }
               placeholder="e.g., 2"
               min="0"
             />

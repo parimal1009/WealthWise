@@ -1,25 +1,28 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Save, Upload, AlertCircle } from "lucide-react";
+import { setUserData } from "../redux/slices/userDataSlice";
 
-const DataInput = ({ userData, setUserData }) => {
+const DataInput = () => {
+  const { userData } = useSelector((state) => state.userData);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [errors, setErrors] = useState({});
 
   const handleInputChange = (field, value) => {
-    setUserData((prev) => ({ ...prev, [field]: value }));
+    dispatch(setUserData({ [field]: value }));
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: null }));
     }
   };
 
   const handleGoalToggle = (goal) => {
-    setUserData((prev) => ({
-      ...prev,
-      goals: prev.goals.includes(goal)
-        ? prev.goals.filter((g) => g !== goal)
-        : [...prev.goals, goal],
-    }));
+    const updatedGoals = userData.goals.includes(goal)
+      ? userData.goals.filter((g) => g !== goal)
+      : [...userData.goals, goal];
+
+    dispatch(setUserData({ goals: updatedGoals }));
   };
 
   const validateForm = () => {

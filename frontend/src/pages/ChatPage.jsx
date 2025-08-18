@@ -1,17 +1,12 @@
 import ChatInterface from "../components/ChatInterface";
 import SummaryComponent from "../components/main/SummaryComponent";
 
-const ChatPage = ({ userData, setUserData, scenarios, setScenarios }) => {
+const ChatPage = ({ scenarios, setScenarios }) => {
   return (
     <>
       <div className="flex-1 flex flex-col">
         <div className="flex-1 overflow-y-auto">
-          <ChatInterface
-            userData={userData}
-            setUserData={setUserData}
-            scenarios={scenarios}
-            setScenarios={setScenarios}
-          />
+          <ChatInterface scenarios={scenarios} setScenarios={setScenarios} />
         </div>
       </div>
 
@@ -27,7 +22,7 @@ const ChatPage = ({ userData, setUserData, scenarios, setScenarios }) => {
           </div>
         </div>
         <div className="mt-6">
-          <SummaryComponent userData={userData} scenarios={scenarios} />
+          <SummaryComponent />
         </div>
       </div>
     </>
