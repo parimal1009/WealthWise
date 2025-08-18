@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Save, AlertCircle } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { setUserData } from "../../redux/slices/userDataSlice";
+import { numberToWords } from "../../utils/textUtils";
+import { LIMITS } from "../../utils/constants";
 
 const IncomeStatusFormComponent = ({ onSubmit }) => {
   const userData = useSelector((state) => state.userData);
@@ -18,7 +20,22 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
   const dispatch = useDispatch();
 
   const handleChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    let processedValue = value;
+
+    // Only clamp if the value is not an empty string and is a valid number
+    if (LIMITS[field] && value !== "" && !isNaN(value)) {
+      const numericValue = Number(value);
+      processedValue = Math.max(
+        LIMITS[field].min,
+        Math.min(LIMITS[field].max, numericValue)
+      );
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      [field]: processedValue,
+    }));
+
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: null }));
     }
@@ -90,6 +107,14 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
                 {errors.currentSalary}
               </p>
             )}
+            {formData.currentSalary && (
+              <p className="mt-1 text-xs text-primary-600">
+                <span className="font-medium">
+                  {numberToWords(formData.currentSalary)}
+                </span>{" "}
+                Rupees
+              </p>
+            )}
           </div>
 
           <div>
@@ -110,6 +135,14 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
               <p className="mt-1 text-xs text-red-600 flex items-center">
                 <AlertCircle className="h-3 w-3 mr-1" />
                 {errors.yearsOfService}
+              </p>
+            )}
+            {formData.yearsOfService && (
+              <p className="mt-1 text-xs text-primary-600">
+                <span className="font-medium">
+                  {numberToWords(formData.yearsOfService)}
+                </span>{" "}
+                Years
               </p>
             )}
           </div>
@@ -183,6 +216,14 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
                 {errors.pensionBalance}
               </p>
             )}
+            {formData.pensionBalance && (
+              <p className="mt-1 text-xs text-primary-600">
+                <span className="font-medium">
+                  {numberToWords(formData.pensionBalance)}
+                </span>{" "}
+                Rupees
+              </p>
+            )}
           </div>
 
           <div>
@@ -198,6 +239,14 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
               }
               placeholder="e.g., 15000"
             />
+            {formData.employerContribution && (
+              <p className="mt-1 text-xs text-primary-600">
+                <span className="font-medium">
+                  {numberToWords(formData.employerContribution)}
+                </span>{" "}
+                Rupees
+              </p>
+            )}
           </div>
         </div>
 
@@ -222,7 +271,7 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
         <div className="flex justify-end pt-4">
           <button
             onClick={handleSubmit}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+            className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-600 flex items-center space-x-2"
           >
             <Save className="h-4 w-4" />
             <span>Continue to Retirement Planning</span>

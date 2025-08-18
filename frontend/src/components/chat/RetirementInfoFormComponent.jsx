@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { AlertCircle, ArrowRight } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { setUserData } from "../../redux/slices/userDataSlice";
+import LegacyGoalSelector from "./LegacyGoalSelector";
 
 const RetirementInfoFormComponent = ({ onSubmit }) => {
   const { userData } = useSelector((state) => state.userData);
@@ -95,19 +96,16 @@ const RetirementInfoFormComponent = ({ onSubmit }) => {
       value: "minimalistic",
       title: "Minimalistic",
       description: "Basic needs covered, simple living",
-      monthlyRange: "₹30,000 - ₹50,000",
     },
     {
       value: "comfortable",
       title: "Comfortable",
       description: "Comfortable lifestyle with moderate luxuries",
-      monthlyRange: "₹50,000 - ₹1,00,000",
     },
     {
       value: "lavish",
       title: "Lavish",
       description: "Premium lifestyle with luxury amenities",
-      monthlyRange: "₹1,00,000+",
     },
   ];
 
@@ -203,9 +201,6 @@ const RetirementInfoFormComponent = ({ onSubmit }) => {
                     <p className="text-sm text-gray-600 mt-1">
                       {option.description}
                     </p>
-                    <span className="text-xs text-blue-600 font-medium">
-                      {option.monthlyRange}
-                    </span>
                   </div>
                   {formData.retirementLifestyle === option.value && (
                     <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center ml-2">
@@ -229,26 +224,11 @@ const RetirementInfoFormComponent = ({ onSubmit }) => {
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Legacy Goal *
           </label>
-          <select
-            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              errors.legacyGoal ? "border-red-500" : "border-gray-300"
-            }`}
-            value={formData.legacyGoal}
-            onChange={(e) => handleChange("legacyGoal", e.target.value)}
-          >
-            <option value="">Select your legacy preference</option>
-            <option value="maximize-income">
-              Maximize my retirement income
-            </option>
-            <option value="moderate-legacy">
-              Modest inheritance for family
-            </option>
-            <option value="substantial-legacy">
-              Substantial wealth transfer
-            </option>
-            <option value="charitable-giving">Charitable giving focus</option>
-            <option value="no-preference">No specific preference</option>
-          </select>
+          <LegacyGoalSelector
+            formData={formData}
+            handleChange={handleChange}
+            errors={errors}
+          />
           {errors.legacyGoal && (
             <p className="mt-1 text-xs text-red-600 flex items-center">
               <AlertCircle className="h-3 w-3 mr-1" />

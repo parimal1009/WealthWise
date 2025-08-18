@@ -11,8 +11,6 @@ const SummaryComponent = () => {
     // Basic Information
     if (hasValue(userData.name) && userData.name !== "Full Name")
       fields.push({ label: "Name", value: userData.name, category: "basic" });
-    if (hasValue(userData.email) && userData.email !== "abc@gmail.com")
-      fields.push({ label: "Email", value: userData.email, category: "basic" });
     if (hasValue(userData.age))
       fields.push({ label: "Age", value: userData.age, category: "basic" });
     if (hasValue(userData.dateOfBirth))
