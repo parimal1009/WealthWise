@@ -37,7 +37,7 @@ const LearnPage = () => {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex-1 overflow-y-auto">
       {/* Header */}
 
       <div className="w-full p-12 shadow-lg border-b bg-white border-gray-200/80">
@@ -189,7 +189,7 @@ const LearnPage = () => {
           {selectedTopic ? (
             <CourseContentViewer topic={selectedTopic} />
           ) : (
-            <div className="flex-1 bg-white rounded-lg shadow-sm p-12 text-center h-fit">
+            <div className="flex-1 bg-white rounded-lg shadow-sm p-12 text-center">
               <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
                 Welcome to Pension Planning & Retirement

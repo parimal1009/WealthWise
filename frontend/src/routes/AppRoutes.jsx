@@ -5,11 +5,13 @@ import Navbar from "../components/Navbar";
 import HomePage from "../pages/HomePage";
 import LoginPage from "../pages/LoginPage";
 import DashboardPage from "../pages/DashboardPage";
-import ProtectedRoute from "../components/ProtectedRoute";
+import ProtectedRoute from "./ProtectedRoute";
 import OAuthCallback from "../pages/OAuthCallback";
 import ZerodhaCallback from "../pages/ZerodhaCallback";
 import ProfilePage from "../pages/ProfilePage";
 import ParentComponent from "../components/main/ParentComponent";
+import ChatPage from "../pages/ChatPage";
+import Dashboard from "../pages/DashboardPage";
 import LearnPage from "../pages/LearnPage";
 import { useAuth } from "../context/AuthContext";
 
@@ -61,7 +63,7 @@ function AppRoutes() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {location.pathname !== "/home" && <Navbar />}
+      {!location.pathname.startsWith("/home") && <Navbar />}
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
@@ -76,14 +78,6 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/learn"
-          element={
-            <ProtectedRoute>
-              <LearnPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/profile"
           element={
             <ProtectedRoute>
@@ -92,31 +86,27 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/home"
+          path="/home/*"
           element={
             <ProtectedRoute>
-              <ParentComponent
+              <ParentComponent userData={userData} />
+            </ProtectedRoute>
+          }
+        >
+          <Route
+            index
+            element={
+              <ChatPage
                 userData={userData}
                 setUserData={setUserData}
                 scenarios={scenarios}
                 setScenarios={setScenarios}
               />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/learn"
-          element={
-            <ProtectedRoute>
-              <ParentComponent
-                userData={userData}
-                setUserData={setUserData}
-                scenarios={scenarios}
-                setScenarios={setScenarios}
-              />
-            </ProtectedRoute>
-          }
-        />
+            }
+          />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="learn" element={<LearnPage />} />
+        </Route>
       </Routes>
     </div>
   );
