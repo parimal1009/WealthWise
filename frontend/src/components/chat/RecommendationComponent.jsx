@@ -141,15 +141,6 @@ const RecommendationComponent = ({ recommendation, onAction }) => {
           <span>Download Report</span>
         </button>
         <button
-          onClick={() =>
-            onAction("Schedule a consultation to discuss this recommendation")
-          }
-          className="btn-secondary flex items-center space-x-2"
-        >
-          <Calendar className="h-4 w-4" />
-          <span>Schedule Call</span>
-        </button>
-        <button
           onClick={() => onAction("I have questions about this recommendation")}
           className="btn-secondary flex items-center space-x-2"
         >

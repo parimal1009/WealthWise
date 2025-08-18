@@ -81,7 +81,7 @@ const ChatMessage = ({
             className={`rounded-2xl px-4 py-3 shadow-sm mb-3 ${
               isBot
                 ? "bg-white rounded-tl-sm"
-                : "bg-primary-600 text-white rounded-tr-sm"
+                : "bg-primary text-white rounded-tr-sm"
             }`}
           >
             <p className="text-sm leading-relaxed whitespace-pre-wrap">

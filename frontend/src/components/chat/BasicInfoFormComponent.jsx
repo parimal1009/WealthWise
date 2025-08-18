@@ -3,14 +3,13 @@ import { Save, AlertCircle } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useDispatch, useSelector } from "react-redux";
 import { setUserData } from "../../redux/slices/userDataSlice";
+import { calculateAge } from "../../utils/textUtils";
 
 const BasicInfoFormComponent = ({ onSubmit }) => {
   const { user } = useAuth();
   const { userData } = useSelector((state) => state.userData);
   const [formData, setFormData] = useState({
     name: user.name || "",
-    email: user.email || "",
-    age: userData.age || "",
     dateOfBirth: userData.dateOfBirth || "",
     gender: userData.gender || "",
     location: userData.location || "",
@@ -34,12 +33,14 @@ const BasicInfoFormComponent = ({ onSubmit }) => {
       newErrors.name = "Please enter a valid name";
     }
 
-    if (!formData.email || !/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address";
-    }
-
-    if (!formData.age || formData.age < 18 || formData.age > 100) {
-      newErrors.age = "Please enter a valid age between 18-100";
+    if (!formData.dateOfBirth) {
+      newErrors.dateOfBirth = "Please select your date of birth";
+    } else {
+      const age = calculateAge(formData.dateOfBirth);
+      if (!age || age < 18 || age > 100) {
+        newErrors.dateOfBirth =
+          "Age must be between 18 and 100 years based on your DOB";
+      }
     }
 
     if (!formData.gender) {
@@ -60,25 +61,28 @@ const BasicInfoFormComponent = ({ onSubmit }) => {
 
   const handleSubmit = () => {
     if (validateForm()) {
-      dispatch(setUserData({ ...formData }));
-      onSubmit("Income Status", formData);
+      const age = calculateAge(formData.dateOfBirth);
+      dispatch(setUserData({ ...formData, age }));
+      onSubmit("Income Status", { ...formData, age });
     }
   };
+
+  const calculatedAge = calculateAge(formData.dateOfBirth);
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 max-w-2xl">
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          Basic Information
+          Let's Start with Your Basic Information
         </h3>
         <p className="text-sm text-gray-600">
-          Let's start with your basic details to personalize your retirement
-          planning
+          This helps me create personalized retirement scenarios for you
         </p>
       </div>
 
       <div className="space-y-4">
         <div className="grid md:grid-cols-2 gap-4">
+          {/* Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Full Name *
@@ -100,60 +104,34 @@ const BasicInfoFormComponent = ({ onSubmit }) => {
             )}
           </div>
 
+          {/* DOB */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email Address *
-            </label>
-            <input
-              type="email"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                errors.email ? "border-red-500" : "border-gray-300"
-              }`}
-              value={formData.email}
-              onChange={(e) => handleChange("email", e.target.value)}
-              placeholder="your.email@example.com"
-            />
-            {errors.email && (
-              <p className="mt-1 text-xs text-red-600 flex items-center">
-                <AlertCircle className="h-3 w-3 mr-1" />
-                {errors.email}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Age *
-            </label>
-            <input
-              type="number"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                errors.age ? "border-red-500" : "border-gray-300"
-              }`}
-              value={formData.age}
-              onChange={(e) => handleChange("age", e.target.value)}
-              placeholder="e.g., 45"
-            />
-            {errors.age && (
-              <p className="mt-1 text-xs text-red-600 flex items-center">
-                <AlertCircle className="h-3 w-3 mr-1" />
-                {errors.age}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Date of Birth (Optional)
+              Date of Birth *
             </label>
             <input
               type="date"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.dateOfBirth ? "border-red-500" : "border-gray-300"
+              }`}
               value={formData.dateOfBirth}
               onChange={(e) => handleChange("dateOfBirth", e.target.value)}
             />
+            {errors.dateOfBirth && (
+              <p className="mt-1 text-xs text-red-600 flex items-center">
+                <AlertCircle className="h-3 w-3 mr-1" />
+                {errors.dateOfBirth}
+              </p>
+            )}
+            {calculatedAge !== null && !errors.dateOfBirth && (
+              <p className="mt-1 text-xs text-primary-600">
+                Calculated Age:{" "}
+                <span className="font-medium">{calculatedAge}</span> years
+              </p>
+            )}
           </div>
 
+          {/* Gender */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Gender *
@@ -179,6 +157,7 @@ const BasicInfoFormComponent = ({ onSubmit }) => {
             )}
           </div>
 
+          {/* Location */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Location *
@@ -200,6 +179,7 @@ const BasicInfoFormComponent = ({ onSubmit }) => {
             )}
           </div>
 
+          {/* Marital Status */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Marital Status *
@@ -225,6 +205,7 @@ const BasicInfoFormComponent = ({ onSubmit }) => {
             )}
           </div>
 
+          {/* Dependants */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Number of Dependants
@@ -242,10 +223,11 @@ const BasicInfoFormComponent = ({ onSubmit }) => {
           </div>
         </div>
 
+        {/* Submit */}
         <div className="flex justify-end pt-4">
           <button
             onClick={handleSubmit}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+            className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-600 flex items-center space-x-2 cursor-pointer"
           >
             <Save className="h-4 w-4" />
             <span>Continue to Income Details</span>
