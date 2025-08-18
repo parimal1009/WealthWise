@@ -40,8 +40,34 @@ const LearnPage = () => {
       {/* Header */}
       <CourseHeader courseData={courseData} />
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="flex gap-8">
+      <div className="mx-auto p-5">
+        <div className="flex gap-4">
+          {/* Main Content Area */}
+          {selectedTopic ? (
+            <CourseContentViewer topic={selectedTopic} />
+          ) : (
+            <div className="flex-1 bg-white rounded-lg shadow-sm px-12 py-24 text-center h-fit">
+              <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Welcome to Pension Planning & Retirement
+              </h2>
+              <p className="text-gray-600 mb-8 max-w-md mx-auto">
+                Select a topic from the roadmap to begin your learning journey.
+                Each module builds upon the previous one to give you
+                comprehensive knowledge of retirement planning.
+              </p>
+              <button
+                onClick={() => {
+                  setExpandedModules([1]);
+                  selectTopic(1, courseData.modules[0].topics[0]);
+                }}
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              >
+                Start Learning
+              </button>
+            </div>
+          )}
+
           {/* Sidebar - Course Roadmap */}
           <div className="w-96 bg-white rounded-lg shadow-sm h-fit">
             <div className="p-4 border-b border-black/30">
@@ -132,32 +158,6 @@ const LearnPage = () => {
               ))}
             </div>
           </div>
-
-          {/* Main Content Area */}
-          {selectedTopic ? (
-            <CourseContentViewer topic={selectedTopic} />
-          ) : (
-            <div className="flex-1 bg-white rounded-lg shadow-sm px-12 py-24 text-center h-fit">
-              <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Welcome to Pension Planning & Retirement
-              </h2>
-              <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                Select a topic from the roadmap to begin your learning journey.
-                Each module builds upon the previous one to give you
-                comprehensive knowledge of retirement planning.
-              </p>
-              <button
-                onClick={() => {
-                  setExpandedModules([1]);
-                  selectTopic(1, courseData.modules[0].topics[0]);
-                }}
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-              >
-                Start Learning
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </div>
