@@ -26,6 +26,15 @@ const initialState = {
     retirementLifestyle: "",
     monthlyRetirementExpense: "",
     legacyGoal: "",
+
+    // Risk Tolerance Analysis
+    zerodhaConnected: false,
+    zerodhaProfile: null,
+    fixedDepositAmount: "",
+    mutualFundAmount: "",
+    stockInvestmentAmount: "",
+    otherInvestmentAmount: "",
+    riskTolerance: "",
   },
 };
 
@@ -39,8 +48,17 @@ const userData = createSlice({
         ...action.payload,
       };
     },
+    resetUserData: (state) => {
+      state.userData = initialState.userData;
+    },
+    updateRiskProfile: (state, action) => {
+      state.userData = {
+        ...state.userData,
+        ...action.payload,
+      };
+    },
   },
 });
 
-export const { setUserData } = userData.actions;
+export const { setUserData, resetUserData, updateRiskProfile } = userData.actions;
 export default userData.reducer;

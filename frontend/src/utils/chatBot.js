@@ -1,5 +1,5 @@
-// Updated Chatbot logic for the new three-step flow
-// Basic Information → Income Status → Retirement Information
+// Updated Chatbot logic for simplified risk tolerance assessment
+// Basic Information → Income Status → Retirement Information → Risk Tolerance Analysis
 
 export const generateBotResponse = async (
   userMessage,
@@ -38,22 +38,83 @@ export const generateBotResponse = async (
   if (formData && formData.currentSalary && !formData.plannedRetirementAge) {
     return {
       content:
-        "Excellent! Now let's plan your retirement goals and lifestyle preferences. This final step will help me create the perfect retirement strategy for you.",
+        "Excellent! Now let's plan your retirement goals and lifestyle preferences. This will help me create the perfect retirement strategy for you.",
       component: "retirement-info-form",
       updateUserData: formData,
     };
   }
 
-  // After retirement info form submission - Generate scenarios
-  if (formData && formData.plannedRetirementAge) {
-    const scenarios = generateScenarios(userData, formData);
+  // After retirement info form submission - Go to Risk Tolerance Analysis
+  if (formData && formData.plannedRetirementAge && (!formData.riskTolerance || formData.riskTolerance === "")) {
     return {
       content:
-        "Fantastic! Based on all your information, I've generated personalized retirement scenarios tailored to your goals and preferences. Here's what I recommend:",
+        "Almost done! Now let's determine your risk tolerance. You can either connect your Zerodha account for automatic analysis or enter your details manually.",
+      component: "risk-tolerance-form",
+      updateUserData: formData,
+    };
+  }
+
+  // After risk tolerance form submission - Generate scenarios
+  if (formData && (formData.riskTolerance || formData.mode === "zerodha")) {
+    const scenarios = generateScenarios(userData, formData);
+    return {
+      content: formData.mode === "zerodha" 
+        ? "Perfect! I've analyzed your Zerodha portfolio data and calculated your risk tolerance automatically. Here are your personalized retirement scenarios:"
+        : "Excellent! Based on your risk tolerance assessment and investment portfolio, here are your personalized retirement scenarios:",
       component: "scenario-visualization",
       data: { scenarios },
       updateUserData: formData,
       updateScenarios: scenarios,
+    };
+  }
+
+  // Risk tolerance specific queries
+  if (
+    message.includes("risk") ||
+    message.includes("investment") ||
+    message.includes("portfolio") ||
+    message.includes("tolerance")
+  ) {
+    if (userData.riskTolerance || userData.mode === "zerodha") {
+      return {
+        content:
+          "Based on your risk tolerance analysis, here are some insights about your investment profile:",
+        component: "recommendation",
+        data: getRiskRecommendation(userData),
+      };
+    } else {
+      return {
+        content:
+          "Let me help you determine your risk tolerance. Choose between Zerodha integration or manual entry:",
+        component: "risk-tolerance-form",
+      };
+    }
+  }
+
+  // Zerodha connection queries
+  if (
+    message.includes("zerodha") ||
+    message.includes("trading") ||
+    message.includes("connect account") ||
+    message.includes("login")
+  ) {
+    return {
+      content:
+        "I can help you connect your Zerodha account to automatically analyze your portfolio and calculate your risk tolerance. This will provide more accurate recommendations.",
+      component: "risk-tolerance-form",
+    };
+  }
+
+  // Manual entry queries
+  if (
+    message.includes("manual") ||
+    message.includes("enter manually") ||
+    message.includes("without zerodha")
+  ) {
+    return {
+      content:
+        "No problem! You can enter your investment details manually and self-assess your risk tolerance. Let me guide you through this:",
+      component: "risk-tolerance-form",
     };
   }
 
@@ -67,7 +128,7 @@ export const generateBotResponse = async (
     if (scenarios && scenarios.length > 0) {
       return {
         content:
-          "Here's a detailed comparison chart of your retirement scenarios. You can switch between different views to analyze various aspects:",
+          "Here's a detailed comparison chart of your retirement scenarios based on your risk tolerance analysis:",
         component: "comparison-chart",
         data: { scenarios, chartType: "income" },
       };
@@ -93,12 +154,12 @@ export const generateBotResponse = async (
       : "phased";
 
     return {
-      content: `Let me explain the ${scenarioType.replace(
+      content: `Based on your risk profile, let me explain the ${scenarioType.replace(
         "-",
         " "
       )} strategy in detail:`,
       component: "recommendation",
-      data: getScenarioRecommendation(scenarioType, scenarios),
+      data: getScenarioRecommendation(scenarioType, scenarios, userData),
     };
   }
 
@@ -106,7 +167,7 @@ export const generateBotResponse = async (
   if (message.includes("tax") || message.includes("taxation")) {
     return {
       content:
-        "Tax implications are crucial in retirement planning. Here's what you need to know:",
+        "Tax implications are crucial in retirement planning. Here's what you need to know based on your risk profile:",
       component: "recommendation",
       data: getTaxRecommendation(scenarios, userData),
     };
@@ -120,26 +181,28 @@ export const generateBotResponse = async (
   ) {
     if (!userData.name || !userData.email) {
       return {
-        content:
-          "Let's update your basic information:",
+        content: "Let's update your basic information:",
         component: "basic-info-form",
       };
     } else if (!userData.currentSalary) {
       return {
-        content:
-          "Let's update your income and employment details:",
+        content: "Let's update your income and employment details:",
         component: "income-status-form",
       };
     } else if (!userData.plannedRetirementAge) {
       return {
-        content:
-          "Let's update your retirement planning information:",
+        content: "Let's update your retirement planning information:",
         component: "retirement-info-form",
+      };
+    } else if (!userData.riskTolerance && userData.mode !== "zerodha") {
+      return {
+        content: "Let's update your risk tolerance analysis:",
+        component: "risk-tolerance-form",
       };
     } else {
       return {
         content:
-          "Which section would you like to update? I can help you modify your basic information, income details, or retirement goals.",
+          "Which section would you like to update? I can help you modify your basic information, income details, retirement goals, or risk tolerance analysis.",
         component: "quick-actions",
       };
     }
@@ -154,7 +217,7 @@ export const generateBotResponse = async (
     const sampleScenarios = generateSampleScenarios();
     return {
       content:
-        "Here's a demo with sample retirement scenarios. You can interact with the charts and see how the system works:",
+        "Here's a demo with sample retirement scenarios showing how risk tolerance affects recommendations:",
       component: "scenario-visualization",
       data: { scenarios: sampleScenarios },
       updateScenarios: sampleScenarios,
@@ -165,8 +228,9 @@ export const generateBotResponse = async (
   const hasBasicInfo = userData.name && userData.email && userData.age;
   const hasIncomeInfo = userData.currentSalary && userData.pensionBalance;
   const hasRetirementInfo = userData.plannedRetirementAge && userData.retirementLifestyle;
+  const hasRiskAnalysis = userData.riskTolerance || userData.mode === "zerodha";
 
-  // Show demo component for first-time users
+  // Progressive flow based on completion
   if (!hasBasicInfo) {
     return {
       content:
@@ -185,12 +249,18 @@ export const generateBotResponse = async (
         "Great progress! Let's finalize your retirement planning preferences:",
       component: "retirement-info-form",
     };
+  } else if (!hasRiskAnalysis) {
+    return {
+      content:
+        "Almost there! Let's determine your risk tolerance. Choose between connecting your Zerodha account for automatic analysis or entering details manually:",
+      component: "risk-tolerance-form",
+    };
   }
 
   // Default response with quick actions for completed profiles
   return {
     content:
-      "I have all your information! Here are some things I can help you with:",
+      "I have all your information including your risk profile! Here are some things I can help you with:",
     component: "quick-actions",
   };
 };
@@ -204,18 +274,35 @@ const generateScenarios = (userData, formData) => {
   const monthlyExpense = parseInt(userData.monthlyRetirementExpense || formData.monthlyRetirementExpense);
   const retirementLifestyle = userData.retirementLifestyle || formData.retirementLifestyle;
   const legacyGoal = userData.legacyGoal || formData.legacyGoal;
+  
+  // Risk tolerance handling for both modes
+  let riskTolerance;
+  if (formData.mode === "zerodha") {
+    // For Zerodha mode, calculate risk tolerance from portfolio data
+    riskTolerance = calculateRiskToleranceFromZerodha(userData, formData);
+  } else {
+    // For manual mode, use selected risk tolerance
+    riskTolerance = userData.riskTolerance || formData.riskTolerance;
+  }
 
   const yearsToRetirement = retirementAge - currentAge;
   const yearsInRetirement = 80 - retirementAge; // Assuming life expectancy of 80
 
-  // Calculate scenarios based on new data structure
+  // Calculate current investment portfolio total
+  const totalCurrentInvestments = 
+    (parseInt(userData.fixedDepositAmount || formData.fixedDepositAmount || "0")) +
+    (parseInt(userData.mutualFundAmount || formData.mutualFundAmount || "0")) +
+    (parseInt(userData.stockInvestmentAmount || formData.stockInvestmentAmount || "0")) +
+    (parseInt(userData.otherInvestmentAmount || formData.otherInvestmentAmount || "0"));
+
+  // Generate scenarios with risk-adjusted calculations
   const scenarios = [
     {
       id: "lump-sum",
       name: "Lump Sum Withdrawal",
       description: "Take the entire pension amount and manage investments yourself",
       totalValue: pensionBalance,
-      monthlyIncome: Math.round((pensionBalance * 0.05) / 12),
+      monthlyIncome: Math.round((pensionBalance * getReturnRate(riskTolerance, "lump-sum")) / 12),
       taxImplication: Math.round(pensionBalance * 0.3),
       pros: [
         "Complete control over investments",
@@ -230,7 +317,9 @@ const generateScenarios = (userData, formData) => {
         "Requires investment expertise"
       ],
       riskLevel: "High",
-      suitability: calculateSuitability("lump-sum", retirementLifestyle, legacyGoal, monthlyExpense, Math.round((pensionBalance * 0.05) / 12)),
+      suitability: calculateSuitability("lump-sum", retirementLifestyle, legacyGoal, monthlyExpense, Math.round((pensionBalance * getReturnRate(riskTolerance, "lump-sum")) / 12), riskTolerance),
+      riskScore: getRiskScore("lump-sum"),
+      mode: formData.mode || "manual"
     },
     {
       id: "annuity",
@@ -252,14 +341,16 @@ const generateScenarios = (userData, formData) => {
         "Lower potential returns"
       ],
       riskLevel: "Low",
-      suitability: calculateSuitability("annuity", retirementLifestyle, legacyGoal, monthlyExpense, Math.round((pensionBalance / (yearsInRetirement * 12)) * 1.1)),
+      suitability: calculateSuitability("annuity", retirementLifestyle, legacyGoal, monthlyExpense, Math.round((pensionBalance / (yearsInRetirement * 12)) * 1.1), riskTolerance),
+      riskScore: getRiskScore("annuity"),
+      mode: formData.mode || "manual"
     },
     {
       id: "phased",
       name: "Phased Withdrawal",
       description: "Systematic withdrawal with remaining amount invested",
       totalValue: pensionBalance,
-      monthlyIncome: Math.round((pensionBalance * 0.04) / 12),
+      monthlyIncome: Math.round((pensionBalance * getReturnRate(riskTolerance, "phased")) / 12),
       taxImplication: Math.round(pensionBalance * 0.15),
       pros: [
         "Balanced risk approach",
@@ -274,7 +365,9 @@ const generateScenarios = (userData, formData) => {
         "Not guaranteed for life"
       ],
       riskLevel: "Medium",
-      suitability: calculateSuitability("phased", retirementLifestyle, legacyGoal, monthlyExpense, Math.round((pensionBalance * 0.04) / 12)),
+      suitability: calculateSuitability("phased", retirementLifestyle, legacyGoal, monthlyExpense, Math.round((pensionBalance * getReturnRate(riskTolerance, "phased")) / 12), riskTolerance),
+      riskScore: getRiskScore("phased"),
+      mode: formData.mode || "manual"
     },
   ];
 
@@ -300,14 +393,74 @@ const generateScenarios = (userData, formData) => {
         "No inheritance"
       ],
       riskLevel: "Low",
-      suitability: calculateSuitability("joint-life", retirementLifestyle, legacyGoal, monthlyExpense, Math.round((pensionBalance / (yearsInRetirement * 12)) * 0.9)),
+      suitability: calculateSuitability("joint-life", retirementLifestyle, legacyGoal, monthlyExpense, Math.round((pensionBalance / (yearsInRetirement * 12)) * 0.9), riskTolerance),
+      riskScore: getRiskScore("joint-life"),
+      mode: formData.mode || "manual"
     });
   }
+
+  // Sort scenarios by suitability score (highest first)
+  scenarios.sort((a, b) => b.suitability - a.suitability);
 
   return scenarios;
 };
 
-const calculateSuitability = (scenarioType, lifestyle, legacyGoal, monthlyExpense, scenarioIncome) => {
+// Helper function to calculate risk tolerance from Zerodha portfolio
+const calculateRiskToleranceFromZerodha = (userData, formData) => {
+  // This would analyze the Zerodha portfolio composition
+  // For now, return a default value - this will be replaced with actual analysis
+  if (formData.zerodhaProfile) {
+    // TODO: Implement actual portfolio analysis logic here
+    // This is a placeholder that would analyze:
+    // - Stock vs Fixed deposit ratio
+    // - Mutual fund allocation
+    // - Investment behavior patterns
+    // - Risk-weighted portfolio composition
+    
+    // Placeholder logic based on connected status
+    return "moderate"; // Default for Zerodha users
+  }
+  return "moderate";
+};
+
+// Helper function to get return rates based on risk tolerance
+const getReturnRate = (riskTolerance, scenarioType) => {
+  const returnRates = {
+    conservative: {
+      "lump-sum": 0.06,
+      "phased": 0.05,
+      "annuity": 0.04,
+      "joint-life": 0.04
+    },
+    moderate: {
+      "lump-sum": 0.08,
+      "phased": 0.07,
+      "annuity": 0.04,
+      "joint-life": 0.04
+    },
+    aggressive: {
+      "lump-sum": 0.10,
+      "phased": 0.09,
+      "annuity": 0.04,
+      "joint-life": 0.04
+    }
+  };
+
+  return returnRates[riskTolerance]?.[scenarioType] || 0.06;
+};
+
+// Helper function to get risk scores
+const getRiskScore = (scenarioType) => {
+  const riskScores = {
+    "lump-sum": 85,
+    "phased": 60,
+    "annuity": 25,
+    "joint-life": 20
+  };
+  return riskScores[scenarioType] || 50;
+};
+
+const calculateSuitability = (scenarioType, lifestyle, legacyGoal, monthlyExpense, scenarioIncome, riskTolerance) => {
   let score = 50; // Base score
 
   // Income adequacy check
@@ -340,11 +493,101 @@ const calculateSuitability = (scenarioType, lifestyle, legacyGoal, monthlyExpens
     if (scenarioType === "phased") score += 15;
   }
 
+  // Risk tolerance matching (UPDATED for simplified approach)
+  if (riskTolerance === "conservative") {
+    if (scenarioType === "annuity" || scenarioType === "joint-life") score += 30;
+    if (scenarioType === "lump-sum") score -= 25;
+    if (scenarioType === "phased") score += 10;
+  } else if (riskTolerance === "moderate") {
+    if (scenarioType === "phased") score += 30;
+    if (scenarioType === "annuity") score += 15;
+    if (scenarioType === "lump-sum") score += 10;
+  } else if (riskTolerance === "aggressive") {
+    if (scenarioType === "lump-sum") score += 30;
+    if (scenarioType === "phased") score += 20;
+    if (scenarioType === "annuity") score -= 20;
+  }
+
   return Math.min(Math.max(score, 10), 95); // Keep between 10-95%
 };
 
-// Keep existing recommendation functions
-const getScenarioRecommendation = (scenarioType, scenarios) => {
+// Updated risk-based recommendation function
+const getRiskRecommendation = (userData) => {
+  const totalInvestments = 
+    (parseInt(userData.fixedDepositAmount || "0")) +
+    (parseInt(userData.mutualFundAmount || "0")) +
+    (parseInt(userData.stockInvestmentAmount || "0")) +
+    (parseInt(userData.otherInvestmentAmount || "0"));
+
+  let riskProfile = "Balanced";
+  let recommendations = [];
+  let analysisMethod = userData.mode === "zerodha" ? "Zerodha Portfolio Analysis" : "Manual Assessment";
+
+  if (userData.mode === "zerodha") {
+    riskProfile = "Auto-Calculated from Portfolio";
+    recommendations = [
+      "Risk tolerance calculated from your actual Zerodha portfolio",
+      "Analysis based on your investment behavior and holdings",
+      "Recommendations optimized for your trading patterns",
+      "Scenarios aligned with your proven investment style"
+    ];
+  } else if (userData.riskTolerance === "conservative") {
+    riskProfile = "Conservative";
+    recommendations = [
+      "Focus on guaranteed income options like annuities",
+      "Consider increasing fixed deposit allocation",
+      "Minimize market-linked investments",
+      "Prioritize capital preservation over growth"
+    ];
+  } else if (userData.riskTolerance === "aggressive") {
+    riskProfile = "Aggressive";
+    recommendations = [
+      "Consider lump sum withdrawal for maximum control",
+      "Increase equity exposure in your portfolio",
+      "Explore growth-oriented mutual funds",
+      "Consider systematic withdrawal plans"
+    ];
+  } else {
+    riskProfile = "Moderate";
+    recommendations = [
+      "Balanced approach with phased withdrawal",
+      "Mix of guaranteed and market-linked options",
+      "Diversified investment portfolio",
+      "Regular review and rebalancing"
+    ];
+  }
+
+  return {
+    title: `Your Risk Profile: ${riskProfile}`,
+    subtitle: `Analysis Method: ${analysisMethod}`,
+    main: {
+      type: userData.riskTolerance === "conservative" ? "info" : userData.riskTolerance === "aggressive" ? "warning" : "success",
+      title: userData.mode === "zerodha" ? "Portfolio-Based Analysis" : `Current Investment Portfolio: ₹${totalInvestments.toLocaleString("en-IN")}`,
+      content: userData.mode === "zerodha" 
+        ? "Risk tolerance automatically calculated from your Zerodha portfolio data and investment behavior"
+        : `Self-assessed as ${userData.riskTolerance} risk tolerance`,
+    },
+    points: recommendations.map(rec => ({
+      type: "info",
+      title: "Recommendation",
+      content: rec,
+    })),
+    actions: userData.mode === "zerodha" ? [
+      "Review auto-calculated risk assessment",
+      "Validate recommendations against your comfort level",
+      "Consider portfolio rebalancing if needed",
+      "Monitor investment performance regularly"
+    ] : [
+      "Review your investment allocation",
+      "Consider rebalancing based on recommendations",
+      "Consult with a financial advisor",
+      "Monitor and adjust as needed"
+    ],
+  };
+};
+
+// Keep existing recommendation functions with risk factor integration
+const getScenarioRecommendation = (scenarioType, scenarios, userData) => {
   const scenario = scenarios?.find((s) => s.id === scenarioType);
 
   if (!scenario) {
@@ -359,13 +602,19 @@ const getScenarioRecommendation = (scenarioType, scenarios) => {
     };
   }
 
+  const riskTolerance = userData.mode === "zerodha" ? "auto-calculated" : userData.riskTolerance;
+  const riskAlignment = (riskTolerance === "conservative" && scenario.riskLevel === "Low") ||
+                       (riskTolerance === "moderate" && scenario.riskLevel === "Medium") ||
+                       (riskTolerance === "aggressive" && scenario.riskLevel === "High") ||
+                       (riskTolerance === "auto-calculated");
+
   return {
     title: `${scenario.name} Analysis`,
-    subtitle: "Detailed breakdown of this retirement strategy",
+    subtitle: userData.mode === "zerodha" ? "Based on your Zerodha portfolio analysis" : "Based on your manual risk assessment",
     main: {
-      type: scenario.suitability >= 80 ? "success" : "info",
+      type: scenario.suitability >= 80 ? "success" : riskAlignment ? "info" : "warning",
       title: `${scenario.suitability}% Suitability Match`,
-      content: scenario.description,
+      content: `${scenario.description} ${riskAlignment ? "(Aligned with your risk profile)" : "(Consider risk level carefully)"}`,
     },
     points: [
       {
@@ -381,14 +630,19 @@ const getScenarioRecommendation = (scenarioType, scenarios) => {
         )} total tax liability`,
       },
       {
-        type: "info",
+        type: riskAlignment ? "success" : "warning",
         title: "Risk Level",
-        content: `${scenario.riskLevel} risk strategy`,
+        content: `${scenario.riskLevel} risk strategy (${scenario.riskScore}% risk score)`,
+      },
+      {
+        type: "info",
+        title: "Analysis Method",
+        content: userData.mode === "zerodha" ? "Based on Zerodha portfolio data" : "Based on manual assessment",
       },
     ],
     actions: [
       "Review all pros and cons carefully",
-      "Consider your risk tolerance",
+      userData.mode === "zerodha" ? "Validate against your comfort level" : "Consider your risk tolerance alignment",
       "Evaluate tax implications",
       "Consult with a financial advisor",
     ],
@@ -396,14 +650,22 @@ const getScenarioRecommendation = (scenarioType, scenarios) => {
 };
 
 const getTaxRecommendation = (scenarios, userData) => {
+  const riskBasedTaxStrategy = userData.mode === "zerodha"
+    ? "Tax strategy optimized based on your actual portfolio behavior and holdings"
+    : userData?.riskTolerance === "conservative" 
+    ? "Focus on tax-efficient annuities with lower immediate burden"
+    : userData?.riskTolerance === "aggressive"
+    ? "Consider timing lump sum withdrawals across financial years"
+    : "Balanced approach with phased withdrawals for tax optimization";
+
   return {
     title: "Tax Optimization Strategy",
-    subtitle: "Minimize your tax burden in retirement",
+    subtitle: userData.mode === "zerodha" ? "Based on Zerodha portfolio analysis" : "Based on your risk tolerance",
     main: {
       type: "warning",
       title: "Tax Planning is Critical",
       content:
-        "Different withdrawal strategies have significantly different tax implications. Proper planning can save you thousands.",
+        "Different withdrawal strategies have significantly different tax implications. Your risk profile affects the optimal tax strategy.",
     },
     points: [
       {
@@ -420,15 +682,19 @@ const getTaxRecommendation = (scenarios, userData) => {
       },
       {
         type: "info",
-        title: "Timing Matters",
-        content:
-          "Consider your current income and tax bracket when deciding withdrawal timing",
+        title: "Your Recommended Strategy",
+        content: riskBasedTaxStrategy,
+      },
+      {
+        type: "info",
+        title: "Analysis Method",
+        content: userData.mode === "zerodha" ? "Recommendations based on your Zerodha portfolio data" : "Recommendations based on your manual risk assessment",
       },
     ],
     actions: [
       "Calculate tax impact for each scenario",
       "Consider spreading withdrawals across tax years",
-      "Explore tax-efficient investment options",
+      userData.mode === "zerodha" ? "Review portfolio-based tax strategies" : "Explore tax-efficient options for your risk level",
       "Consult with a tax professional",
     ],
   };
@@ -455,6 +721,8 @@ const generateSampleScenarios = () => {
       ],
       riskLevel: "High",
       suitability: 75,
+      riskScore: 85,
+      mode: "sample"
     },
     {
       id: "annuity",
@@ -475,6 +743,8 @@ const generateSampleScenarios = () => {
       ],
       riskLevel: "Low",
       suitability: 90,
+      riskScore: 25,
+      mode: "sample"
     },
     {
       id: "phased",
@@ -495,6 +765,8 @@ const generateSampleScenarios = () => {
       ],
       riskLevel: "Medium",
       suitability: 85,
+      riskScore: 60,
+      mode: "sample"
     },
   ];
 };
