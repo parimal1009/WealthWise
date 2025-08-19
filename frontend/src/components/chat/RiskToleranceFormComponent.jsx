@@ -9,11 +9,11 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
   const { userData } = useSelector((state) => state.userData);
   const dispatch = useDispatch();
   
-  const [mode, setMode] = useState("zerodha"); // "zerodha" or "manual"
+  const [mode, setMode] = useState(userData.mode || "zerodha"); // "zerodha" or "manual"
   const [formData, setFormData] = useState({
     // Zerodha connection
-    zerodhaConnected: false,
-    zerodhaProfile: null,
+    zerodhaConnected: userData.zerodhaConnected || false,
+    zerodhaProfile: userData.zerodhaProfile || null,
     fdValue: userData.fdValue || "500000", // Default FD value for Zerodha mode
     
     // Manual Investment Details (only for manual mode)
@@ -160,16 +160,22 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
 
       const result = await response.json();
       
-      // Update user data with the results
+      // Update user data with the results - using the correct field names
       const updatedUserData = {
-        ...formData,
         mode: mode,
+        zerodhaConnected: formData.zerodhaConnected,
+        zerodhaProfile: formData.zerodhaProfile,
+        fdValue: mode === "zerodha" ? formData.fdValue : formData.fixedDepositAmount,
+        fixedDepositAmount: mode === "manual" ? formData.fixedDepositAmount : "",
+        stockInvestmentAmount: mode === "manual" ? formData.stockInvestmentAmount : "",
+        mutualFundAmount: mode === "manual" ? formData.mutualFundAmount : "",
         risk_score: result.risk_score,
         risk_category: result.risk_category,
         stock_holdings_value: result.stock_holdings_value,
         mf_holdings_value: result.mf_holdings_value,
-        fd_value: result.fd_value,
-        total_portfolio_value: result.total_portfolio_value
+        total_portfolio_value: result.total_portfolio_value,
+        stock_breakdown: result.stock_breakdown || {},
+        calculated_at: result.calculated_at || new Date().toISOString()
       };
       
       dispatch(setUserData(updatedUserData));

@@ -28,13 +28,20 @@ const initialState = {
     legacyGoal: "",
 
     // Risk Tolerance Analysis
+    mode: "", // 'zerodha' or 'manual'
     zerodhaConnected: false,
     zerodhaProfile: null,
+    fdValue: "",
     fixedDepositAmount: "",
     mutualFundAmount: "",
     stockInvestmentAmount: "",
-    otherInvestmentAmount: "",
-    riskTolerance: "",
+    risk_score: "",
+    risk_category: "",
+    stock_holdings_value: "",
+    mf_holdings_value: "",
+    total_portfolio_value: "",
+    stock_breakdown: {},
+    calculated_at: "",
   },
 };
 
