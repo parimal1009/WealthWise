@@ -1,6 +1,8 @@
+import pandas as pd
 from fastapi import FastAPI
 from pydantic import BaseModel
 from models.life_expectancy import predict_life_expectancy
+from models.inflation_prediction import predict_inflation
 
 
 # Define input schema
@@ -21,6 +23,10 @@ class LifeExpectancyInput(BaseModel):
     Hypertension: int
 
 
+class YearRequest(BaseModel):
+    year: int
+
+
 # Initialize FastAPI
 app = FastAPI(title="Life Expectancy Prediction API")
 
@@ -37,3 +43,12 @@ def get_life_expectancy(data: LifeExpectancyInput):
     prediction = predict_life_expectancy(user_data)
 
     return {"predicted_life_expectancy": round(float(prediction), 2)}
+
+
+@app.post("/predict_inflation")
+def get_inflation_data(req: YearRequest):
+    future_dates, forecast = predict_inflation(req.year)
+
+    # Build response
+    results = pd.DataFrame({"Date": future_dates, "Predicted_Inflation": forecast})
+    return results.to_dict(orient="records")
