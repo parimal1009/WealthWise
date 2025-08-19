@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { Save, AlertCircle, TrendingUp, Shield, DollarSign, BarChart3, User, ChevronLeft, Info } from "lucide-react";
+import { Save, AlertCircle, TrendingUp, Shield, DollarSign, BarChart3, User, ChevronLeft, Info, Loader } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { setUserData } from "../../redux/slices/userDataSlice";
 import { zerodhaService } from "../../services/zerodhaService";
+import { API_BASE_URL } from "../../utils/constants";
 
 const RiskToleranceFormComponent = ({ onSubmit }) => {
   const { userData } = useSelector((state) => state.userData);
@@ -23,6 +24,10 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
 
   const [errors, setErrors] = useState({});
   const [zerodhaStatus, setZerodhaStatus] = useState({
+    loading: false,
+    error: null
+  });
+  const [apiStatus, setApiStatus] = useState({
     loading: false,
     error: null
   });
@@ -106,24 +111,91 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
-    if (validateForm()) {
-      dispatch(setUserData(formData));
+  const calculateRiskTolerance = async () => {
+    try {
+      setApiStatus({ loading: true, error: null });
+      
+      // Get the token from localStorage
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication token not found. Please log in again.');
+      }
+
+      let response;
       
       if (mode === "zerodha") {
-        // For Zerodha mode, we'll calculate risk tolerance from portfolio analysis
-        onSubmit("Risk analysis completed via Zerodha - portfolio data automatically analyzed", { 
-          ...formData, 
-          mode: "zerodha",
-          riskTolerance: "auto-calculated" // Will be calculated from Zerodha data
+        // Call Zerodha mode API
+        response = await fetch(`${API_BASE_URL}/financial/risk/calculate/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            mode: 'zerodha',
+            fd_value: parseFloat(formData.fdValue)
+          })
         });
       } else {
-        // For manual mode, we'll calculate risk based on the investment amounts
-        onSubmit("Risk analysis completed manually", { 
-          ...formData, 
-          mode: "manual"
+        // Call manual mode API
+        response = await fetch(`${API_BASE_URL}/financial/risk/calculate/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            mode: 'manual',
+            fd_value: parseFloat(formData.fixedDepositAmount) || 0,
+            stock_value: parseFloat(formData.stockInvestmentAmount) || 0,
+            mf_value: parseFloat(formData.mutualFundAmount) || 0
+          })
         });
       }
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to calculate risk tolerance');
+      }
+
+      const result = await response.json();
+      
+      // Update user data with the results
+      const updatedUserData = {
+        ...formData,
+        mode: mode,
+        risk_score: result.risk_score,
+        risk_category: result.risk_category,
+        stock_holdings_value: result.stock_holdings_value,
+        mf_holdings_value: result.mf_holdings_value,
+        fd_value: result.fd_value,
+        total_portfolio_value: result.total_portfolio_value
+      };
+      
+      dispatch(setUserData(updatedUserData));
+      
+      // Pass results to parent component
+      onSubmit(
+        mode === "zerodha" 
+          ? "Risk analysis completed via Zerodha - portfolio data automatically analyzed" 
+          : "Risk analysis completed manually", 
+        updatedUserData
+      );
+      
+    } catch (error) {
+      setApiStatus({ 
+        loading: false, 
+        error: error.message 
+      });
+      console.error('Error calculating risk tolerance:', error);
+    } finally {
+      setApiStatus({ loading: false, error: null });
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (validateForm()) {
+      await calculateRiskTolerance();
     }
   };
 
@@ -168,6 +240,16 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
           <ChevronLeft className="h-4 w-4 mr-1" />
           Back to Zerodha connection
         </button>
+      )}
+
+      {/* API Error Message */}
+      {apiStatus.error && (
+        <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-sm text-red-600 flex items-center">
+            <AlertCircle className="h-4 w-4 mr-2" />
+            {apiStatus.error}
+          </p>
+        </div>
       )}
 
       <div className="space-y-6">
@@ -359,14 +441,20 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
         <div className="flex justify-end pt-4 border-t border-gray-200">
           <button
             onClick={handleSubmit}
-            disabled={(mode === "zerodha" && zerodhaStatus.loading)}
+            disabled={(mode === "zerodha" && zerodhaStatus.loading) || apiStatus.loading}
             className="btn-primary flex items-center space-x-2 disabled:opacity-50"
           >
-            <Save className="h-4 w-4" />
+            {apiStatus.loading ? (
+              <Loader className="h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
             <span>
-              {mode === "zerodha" 
-                ? (formData.zerodhaConnected ? "Complete Analysis" : "Connect & Analyze")
-                : "Complete Risk Analysis"
+              {apiStatus.loading 
+                ? "Calculating..." 
+                : mode === "zerodha" 
+                  ? (formData.zerodhaConnected ? "Complete Analysis" : "Connect & Analyze")
+                  : "Complete Risk Analysis"
               }
             </span>
           </button>
