@@ -23,3 +23,18 @@ class ZerodhaUser(models.Model):
 
     class Meta:
         db_table = 'zerodha_user'
+
+class RiskProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='risk_profile')
+    risk_score = models.FloatField()
+    risk_category = models.CharField(max_length=50)
+    last_calculated = models.DateTimeField(auto_now=True)
+    stock_exposure = models.JSONField(default=dict)
+    mf_exposure = models.JSONField(default=dict)
+    fd_value = models.FloatField(default=0.0)
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.risk_category} ({self.risk_score})"
+
+    class Meta:
+        db_table = 'risk_profile'
