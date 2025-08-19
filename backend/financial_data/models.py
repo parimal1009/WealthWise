@@ -32,6 +32,7 @@ class RiskProfile(models.Model):
     stock_exposure = models.JSONField(default=dict)
     mf_exposure = models.JSONField(default=dict)
     fd_value = models.FloatField(default=0.0)
+    calculation_mode = models.CharField(max_length=10, choices=[('zerodha', 'Zerodha'), ('manual', 'Manual')], default='zerodha')
     
     def __str__(self):
         return f"{self.user.username} - {self.risk_category} ({self.risk_score})"
