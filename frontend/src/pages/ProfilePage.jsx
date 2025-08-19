@@ -90,18 +90,22 @@ export default function ProfilePage() {
   };
 
   const handleZerodhaConnect = async () => {
-    try {
-      setZerodhaStatus(prev => ({ ...prev, loading: true }));
-      const loginUrl = await zerodhaService.getLoginUrl();
-      window.location.href = loginUrl;
-    } catch (error) {
-      setZerodhaStatus(prev => ({ 
-        ...prev, 
-        loading: false, 
-        error: error.message 
-      }));
-    }
-  };
+  try {
+    setZerodhaStatus({ loading: true, error: null });
+    // Pass current URL (settings page) as return URL for callback redirect
+    const currentUrl = '/profile#settings';
+    const loginUrl = await zerodhaService.getLoginUrl(currentUrl);
+    
+    // Redirect to Zerodha login instead of opening popup
+    window.location.href = loginUrl;
+    
+  } catch (error) {
+    setZerodhaStatus({ 
+      loading: false, 
+      error: error.message 
+    });
+  }
+};
 
   const handleZerodhaDisconnect = async () => {
     if (window.confirm('Are you sure you want to disconnect your Zerodha account?')) {
