@@ -1,5 +1,5 @@
 import { useSelector } from "react-redux";
-import { BarChart3, TrendingUp, DollarSign, PieChart, Shield, BarChart, Heart } from "lucide-react";
+import { BarChart3, TrendingUp, DollarSign, Shield, Heart } from "lucide-react";
 
 const SummaryComponent = () => {
   const { userData } = useSelector((state) => state.userData);
@@ -135,62 +135,6 @@ const SummaryComponent = () => {
         category: "retirement",
       });
 
-    // Risk Tolerance Analysis
-    if (hasValue(userData.mode)) {
-      fields.push({
-        label: "Analysis Mode",
-        value: userData.mode === "zerodha" ? "Zerodha Integration" : "Manual Entry",
-        category: "risk",
-      });
-    }
-    
-    if (hasValue(userData.risk_score))
-      fields.push({
-        label: "Risk Score",
-        value: userData.risk_score,
-        category: "risk",
-      });
-      
-    if (hasValue(userData.risk_category))
-      fields.push({
-        label: "Risk Category",
-        value: userData.risk_category,
-        category: "risk",
-      });
-      
-    if (hasValue(userData.fdValue) || hasValue(userData.fixedDepositAmount))
-      fields.push({
-        label: "Fixed Deposits",
-        value: formatCurrency(userData.fdValue || userData.fixedDepositAmount),
-        category: "risk",
-      });
-      
-    if (hasValue(userData.stock_holdings_value) || hasValue(userData.stockInvestmentAmount))
-      fields.push({
-        label: "Stock Investments",
-        value: formatCurrency(userData.stock_holdings_value || userData.stockInvestmentAmount),
-        category: "risk",
-      });
-      
-    if (hasValue(userData.mf_holdings_value) || hasValue(userData.mutualFundAmount))
-      fields.push({
-        label: "Mutual Funds",
-        value: formatCurrency(userData.mf_holdings_value || userData.mutualFundAmount),
-        category: "risk",
-      });
-      
-    if (hasValue(userData.total_portfolio_value)) {
-      const totalManual = (parseInt(userData.fixedDepositAmount || 0) + 
-                          parseInt(userData.stockInvestmentAmount || 0) + 
-                          parseInt(userData.mutualFundAmount || 0));
-      
-      fields.push({
-        label: "Total Portfolio Value",
-        value: formatCurrency(userData.total_portfolio_value || totalManual),
-        category: "risk",
-      });
-    }
-
     // Health & Life Expectancy Information
     if (hasValue(userData.height))
       fields.push({
@@ -257,6 +201,62 @@ const SummaryComponent = () => {
       });
     }
 
+    // Risk Tolerance Analysis
+    if (hasValue(userData.mode)) {
+      fields.push({
+        label: "Analysis Mode",
+        value: userData.mode === "zerodha" ? "Zerodha Integration" : "Manual Entry",
+        category: "risk",
+      });
+    }
+    
+    if (hasValue(userData.risk_score))
+      fields.push({
+        label: "Risk Score",
+        value: userData.risk_score,
+        category: "risk",
+      });
+      
+    if (hasValue(userData.risk_category))
+      fields.push({
+        label: "Risk Category",
+        value: userData.risk_category,
+        category: "risk",
+      });
+      
+    if (hasValue(userData.fdValue) || hasValue(userData.fixedDepositAmount))
+      fields.push({
+        label: "Fixed Deposits",
+        value: formatCurrency(userData.fdValue || userData.fixedDepositAmount),
+        category: "risk",
+      });
+      
+    if (hasValue(userData.stock_holdings_value) || hasValue(userData.stockInvestmentAmount))
+      fields.push({
+        label: "Stock Investments",
+        value: formatCurrency(userData.stock_holdings_value || userData.stockInvestmentAmount),
+        category: "risk",
+      });
+      
+    if (hasValue(userData.mf_holdings_value) || hasValue(userData.mutualFundAmount))
+      fields.push({
+        label: "Mutual Funds",
+        value: formatCurrency(userData.mf_holdings_value || userData.mutualFundAmount),
+        category: "risk",
+      });
+      
+    if (hasValue(userData.total_portfolio_value)) {
+      const totalManual = (parseInt(userData.fixedDepositAmount || 0) + 
+                          parseInt(userData.stockInvestmentAmount || 0) + 
+                          parseInt(userData.mutualFundAmount || 0));
+      
+      fields.push({
+        label: "Total Portfolio Value",
+        value: formatCurrency(userData.total_portfolio_value || totalManual),
+        category: "risk",
+      });
+    }
+
     return fields;
   };
 
@@ -282,17 +282,20 @@ const SummaryComponent = () => {
     basic: "Personal Information",
     income: "Income & Employment",
     retirement: "Retirement Planning",
-    risk: "Risk Tolerance Analysis",
     health: "Health & Life Expectancy",
+    risk: "Risk Tolerance Analysis",
   };
 
   const categoryColors = {
     basic: "from-purple-500 to-pink-500",
     income: "from-green-500 to-blue-500",
     retirement: "from-orange-500 to-red-500",
-    risk: "from-indigo-500 to-purple-500",
     health: "from-pink-500 to-rose-500",
+    risk: "from-indigo-500 to-purple-500",
   };
+
+  // Force display order (risk after health)
+  const categoryOrder = ["basic", "income", "retirement", "health", "risk"];
 
   if (!hasData) {
     return (
@@ -321,36 +324,38 @@ const SummaryComponent = () => {
 
   return (
     <div className="space-y-6">
-      {Object.entries(groupedFields).map(([category, fields]) => (
-        <div
-          key={category}
-          className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 break-words whitespace-normal"
-        >
-          <div className="flex items-center gap-3 mb-4">
-            <div
-              className={`w-8 h-8 bg-gradient-to-r ${categoryColors[category]} rounded-lg flex items-center justify-center text-white`}
-            >
-              {categoryIcons[category]}
-            </div>
-            <h4 className="font-semibold text-gray-900">
-              {categoryTitles[category]}
-            </h4>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {fields.map((field, index) => (
-              <div key={index} className="flex flex-col">
-                <dt className="text-xs font-medium text-gray-500 mb-1">
-                  {field.label}
-                </dt>
-                <dd className="text-sm text-gray-900 font-medium">
-                  {field.value}
-                </dd>
+      {categoryOrder
+        .filter((category) => groupedFields[category])
+        .map((category) => (
+          <div
+            key={category}
+            className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 break-words whitespace-normal"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div
+                className={`w-8 h-8 bg-gradient-to-r ${categoryColors[category]} rounded-lg flex items-center justify-center text-white`}
+              >
+                {categoryIcons[category]}
               </div>
-            ))}
+              <h4 className="font-semibold text-gray-900">
+                {categoryTitles[category]}
+              </h4>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {groupedFields[category].map((field, index) => (
+                <div key={index} className="flex flex-col">
+                  <dt className="text-xs font-medium text-gray-500 mb-1">
+                    {field.label}
+                  </dt>
+                  <dd className="text-sm text-gray-900 font-medium">
+                    {field.value}
+                  </dd>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
     </div>
   );
 };
