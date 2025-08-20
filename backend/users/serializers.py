@@ -38,7 +38,16 @@ class IncomeStatusSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = IncomeStatus
-        fields = "__all__"
+        fields = [
+            "id",
+            "user",
+            "currentSalary",
+            "yearsOfService",
+            "employerType",
+            "pensionScheme",
+            "pensionBalance",
+            "employerContribution"
+        ]
 
 
 class RetirementInfoSerializer(serializers.ModelSerializer):

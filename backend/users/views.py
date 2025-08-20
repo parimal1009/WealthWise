@@ -165,7 +165,7 @@ def add_income_status(request):
     """Save income status"""
     serializer = IncomeStatusSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()
+        serializer.save(user=request.user)
         return Response({"message": "Income status saved!"}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -179,6 +179,9 @@ def list_income_status(request):
     return Response(serializer.data)
 
 
+# ==========================
+# RETIREMENT INFO APIs
+# ==========================
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def add_retirement_info(request):
@@ -188,7 +191,7 @@ def add_retirement_info(request):
     serializer = RetirementInfoSerializer(data=data)
     
     if serializer.is_valid():
-        serializer.save()
+        serializer.save(user=request.user)
         return Response({"message": "Retirement info saved!"}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

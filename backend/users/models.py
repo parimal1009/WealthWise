@@ -28,7 +28,7 @@ class UserData(models.Model):
 
 
 class IncomeStatus(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="income_status", null=True, blank=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="income_status")
     currentSalary = models.DecimalField(max_digits=12, decimal_places=2)
     yearsOfService = models.IntegerField()
     employerType = models.CharField(max_length=100)
@@ -41,7 +41,7 @@ class IncomeStatus(models.Model):
 
 
 class RetirementInfo(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="retirement_info", null=True, blank=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="retirement_info")
     plannedRetirementAge = models.IntegerField()
     retirementLifestyle = models.CharField(max_length=50)  # minimalistic, comfortable, lavish
     monthlyRetirementExpense = models.DecimalField(max_digits=12, decimal_places=2)
