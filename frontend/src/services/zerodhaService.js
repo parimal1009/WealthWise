@@ -2,7 +2,7 @@ import { API_BASE_URL } from '../utils/constants';
 
 class ZerodhaService {
   constructor() {
-    this.baseUrl = `${API_BASE_URL}/financial/kite`;
+    this.baseUrl = `${API_BASE_URL}/api/financial/kite`;
   }
 
   getAuthHeaders() {

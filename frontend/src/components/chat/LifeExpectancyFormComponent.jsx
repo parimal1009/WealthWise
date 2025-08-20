@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Heart, Loader2 } from "lucide-react";
 import { updateHealthProfile } from "../../redux/slices/userDataSlice";
+import { API_BASE_URL } from "../../utils/constants";
 
 const LifeExpectancyFormComponent = ({ onSubmit }) => {
   const dispatch = useDispatch();
@@ -77,7 +78,7 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
         Hypertension: data.hypertension
       };
 
-      const response = await fetch('http://localhost:8000/users/life-expectancy/add/', {
+      const response = await fetch(`${API_BASE_URL}/users/life-expectancy/add/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

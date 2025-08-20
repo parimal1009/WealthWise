@@ -4,6 +4,8 @@ import { Send, Bot, Paperclip, X } from "lucide-react";
 import ChatMessage from "./ChatMessage";
 import { generateBotResponse } from "../utils/chatBot";
 import { setUserData } from "../redux/slices/userDataSlice";
+import { Paperclip } from "lucide-react";
+import { API_BASE_URL } from "../utils/constants";
 
 const ChatInterface = ({ scenarios, setScenarios }) => {
   const dispatch = useDispatch();
@@ -101,16 +103,8 @@ const ChatInterface = ({ scenarios, setScenarios }) => {
     setStagedFiles([]); // clear after sending
 
     try {
-      // Use FormData instead of JSON
-      const formData = new FormData();
-      formData.append("user_message", message);
-
-      // Append files (multiple supported)
-      stagedFiles.forEach((file, index) => {
-        formData.append("files", file);
-      });
-
-      const response = await fetch("http://127.0.0.1:8000/chat/answer/", {
+      // Call backend API
+      const response = await fetch(`${API_BASE_URL}/chat/answer/`, {
         method: "POST",
         body: formData,
       });
