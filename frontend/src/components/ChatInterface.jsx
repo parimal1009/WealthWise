@@ -4,9 +4,11 @@ import { Send, Bot } from "lucide-react";
 import ChatMessage from "./ChatMessage";
 import { generateBotResponse } from "../utils/chatBot";
 import { setUserData } from "../redux/slices/userDataSlice";
+import { Paperclip } from "lucide-react";
 
 const ChatInterface = ({ scenarios, setScenarios }) => {
   const dispatch = useDispatch();
+  const fileInputRef = useRef(null);
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -137,6 +139,23 @@ const ChatInterface = ({ scenarios, setScenarios }) => {
     }
   };
 
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (file && file.type === "application/pdf") {
+      const userMessage = {
+        id: Date.now(),
+        type: "user",
+        content: `Uploaded PDF: ${file.name}`,
+        timestamp: new Date(),
+        file: file,
+      };
+      setMessages((prev) => [...prev, userMessage]);
+    } else {
+      alert("Please upload a valid PDF file");
+    }
+  };
+
+
   return (
     <div className="h-screen flex flex-col">
       {/* Messages */}
@@ -176,12 +195,31 @@ const ChatInterface = ({ scenarios, setScenarios }) => {
         <div className="max-w-4xl mx-auto">
           <div className="flex items-end space-x-3">
             <div className="flex-1 flex gap-2 relative items-center">
+              {/* Hidden file input */}
+              <input
+                type="file"
+                accept="application/pdf"
+                ref={fileInputRef}
+                className="hidden"
+                onChange={handleFileUpload}
+              />
+
+              {/* PDF Upload Button */}
+              <button
+                onClick={() => fileInputRef.current.click()}
+                className="px-3 py-3 bg-gray-100 border border-gray-300 rounded-xl hover:bg-gray-200 transition-colors"
+                title="Upload PDF"
+              >
+                <Paperclip />
+              </button>
+
+              {/* Chat Input */}
               <textarea
                 ref={inputRef}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Ask me about your retirement options, tax implications, or any financial planning questions..."
+                placeholder="Ask me about your retirement options, tax implications, or upload a PDF..."
                 className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
                 rows="1"
                 style={{
@@ -189,6 +227,8 @@ const ChatInterface = ({ scenarios, setScenarios }) => {
                   maxHeight: "120px",
                 }}
               />
+
+              {/* Send Button */}
               <button
                 onClick={() => handleSendMessageInput(inputValue)}
                 disabled={!inputValue.trim() || isTyping}
@@ -198,11 +238,9 @@ const ChatInterface = ({ scenarios, setScenarios }) => {
               </button>
             </div>
           </div>
-          {/* <p className="text-xs text-gray-500 mt-2 text-center">
-            Press Enter to send • Shift+Enter for new line
-          </p> */}
         </div>
       </div>
+
     </div>
   );
 };
