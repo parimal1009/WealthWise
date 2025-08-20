@@ -12,4 +12,5 @@ urlpatterns = [
     path("retirement/list/", views.list_retirement_info, name="list_retirement_info"),
     path('user/add/', views.add_user_data, name='add_user_data'),
     path('user/get/', views.get_user_data, name='get_user_data'),
+    path("life-expectancy/add/", views.add_life_expectancy, name="add_life_expectancy"),
 ]

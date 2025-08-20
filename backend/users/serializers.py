@@ -3,6 +3,7 @@ from .models import IncomeStatus
 from .models import RetirementInfo
 from .models import UserData
 from django.contrib.auth.models import User
+from .models import LifeExpectancy
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for the Django User model"""
@@ -57,3 +58,12 @@ class RetirementInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = RetirementInfo
         fields = "__all__"
+
+class LifeExpectancySerializer(serializers.ModelSerializer):
+    """Serializer for Life Expectancy model"""
+    user = UserSerializer(read_only=True)
+
+    class Meta:
+        model = LifeExpectancy
+        fields = "__all__"
+        read_only_fields = ["id", "user", "created_at"]

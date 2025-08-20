@@ -21,6 +21,8 @@ from .serializers import IncomeStatusSerializer
 from rest_framework import status
 from .models import UserData
 from .serializers import UserDataSerializer
+from .models import LifeExpectancy
+from .serializers import LifeExpectancySerializer
 
 def get_google_data(user):
     """Get additional data from Google People API"""
@@ -252,3 +254,57 @@ def get_user_data(request):
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+# ==========================
+# LIFE EXPECTANCY APIs
+# ==========================
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def add_life_expectancy(request):
+    """
+    Save life expectancy inputs, call FastAPI for prediction,
+    store result in DB, and return it to frontend
+    """
+    try:
+        # Step 1: Get data from frontend
+        input_data = request.data.copy()
+
+        # Step 2: Call FastAPI service
+        fastapi_url = "http://localhost:5000/life-expectancy"
+        response = requests.post(fastapi_url, json=input_data, timeout=10)
+
+        if response.status_code != 200:
+            return Response(
+                {"error": "Failed to fetch prediction from FastAPI"},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        prediction = response.json()
+        predicted_value = prediction.get("predicted_life_expectancy")
+
+        if predicted_value is None:
+            return Response(
+                {"error": "FastAPI did not return prediction"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        # Step 3: Save/update in LifeExpectancy model
+        instance = LifeExpectancy.objects.filter(user=request.user).first()
+        input_data["predicted_life_expectancy"] = predicted_value
+
+        serializer = LifeExpectancySerializer(
+            instance, data=input_data, partial=True
+        )
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Step 4: Return prediction to frontend
+        return Response(
+            {"predicted_life_expectancy": predicted_value},
+            status=status.HTTP_200_OK,
+        )
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

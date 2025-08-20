@@ -50,3 +50,29 @@ class RetirementInfo(models.Model):
 
     def __str__(self):
         return f"Retirement Plan for {self.user.username} - Age {self.plannedRetirementAge}"
+    
+class LifeExpectancy(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="life_expectancy")
+    
+    Height = models.FloatField()
+    Weight = models.FloatField()
+    Gender = models.CharField(max_length=10, choices=[("Male", "Male"), ("Female", "Female")])
+    BMI = models.FloatField()
+    Physical_Activity = models.CharField(max_length=50)  # e.g. Sedentary, Moderate, Active
+    Smoking_Status = models.CharField(max_length=20)  # Never, Former, Current
+    Alcohol_Consumption = models.CharField(max_length=20)  # None, Low, Moderate, High
+    Diet = models.CharField(max_length=50)  # e.g. Balanced, Unhealthy, Vegetarian
+    Blood_Pressure = models.CharField(max_length=20)  # Normal, High, Low
+    Cholesterol = models.IntegerField()
+    
+    Asthma = models.BooleanField(default=False)
+    Diabetes = models.BooleanField(default=False)
+    Heart_Disease = models.BooleanField(default=False)
+    Hypertension = models.BooleanField(default=False)
+
+    predicted_life_expectancy = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Life Expectancy for {self.user.username} - {self.predicted_life_expectancy} years"
