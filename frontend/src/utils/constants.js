@@ -1,6 +1,10 @@
 // Update this URL to match your Django backend
-export const API_BASE_URL = "http://localhost:8000/api";
 
+export const API_BASE_URL =
+  import.meta.env.MODE === "production"
+    ? "https://4.213.60.21.nip.io"
+    : "http://localhost:8000";
+    
 export const APP_NAME = "WealthWise";
 
 export const LIMITS = {

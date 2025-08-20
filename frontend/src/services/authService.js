@@ -7,12 +7,12 @@ class AuthService {
     localStorage.setItem('oauth_state', state);
 
     // Redirect directly to Google OAuth
-    window.location.href = `${API_BASE_URL}/auth/google/login/`;
+    window.location.href = `${API_BASE_URL}/api/auth/google/login/`;
   }
 
   async verifyToken(token) {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/verify/`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/verify/`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -33,7 +33,7 @@ class AuthService {
   async logout() {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`${API_BASE_URL}/auth/logout/`, {
+      await fetch(`${API_BASE_URL}/api/auth/logout/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

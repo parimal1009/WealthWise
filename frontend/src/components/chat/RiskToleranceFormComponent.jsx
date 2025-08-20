@@ -138,7 +138,7 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
 
       if (mode === "zerodha") {
         // Call Zerodha mode API
-        response = await fetch(`${API_BASE_URL}/financial/risk/calculate/`, {
+        response = await fetch(`${API_BASE_URL}/api/financial/risk/calculate/`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -151,7 +151,7 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
         });
       } else {
         // Call manual mode API
-        response = await fetch(`${API_BASE_URL}/financial/risk/calculate/`, {
+        response = await fetch(`${API_BASE_URL}/api/financial/risk/calculate/`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

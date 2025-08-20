@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { setUserData } from "../../redux/slices/userDataSlice";
 import LegacyGoalSelector from "./LegacyGoalSelector";
 import axios from "axios";
+import { API_BASE_URL } from "../../utils/constants";
 const RetirementInfoFormComponent = ({ onSubmit }) => {
   const { userData } = useSelector((state) => state.userData);
   const safeUserData = userData || {};
@@ -88,7 +89,7 @@ const RetirementInfoFormComponent = ({ onSubmit }) => {
           }
           console.log("payload is " + JSON.stringify(payload));
           const response = axios.post(
-            "http://127.0.0.1:8000/users/retirement/add/",
+            `${API_BASE_URL}/users/retirement/add/`,
             payload,
             {
               headers: {

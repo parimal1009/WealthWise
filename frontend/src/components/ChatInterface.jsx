@@ -5,6 +5,7 @@ import ChatMessage from "./ChatMessage";
 import { generateBotResponse } from "../utils/chatBot";
 import { setUserData } from "../redux/slices/userDataSlice";
 import { Paperclip } from "lucide-react";
+import { API_BASE_URL } from "../utils/constants";
 
 const ChatInterface = ({ scenarios, setScenarios }) => {
   const dispatch = useDispatch();
@@ -97,7 +98,7 @@ const ChatInterface = ({ scenarios, setScenarios }) => {
     setIsTyping(true);
     try {
       // Call backend API
-      const response = await fetch("http://127.0.0.1:8000/chat/answer/", {
+      const response = await fetch(`${API_BASE_URL}/chat/answer/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

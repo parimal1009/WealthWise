@@ -5,6 +5,7 @@ import { setUserData } from "../../redux/slices/userDataSlice";
 import { numberToWords } from "../../utils/textUtils";
 import { LIMITS } from "../../utils/constants";
 import axios from "axios";
+import { API_BASE_URL } from "../../utils/constants";
 
 const IncomeStatusFormComponent = ({ onSubmit }) => {
   const userData = useSelector((state) => state.userData);
@@ -84,7 +85,7 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
         }
         console.log("payload is " + payload);
         const response = axios.post(
-          "http://127.0.0.1:8000/users/income/add/",
+          `${API_BASE_URL}/users/income/add/`,
           payload,
           {
             headers: {

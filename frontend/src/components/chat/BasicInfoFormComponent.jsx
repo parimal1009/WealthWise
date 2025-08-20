@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { setUserData } from "../../redux/slices/userDataSlice";
 import { calculateAge } from "../../utils/textUtils";
 import axios from "axios";
+import { API_BASE_URL } from "../../utils/constants";
 
 const BasicInfoFormComponent = ({ onSubmit }) => {
   const { user } = useAuth();
@@ -79,7 +80,7 @@ const BasicInfoFormComponent = ({ onSubmit }) => {
 
         console.log("payload is " + payload);
         const response = await axios.post(
-          "http://127.0.0.1:8000/users/user/add/",
+          `${API_BASE_URL}/users/user/add/`,
           payload,
           {
             headers: {
