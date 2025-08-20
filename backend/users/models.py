@@ -1,8 +1,34 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+class UserData(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="user_data")
+    name = models.CharField(max_length=150, blank=True, null=True)   # was full_name
+    dateOfBirth = models.DateField(blank=True, null=True)            # camelCase for frontend
+    GENDER_CHOICES = [
+        ("male", "Male"),
+        ("female", "Female"),
+        ("other", "Other"),
+    ]
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True, null=True)
+    location = models.CharField(max_length=255, blank=True, null=True)
+    MARITAL_CHOICES = [
+        ("single", "Single"),
+        ("married", "Married"),
+        ("divorced", "Divorced"),
+        ("widowed", "Widowed"),
+    ]
+    maritalStatus = models.CharField(max_length=20, choices=MARITAL_CHOICES, blank=True, null=True)
+    numberOfDependants = models.PositiveIntegerField(default=0)
+    createdAt = models.DateTimeField(auto_now_add=True)
+    updatedAt = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name or self.user.username
+
+
 class IncomeStatus(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="income_status")
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="income_status", null=True, blank=True)
     currentSalary = models.DecimalField(max_digits=12, decimal_places=2)
     yearsOfService = models.IntegerField()
     employerType = models.CharField(max_length=100)
@@ -15,7 +41,7 @@ class IncomeStatus(models.Model):
 
 
 class RetirementInfo(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="retirement_info")
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="retirement_info", null=True, blank=True)
     plannedRetirementAge = models.IntegerField()
     retirementLifestyle = models.CharField(max_length=50)  # minimalistic, comfortable, lavish
     monthlyRetirementExpense = models.DecimalField(max_digits=12, decimal_places=2)

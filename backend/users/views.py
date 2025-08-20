@@ -13,14 +13,14 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from allauth.socialaccount.models import SocialApp, SocialAccount, SocialToken
 from django.urls import reverse
 from urllib.parse import urlencode, quote
-
 from .models import RetirementInfo
 from .serializers import RetirementInfoSerializer
 # --- NEW IMPORTS FOR INCOME STATUS ---
 from .models import IncomeStatus
 from .serializers import IncomeStatusSerializer
 from rest_framework import status
-
+from .models import UserData
+from .serializers import UserDataSerializer
 
 def get_google_data(user):
     """Get additional data from Google People API"""
@@ -200,3 +200,52 @@ def list_retirement_info(request):
     records = RetirementInfo.objects.filter(user=request.user)
     serializer = RetirementInfoSerializer(records, many=True)
     return Response(serializer.data)
+
+
+# ==========================
+# USER DATA APIs
+# ==========================
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def add_user_data(request):
+    """
+    Save or update user personal details
+    """
+    try:
+        # Fetch existing UserData for this user (if any)
+        instance = UserData.objects.filter(user=request.user).first()
+
+        # Pass instance for update, or create if not exists
+        serializer = UserDataSerializer(instance, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(
+                {"message": "User data saved successfully!", "data": serializer.data},
+                status=status.HTTP_201_CREATED if not instance else status.HTTP_200_OK,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_user_data(request):
+    """
+    Get personal details of logged-in user
+    """
+    try:
+        instance = UserData.objects.filter(user=request.user).first()
+        if not instance:
+            return Response(
+                {"message": "No user data found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        serializer = UserDataSerializer(instance)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
