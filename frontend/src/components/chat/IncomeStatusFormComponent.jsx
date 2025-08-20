@@ -161,7 +161,6 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
               <option value="">Select Employer Type</option>
               <option value="government">Government</option>
               <option value="private">Private</option>
-              <option value="public-sector">Public Sector Undertaking</option>
               <option value="self-employed">Self Employed</option>
             </select>
             {errors.employerType && (

@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     # Your apps
     "users",
     "financial_data",
+    "chatbot",
 ]
 
 MIDDLEWARE = [
@@ -139,7 +140,7 @@ SOCIALACCOUNT_PROVIDERS = {
     "google": {
         "SCOPE": [
             "profile",
-            "email", 
+            "email",
             "openid",
             "https://www.googleapis.com/auth/user.birthday.read",
             "https://www.googleapis.com/auth/user.gender.read",
@@ -148,7 +149,7 @@ SOCIALACCOUNT_PROVIDERS = {
         "AUTH_PARAMS": {"access_type": "offline"},  # Changed from "online"
         "OAUTH_PKCE_ENABLED": True,
         "FETCH_USERINFO": True,  # Add this line
-        "STORE_TOKENS": True,    # Add this line
+        "STORE_TOKENS": True,  # Add this line
         "APP": {
             "client_id": os.getenv("GOOGLE_CLIENT_ID", "your-google-client-id"),
             "secret": os.getenv("GOOGLE_CLIENT_SECRET", "your-google-client-secret"),
@@ -178,9 +179,9 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # Cache Configuration
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
     }
 }
 
