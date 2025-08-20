@@ -1,5 +1,14 @@
 import { useState, useEffect } from "react";
-import { Save, AlertCircle, TrendingUp, Shield, DollarSign, BarChart3, User, ChevronLeft, Info, Loader } from "lucide-react";
+import {
+  Save,
+  AlertCircle,
+  DollarSign,
+  BarChart3,
+  User,
+  ChevronLeft,
+  Info,
+  Loader,
+} from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { setUserData } from "../../redux/slices/userDataSlice";
 import { zerodhaService } from "../../services/zerodhaService";
@@ -9,14 +18,14 @@ import { API_BASE_URL } from "../../utils/constants";
 const RiskToleranceFormComponent = ({ onSubmit }) => {
   const { userData } = useSelector((state) => state.userData);
   const dispatch = useDispatch();
-  
+
   const [mode, setMode] = useState(userData.mode || "zerodha"); // "zerodha" or "manual"
   const [formData, setFormData] = useState({
     // Zerodha connection
     zerodhaConnected: userData.zerodhaConnected || false,
     zerodhaProfile: userData.zerodhaProfile || null,
     fdValue: userData.fdValue || "500000", // Default FD value for Zerodha mode
-    
+
     // Manual Investment Details (only for manual mode)
     fixedDepositAmount: userData.fixedDepositAmount || "",
     mutualFundAmount: userData.mutualFundAmount || "",
@@ -26,11 +35,11 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
   const [errors, setErrors] = useState({});
   const [zerodhaStatus, setZerodhaStatus] = useState({
     loading: false,
-    error: null
+    error: null,
   });
   const [apiStatus, setApiStatus] = useState({
     loading: false,
-    error: null
+    error: null,
   });
 
   // Check Zerodha connection status on component mount
@@ -44,18 +53,18 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
     try {
       setZerodhaStatus({ loading: true, error: null });
       const status = await zerodhaService.checkConnectionStatus();
-      
-      setFormData(prev => ({
+
+      setFormData((prev) => ({
         ...prev,
         zerodhaConnected: status.connected,
-        zerodhaProfile: status.profile
+        zerodhaProfile: status.profile,
       }));
-      
+
       setZerodhaStatus({ loading: false, error: status.error || null });
     } catch (error) {
-      setZerodhaStatus({ 
-        loading: false, 
-        error: error.message 
+      setZerodhaStatus({
+        loading: false,
+        error: error.message,
       });
     }
   };
@@ -65,14 +74,13 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
       setZerodhaStatus({ loading: true, error: null });
       const currentUrl = window.location.pathname + window.location.search;
       const loginUrl = await zerodhaService.getLoginUrl(currentUrl);
-      
+
       // Redirect to Zerodha login
       window.location.href = loginUrl;
-      
     } catch (error) {
-      setZerodhaStatus({ 
-        loading: false, 
-        error: error.message 
+      setZerodhaStatus({
+        loading: false,
+        error: error.message,
       });
     }
   };
@@ -92,13 +100,17 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
       if (!formData.zerodhaConnected) {
         newErrors.zerodha = "Please connect your Zerodha account to proceed";
       }
-      
-      if (!formData.fdValue || isNaN(formData.fdValue) || parseFloat(formData.fdValue) < 0) {
+
+      if (
+        !formData.fdValue ||
+        isNaN(formData.fdValue) ||
+        parseFloat(formData.fdValue) < 0
+      ) {
         newErrors.fdValue = "Please enter a valid FD amount";
       }
     } else {
       // For manual mode, validate investment amounts
-      const totalInvestments = 
+      const totalInvestments =
         (parseInt(formData.fixedDepositAmount) || 0) +
         (parseInt(formData.mutualFundAmount) || 0) +
         (parseInt(formData.stockInvestmentAmount) || 0);
@@ -115,60 +127,65 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
   const calculateRiskTolerance = async () => {
     try {
       setApiStatus({ loading: true, error: null });
-      
+
       // Get the token from localStorage
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        throw new Error('Authentication token not found. Please log in again.');
+        throw new Error("Authentication token not found. Please log in again.");
       }
 
       let response;
-      
+
       if (mode === "zerodha") {
         // Call Zerodha mode API
         response = await fetch(`${API_BASE_URL}/financial/risk/calculate/`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            mode: 'zerodha',
-            fd_value: parseFloat(formData.fdValue)
-          })
+            mode: "zerodha",
+            fd_value: parseFloat(formData.fdValue),
+          }),
         });
       } else {
         // Call manual mode API
         response = await fetch(`${API_BASE_URL}/financial/risk/calculate/`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            mode: 'manual',
+            mode: "manual",
             fd_value: parseFloat(formData.fixedDepositAmount) || 0,
             stock_value: parseFloat(formData.stockInvestmentAmount) || 0,
-            mf_value: parseFloat(formData.mutualFundAmount) || 0
-          })
+            mf_value: parseFloat(formData.mutualFundAmount) || 0,
+          }),
         });
       }
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to calculate risk tolerance');
+        throw new Error(
+          errorData.error || "Failed to calculate risk tolerance"
+        );
       }
 
       const result = await response.json();
-      
+
       // Update user data with the results - using the correct field names
       const updatedUserData = {
         mode: mode,
         zerodhaConnected: formData.zerodhaConnected,
         zerodhaProfile: formData.zerodhaProfile,
-        fdValue: mode === "zerodha" ? formData.fdValue : formData.fixedDepositAmount,
-        fixedDepositAmount: mode === "manual" ? formData.fixedDepositAmount : "",
-        stockInvestmentAmount: mode === "manual" ? formData.stockInvestmentAmount : "",
+        fdValue:
+          mode === "zerodha" ? formData.fdValue : formData.fixedDepositAmount,
+        fixedDepositAmount:
+          mode === "manual" ? formData.fixedDepositAmount : "",
+        stockInvestmentAmount:
+          mode === "manual" ? formData.stockInvestmentAmount : "",
         mutualFundAmount: mode === "manual" ? formData.mutualFundAmount : "",
         risk_score: result.risk_score,
         risk_category: result.risk_category,
@@ -176,25 +193,24 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
         mf_holdings_value: result.mf_holdings_value,
         total_portfolio_value: result.total_portfolio_value,
         stock_breakdown: result.stock_breakdown || {},
-        calculated_at: result.calculated_at || new Date().toISOString()
+        calculated_at: result.calculated_at || new Date().toISOString(),
       };
-      
+
       dispatch(setUserData(updatedUserData));
-      
+
       // Pass results to parent component
       onSubmit(
-        mode === "zerodha" 
-          ? "Risk analysis completed via Zerodha - portfolio data automatically analyzed" 
-          : "Risk analysis completed manually", 
+        mode === "zerodha"
+          ? "Risk analysis completed via Zerodha - portfolio data automatically analyzed"
+          : "Risk analysis completed manually",
         updatedUserData
       );
-      
     } catch (error) {
-      setApiStatus({ 
-        loading: false, 
-        error: error.message 
+      setApiStatus({
+        loading: false,
+        error: error.message,
       });
-      console.error('Error calculating risk tolerance:', error);
+      console.error("Error calculating risk tolerance:", error);
     } finally {
       setApiStatus({ loading: false, error: null });
     }
@@ -211,7 +227,7 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
       (parseInt(formData.fixedDepositAmount) || 0) +
       (parseInt(formData.mutualFundAmount) || 0) +
       (parseInt(formData.stockInvestmentAmount) || 0)
-    ).toLocaleString('en-IN');
+    ).toLocaleString("en-IN");
   };
 
   return (
@@ -221,18 +237,18 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
           Risk Tolerance Analysis
         </h3>
         <p className="text-sm text-gray-600">
-          {mode === "zerodha" 
+          {mode === "zerodha"
             ? "Connect your Zerodha account to automatically analyze your portfolio"
-            : "Enter your investment details manually"
-          }
+            : "Enter your investment details manually"}
         </p>
-        
+
         {/* Accuracy message placed prominently at the top */}
         {mode === "zerodha" && (
           <div className="mt-4 flex items-start text-sm text-blue-600 bg-blue-50 p-3 rounded-lg">
             <Info className="h-4 w-4 mr-2 mt-0.5 text-blue-500 flex-shrink-0" />
             <span>
-              Connecting Zerodha provides more accurate risk tolerance calculations by analyzing your actual portfolio composition.
+              Connecting Zerodha provides more accurate risk tolerance
+              calculations by analyzing your actual portfolio composition.
             </span>
           </div>
         )}
@@ -266,28 +282,35 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
             <div className="bg-primary-50 border border-gray-300 rounded-lg p-6">
               <div className="flex items-center mb-4">
                 <BarChart3 className="h-5 w-5 text-primary mr-2" />
-                <h4 className="font-medium text-gray-900">Connect Your Zerodha Account</h4>
+                <h4 className="font-medium text-gray-900">
+                  Connect Your Zerodha Account
+                </h4>
               </div>
-              
+
               {formData.zerodhaConnected && formData.zerodhaProfile ? (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                   <div className="flex items-center text-green-800 mb-2">
                     <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
                     <span className="font-medium">
-                      Connected to {formData.zerodhaProfile.user_name} ({formData.zerodhaProfile.user_id})
+                      Connected to {formData.zerodhaProfile.user_name} (
+                      {formData.zerodhaProfile.user_id})
                     </span>
                   </div>
                   <p className="text-sm text-green-700 mb-2">
                     ✅ Account connected successfully
                   </p>
                   <p className="text-xs text-green-600">
-                    We'll automatically analyze your portfolio data to calculate your risk tolerance and provide personalized retirement recommendations.
+                    We'll automatically analyze your portfolio data to calculate
+                    your risk tolerance and provide personalized retirement
+                    recommendations.
                   </p>
                 </div>
               ) : (
                 <div className="space-y-4">
                   <div className="bg-white border border-gray-300 rounded-lg p-4">
-                    <h5 className="font-medium text-gray-900 mb-2">What we'll do with your Zerodha data:</h5>
+                    <h5 className="font-medium text-gray-900 mb-2">
+                      What we'll do with your Zerodha data:
+                    </h5>
                     <ul className="text-sm text-gray-600 space-y-1">
                       <li>• Analyze your current investment portfolio</li>
                       <li>• Calculate your risk tolerance automatically</li>
@@ -295,15 +318,17 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
                       <li>• Provide data-driven recommendations</li>
                     </ul>
                   </div>
-                  
+
                   <button
                     onClick={handleZerodhaConnect}
                     disabled={zerodhaStatus.loading}
                     className="w-full btn-primary disabled:opacity-50"
                   >
-                    {zerodhaStatus.loading ? 'Connecting to Zerodha...' : 'Login with Zerodha'}
+                    {zerodhaStatus.loading
+                      ? "Connecting to Zerodha..."
+                      : "Login with Zerodha"}
                   </button>
-                  
+
                   {zerodhaStatus.error && (
                     <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                       <p className="text-sm text-red-600 flex items-center">
@@ -329,7 +354,7 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
                 <DollarSign className="h-4 w-4 mr-2 text-primary" />
                 Fixed Deposit Details
               </h4>
-              
+
               <div className="mb-3">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Fixed Deposit Amount (₹) *
@@ -385,7 +410,9 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
                 <span className="font-medium">Manual Entry Mode</span>
               </div>
               <p className="text-sm text-yellow-700">
-                You're providing your investment portfolio details manually. For more accurate risk assessment, consider connecting your Zerodha account.
+                You're providing your investment portfolio details manually. For
+                more accurate risk assessment, consider connecting your Zerodha
+                account.
               </p>
             </div>
 
@@ -395,7 +422,7 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
                 <DollarSign className="h-4 w-4 mr-2 text-primary" />
                 Current Investment Portfolio
               </h4>
-              
+
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -405,7 +432,9 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
                     type="number"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     value={formData.fixedDepositAmount}
-                    onChange={(e) => handleChange("fixedDepositAmount", e.target.value)}
+                    onChange={(e) =>
+                      handleChange("fixedDepositAmount", e.target.value)
+                    }
                     placeholder="e.g., 500000"
                   />
                   {formData.fixedDepositAmount && (
@@ -426,7 +455,9 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
                     type="number"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     value={formData.mutualFundAmount}
-                    onChange={(e) => handleChange("mutualFundAmount", e.target.value)}
+                    onChange={(e) =>
+                      handleChange("mutualFundAmount", e.target.value)
+                    }
                     placeholder="e.g., 300000"
                   />
                   {formData.mutualFundAmount && (
@@ -447,7 +478,9 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
                     type="number"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     value={formData.stockInvestmentAmount}
-                    onChange={(e) => handleChange("stockInvestmentAmount", e.target.value)}
+                    onChange={(e) =>
+                      handleChange("stockInvestmentAmount", e.target.value)
+                    }
                     placeholder="e.g., 200000"
                   />
                   {formData.stockInvestmentAmount && (
@@ -468,21 +501,29 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
                 </p>
               )}
 
-              {parseInt(calculateTotalInvestments().replace(/,/g, '')) > 0 && (
+              {parseInt(calculateTotalInvestments().replace(/,/g, "")) > 0 && (
                 <div className="mt-4 p-3 bg-white border border-gray-200 rounded-lg">
-                  <span className="text-sm text-gray-600">Total Current Investments: </span>
-                  <span className="font-semibold text-gray-900">₹{calculateTotalInvestments()}</span>
+                  <span className="text-sm text-gray-600">
+                    Total Current Investments:{" "}
+                  </span>
+                  <span className="font-semibold text-gray-900">
+                    ₹{calculateTotalInvestments()}
+                  </span>
                 </div>
               )}
               {(() => {
-                const total = parseInt(calculateTotalInvestments().toString().replace(/,/g, ''));
-                return total > 0 && (
-                  <p className="mt-1 text-xs text-primary-600">
-                    <span className="font-medium">
-                      {numberToWords(total)}
-                    </span>{" "}
-                    Rupees
-                  </p>
+                const total = parseInt(
+                  calculateTotalInvestments().toString().replace(/,/g, "")
+                );
+                return (
+                  total > 0 && (
+                    <p className="mt-1 text-xs text-primary-600">
+                      <span className="font-medium">
+                        {numberToWords(total)}
+                      </span>{" "}
+                      Rupees
+                    </p>
+                  )
                 );
               })()}
             </div>
@@ -493,7 +534,9 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
         <div className="flex justify-end pt-4 border-t border-gray-200">
           <button
             onClick={handleSubmit}
-            disabled={(mode === "zerodha" && zerodhaStatus.loading) || apiStatus.loading}
+            disabled={
+              (mode === "zerodha" && zerodhaStatus.loading) || apiStatus.loading
+            }
             className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-600 flex items-center space-x-2 disabled:opacity-50"
           >
             {apiStatus.loading ? (
@@ -502,12 +545,13 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
               <Save className="h-4 w-4" />
             )}
             <span>
-              {apiStatus.loading 
-                ? "Calculating..." 
-                : mode === "zerodha" 
-                  ? (formData.zerodhaConnected ? "Complete Analysis" : "Connect & Analyze")
-                  : "Complete Risk Analysis"
-              }
+              {apiStatus.loading
+                ? "Calculating..."
+                : mode === "zerodha"
+                ? formData.zerodhaConnected
+                  ? "Complete Analysis"
+                  : "Connect & Analyze"
+                : "Complete Risk Analysis"}
             </span>
           </button>
         </div>
