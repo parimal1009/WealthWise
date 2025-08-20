@@ -1,7 +1,12 @@
-import { useState } from "react";
-import { Heart, Activity, Scale, User } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Heart } from "lucide-react";
+import { updateHealthProfile } from "../../redux/slices/userDataSlice";
 
 const LifeExpectancyFormComponent = ({ onSubmit }) => {
+  const dispatch = useDispatch();
+  const { userData } = useSelector((state) => state.userData);
+
   const [formData, setFormData] = useState({
     height: "",
     weight: "",
@@ -17,6 +22,27 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
     heartDisease: 0,
     hypertension: 0,
   });
+
+  // Load existing data from Redux on component mount
+  useEffect(() => {
+    if (userData) {
+      setFormData({
+        height: userData.height || "",
+        weight: userData.weight || "",
+        gender: userData.gender && userData.gender !== "Prefer not to say" ? userData.gender : "",
+        physicalActivity: userData.physicalActivity || "",
+        smokingStatus: userData.smokingStatus || "",
+        alcoholConsumption: userData.alcoholConsumption || "",
+        diet: userData.diet || "",
+        bloodPressure: userData.bloodPressure || "",
+        cholesterol: userData.cholesterol || "",
+        asthma: userData.asthma || 0,
+        diabetes: userData.diabetes || 0,
+        heartDisease: userData.heartDisease || 0,
+        hypertension: userData.hypertension || 0,
+      });
+    }
+  }, [userData]);
 
   const calculateBMI = (height, weight) => {
     if (!height || !weight) return 0;
@@ -35,7 +61,14 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
       weight: parseInt(formData.weight),
       cholesterol: parseInt(formData.cholesterol),
     };
-    onSubmit("Life expectancy form submitted", dataToSubmit);
+    
+    // Update Redux store
+    dispatch(updateHealthProfile(dataToSubmit));
+    
+    // Call parent onSubmit if provided
+    if (onSubmit) {
+      onSubmit("Life expectancy form submitted", dataToSubmit);
+    }
   };
 
   const handleInputChange = (field, value) => {
