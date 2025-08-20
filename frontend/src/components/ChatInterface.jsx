@@ -1,10 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Send, Bot } from "lucide-react";
+import { Send, Bot, Paperclip, X } from "lucide-react";
 import ChatMessage from "./ChatMessage";
 import { generateBotResponse } from "../utils/chatBot";
 import { setUserData } from "../redux/slices/userDataSlice";
-import { Paperclip } from "lucide-react";
 
 const ChatInterface = ({ scenarios, setScenarios }) => {
   const dispatch = useDispatch();
@@ -25,6 +24,9 @@ const ChatInterface = ({ scenarios, setScenarios }) => {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
+  // NEW: staged files state
+  const [stagedFiles, setStagedFiles] = useState([]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -34,20 +36,22 @@ const ChatInterface = ({ scenarios, setScenarios }) => {
   }, [messages]);
 
   const handleSendMessage = async (message, data = null) => {
-    if (!message.trim() && !data) return;
+    if (!message.trim() && !data && stagedFiles.length === 0) return;
 
-    // Add user message
+    // Add user message (with staged files if any)
     const userMessage = {
       id: Date.now(),
       type: "user",
       content: message || "Form submitted",
       timestamp: new Date(),
       data: data,
+      files: stagedFiles, // attach staged files
     };
 
     setMessages((prev) => [...prev, userMessage]);
     setInputValue("");
     setIsTyping(true);
+    setStagedFiles([]); // clear staged files after sending
 
     // Generate bot response
     setTimeout(async () => {
@@ -70,7 +74,6 @@ const ChatInterface = ({ scenarios, setScenarios }) => {
       setMessages((prev) => [...prev, botMessage]);
       setIsTyping(false);
 
-      // Update app state if needed
       if (botResponse.updateUserData) {
         dispatch(setUserData({ ...botResponse.updateUserData }));
       }
@@ -81,33 +84,39 @@ const ChatInterface = ({ scenarios, setScenarios }) => {
   };
 
   const handleSendMessageInput = async (message, data = null) => {
-    if (!message.trim() && !data) return;
+    if (!message.trim() && !data && stagedFiles.length === 0) return;
 
-    // Add user message
     const userMessage = {
       id: Date.now(),
       type: "user",
       content: message || "Form submitted",
       timestamp: new Date(),
       data: data,
+      files: stagedFiles,
     };
 
     setMessages((prev) => [...prev, userMessage]);
     setInputValue("");
     setIsTyping(true);
+    setStagedFiles([]); // clear after sending
+
     try {
-      // Call backend API
+      // Use FormData instead of JSON
+      const formData = new FormData();
+      formData.append("user_message", message);
+
+      // Append files (multiple supported)
+      stagedFiles.forEach((file, index) => {
+        formData.append("files", file);
+      });
+
       const response = await fetch("http://127.0.0.1:8000/chat/answer/", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ user_message: message }),
+        body: formData,
       });
 
       const result = await response.json();
 
-      // Create bot message from API response
       const botMessage = {
         id: Date.now() + 1,
         type: "bot",
@@ -118,8 +127,6 @@ const ChatInterface = ({ scenarios, setScenarios }) => {
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
       console.error("Error fetching bot response:", error);
-
-      // Show error as bot message
       const errorMessage = {
         id: Date.now() + 1,
         type: "bot",
@@ -132,29 +139,27 @@ const ChatInterface = ({ scenarios, setScenarios }) => {
     }
   };
 
+
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage(inputValue);
+      handleSendMessageInput(inputValue);
     }
   };
 
+  // File Staging
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (file && file.type === "application/pdf") {
-      const userMessage = {
-        id: Date.now(),
-        type: "user",
-        content: `Uploaded PDF: ${file.name}`,
-        timestamp: new Date(),
-        file: file,
-      };
-      setMessages((prev) => [...prev, userMessage]);
+      setStagedFiles((prev) => [...prev, file]); // stage instead of sending
     } else {
       alert("Please upload a valid PDF file");
     }
   };
 
+  const removeStagedFile = (index) => {
+    setStagedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
 
   return (
     <div className="h-screen flex flex-col">
@@ -193,6 +198,26 @@ const ChatInterface = ({ scenarios, setScenarios }) => {
       {/* Input */}
       <div className="bg-white border-t border-gray-200 px-4 py-4">
         <div className="max-w-4xl mx-auto">
+          {/* Staged Files Preview */}
+          {stagedFiles.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-2">
+              {stagedFiles.map((file, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-lg text-sm"
+                >
+                  <span>{file.name}</span>
+                  <button
+                    onClick={() => removeStagedFile(index)}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="flex items-end space-x-3">
             <div className="flex-1 flex gap-2 relative items-center">
               {/* Hidden file input */}
@@ -231,7 +256,7 @@ const ChatInterface = ({ scenarios, setScenarios }) => {
               {/* Send Button */}
               <button
                 onClick={() => handleSendMessageInput(inputValue)}
-                disabled={!inputValue.trim() || isTyping}
+                disabled={(!inputValue.trim() && stagedFiles.length === 0) || isTyping}
                 className="px-4 py-4 bg-primary-600 text-white rounded-xl hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <Send className="h-4 w-4" />
@@ -240,7 +265,6 @@ const ChatInterface = ({ scenarios, setScenarios }) => {
           </div>
         </div>
       </div>
-
     </div>
   );
 };
