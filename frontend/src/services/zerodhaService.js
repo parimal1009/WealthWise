@@ -13,8 +13,13 @@ class ZerodhaService {
     };
   }
 
-  async getLoginUrl() {
+  async getLoginUrl(returnUrl = null) {
     try {
+      // Store the return URL in sessionStorage for callback redirect
+      if (returnUrl) {
+        sessionStorage.setItem('zerodha_return_url', returnUrl);
+      }
+
       const response = await fetch(`${this.baseUrl}/login-url/`, {
         method: 'GET',
         headers: this.getAuthHeaders(),
@@ -62,6 +67,12 @@ class ZerodhaService {
       console.error('handleCallback error:', error);
       throw error;
     }
+  }
+
+  getReturnUrl() {
+    const returnUrl = sessionStorage.getItem('zerodha_return_url');
+    sessionStorage.removeItem('zerodha_return_url'); // Clean up after use
+    return returnUrl;
   }
 
   async getProfile() {

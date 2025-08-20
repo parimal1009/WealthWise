@@ -3,6 +3,7 @@ import WelcomeComponent from "./chat/WelcomeComponent";
 import BasicInfoFormComponent from "./chat/BasicInfoFormComponent";
 import IncomeStatusFormComponent from "./chat/IncomeStatusFormComponent";
 import RetirementInfoFormComponent from "./chat/RetirementInfoFormComponent";
+import RiskToleranceFormComponent from "./chat/RiskToleranceFormComponent";
 import ScenarioVisualizationComponent from "./chat/ScenarioVisualizationComponent";
 import ComparisonChartComponent from "./chat/ComparisonChartComponent";
 import RecommendationComponent from "./chat/RecommendationComponent";
@@ -27,6 +28,8 @@ const ChatMessage = ({
         return <IncomeStatusFormComponent onSubmit={onFormSubmit} />;
       case "retirement-info-form":
         return <RetirementInfoFormComponent onSubmit={onFormSubmit} />;
+      case "risk-tolerance-form":
+        return <RiskToleranceFormComponent onSubmit={onFormSubmit} />;
       case "scenario-visualization":
         return (
           <ScenarioVisualizationComponent

@@ -1,9 +1,17 @@
 import { useSelector } from "react-redux";
-import { BarChart3, TrendingUp, DollarSign, PieChart } from "lucide-react";
+import { BarChart3, TrendingUp, DollarSign, PieChart, Shield, BarChart } from "lucide-react";
+
 const SummaryComponent = () => {
   const { userData } = useSelector((state) => state.userData);
+  
   // Helper function to check if a value is not empty
   const hasValue = (value) => value && value.toString().trim() !== "";
+
+  // Format currency values
+  const formatCurrency = (value) => {
+    if (!value) return "₹0";
+    return `₹${parseInt(value).toLocaleString('en-IN')}`;
+  };
 
   // Get all non-empty fields
   const getPopulatedFields = () => {
@@ -48,7 +56,7 @@ const SummaryComponent = () => {
     if (hasValue(userData.currentSalary))
       fields.push({
         label: "Current Salary",
-        value: userData.currentSalary,
+        value: formatCurrency(userData.currentSalary),
         category: "income",
       });
     if (hasValue(userData.yearsOfService))
@@ -72,7 +80,7 @@ const SummaryComponent = () => {
     if (hasValue(userData.pensionBalance))
       fields.push({
         label: "Pension Balance",
-        value: userData.pensionBalance,
+        value: formatCurrency(userData.pensionBalance),
         category: "income",
       });
     if (hasValue(userData.employerContribution))
@@ -98,7 +106,7 @@ const SummaryComponent = () => {
     if (hasValue(userData.monthlyRetirementExpense))
       fields.push({
         label: "Monthly Retirement Expense",
-        value: userData.monthlyRetirementExpense,
+        value: formatCurrency(userData.monthlyRetirementExpense),
         category: "retirement",
       });
     if (hasValue(userData.legacyGoal))
@@ -107,6 +115,62 @@ const SummaryComponent = () => {
         value: userData.legacyGoal,
         category: "retirement",
       });
+
+    // Risk Tolerance Analysis
+    if (hasValue(userData.mode)) {
+      fields.push({
+        label: "Analysis Mode",
+        value: userData.mode === "zerodha" ? "Zerodha Integration" : "Manual Entry",
+        category: "risk",
+      });
+    }
+    
+    if (hasValue(userData.risk_score))
+      fields.push({
+        label: "Risk Score",
+        value: userData.risk_score,
+        category: "risk",
+      });
+      
+    if (hasValue(userData.risk_category))
+      fields.push({
+        label: "Risk Category",
+        value: userData.risk_category,
+        category: "risk",
+      });
+      
+    if (hasValue(userData.fdValue) || hasValue(userData.fixedDepositAmount))
+      fields.push({
+        label: "Fixed Deposits",
+        value: formatCurrency(userData.fdValue || userData.fixedDepositAmount),
+        category: "risk",
+      });
+      
+    if (hasValue(userData.stock_holdings_value) || hasValue(userData.stockInvestmentAmount))
+      fields.push({
+        label: "Stock Investments",
+        value: formatCurrency(userData.stock_holdings_value || userData.stockInvestmentAmount),
+        category: "risk",
+      });
+      
+    if (hasValue(userData.mf_holdings_value) || hasValue(userData.mutualFundAmount))
+      fields.push({
+        label: "Mutual Funds",
+        value: formatCurrency(userData.mf_holdings_value || userData.mutualFundAmount),
+        category: "risk",
+      });
+      
+    if (hasValue(userData.total_portfolio_value)) {
+      const totalManual = (parseInt(userData.fixedDepositAmount || 0) + 
+                          parseInt(userData.stockInvestmentAmount || 0) + 
+                          parseInt(userData.mutualFundAmount || 0));
+      
+      fields.push({
+        label: "Total Portfolio Value",
+        value: formatCurrency(userData.total_portfolio_value || totalManual),
+        category: "risk",
+      });
+    }
 
     return fields;
   };
@@ -125,18 +189,21 @@ const SummaryComponent = () => {
     basic: <BarChart3 className="w-5 h-5" />,
     income: <DollarSign className="w-5 h-5" />,
     retirement: <TrendingUp className="w-5 h-5" />,
+    risk: <Shield className="w-5 h-5" />,
   };
 
   const categoryTitles = {
     basic: "Personal Information",
     income: "Income & Employment",
     retirement: "Retirement Planning",
+    risk: "Risk Tolerance Analysis",
   };
 
   const categoryColors = {
     basic: "from-purple-500 to-pink-500",
     income: "from-green-500 to-blue-500",
     retirement: "from-orange-500 to-red-500",
+    risk: "from-indigo-500 to-purple-500",
   };
 
   if (!hasData) {

@@ -29,9 +29,17 @@ const ZerodhaCallback = () => {
         // Set success status
         setStatus('success');
         
+        // Get the return URL from service (which retrieves from sessionStorage)
+        const returnUrl = zerodhaService.getReturnUrl();
+        
         // Show success message for 2 seconds, then redirect
         setTimeout(() => {
-          navigate('/profile#settings', { replace: true });
+          if (returnUrl) {
+            navigate(returnUrl, { replace: true });
+          } else {
+            // Default fallback
+            navigate('/dashboard', { replace: true });
+          }
         }, 2000);
         
       } catch (error) {
@@ -45,23 +53,41 @@ const ZerodhaCallback = () => {
           // Token already processed - treat as success
           setStatus('success');
           setError(null);
+          
+          const returnUrl = zerodhaService.getReturnUrl();
           setTimeout(() => {
-            navigate('/dashboard', { replace: true });
+            if (returnUrl) {
+              navigate(returnUrl, { replace: true });
+            } else {
+              navigate('/dashboard', { replace: true });
+            }
           }, 2000);
           return;
         } else {
           setError(error.message || 'Failed to connect Zerodha account. Please try again.');
         }
         
+        // Get return URL for error case too
+        const returnUrl = zerodhaService.getReturnUrl();
+        
         // Redirect after showing error for 4 seconds
         setTimeout(() => {
-          navigate('/dashboard', { replace: true });
+          if (returnUrl) {
+            navigate(returnUrl, { replace: true });
+          } else {
+            navigate('/dashboard', { replace: true });
+          }
         }, 4000);
       }
     } else {
       // Not a valid callback, redirect immediately
       console.log('Not a valid Zerodha callback, redirecting to dashboard');
-      navigate('/dashboard', { replace: true });
+      const returnUrl = zerodhaService.getReturnUrl();
+      if (returnUrl) {
+        navigate(returnUrl, { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     }
   };
 
@@ -122,7 +148,7 @@ const ZerodhaCallback = () => {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Taking you to dashboard...
+              Redirecting...
             </p>
           </div>
         </div>
@@ -156,7 +182,7 @@ const ZerodhaCallback = () => {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Redirecting to dashboard...
+              Redirecting...
             </p>
           </div>
         </div>
