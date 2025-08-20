@@ -3,7 +3,7 @@ import { AlertCircle, ArrowRight } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { setUserData } from "../../redux/slices/userDataSlice";
 import LegacyGoalSelector from "./LegacyGoalSelector";
-
+import axios from "axios";
 const RetirementInfoFormComponent = ({ onSubmit }) => {
   const { userData } = useSelector((state) => state.userData);
   const safeUserData = userData || {};
@@ -75,8 +75,36 @@ const RetirementInfoFormComponent = ({ onSubmit }) => {
   const handleSubmit = () => {
     try {
       if (validateForm()) {
-        if (typeof setUserData === "function") {
-          dispatch(setUserData({ ...formData }));
+        // if (typeof setUserData === "function") {
+        //   // dispatch(setUserData({ ...formData }));
+        // }
+        try {
+          const token = localStorage.getItem("token");
+          const payload = {
+            plannedRetirementAge: formData.plannedRetirementAge,
+            retirementLifestyle: formData.retirementLifestyle,
+            monthlyRetirementExpense: formData.monthlyRetirementExpense,
+            legacyGoal: formData.legacyGoal,
+          }
+          console.log("payload is " + JSON.stringify(payload));
+          const response = axios.post(
+            "http://127.0.0.1:8000/users/retirement/add/",
+            payload,
+            {
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+              },
+              body: JSON.stringify(payload),
+            }
+
+          );
+        } catch (error) {
+          if (error.response) {
+            console.error("Backend validation error:", error.response.data); // 👈 this will show exact field errors
+          } else {
+            console.error("Request failed:", error.message);
+          }
         }
         if (typeof onSubmit === "function") {
           onSubmit(
