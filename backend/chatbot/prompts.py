@@ -38,7 +38,7 @@ Inputs:
 - Context: 
 {context}
 
-- Question: "{question}"
+- Question: "{user_query}"
 
 Guidelines:
 1. Use the context above when answering. 

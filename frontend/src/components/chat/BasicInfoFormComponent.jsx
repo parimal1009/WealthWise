@@ -4,6 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useDispatch, useSelector } from "react-redux";
 import { setUserData } from "../../redux/slices/userDataSlice";
 import { calculateAge } from "../../utils/textUtils";
+import axios from "axios";
 
 const BasicInfoFormComponent = ({ onSubmit }) => {
   const { user } = useAuth();
@@ -16,6 +17,7 @@ const BasicInfoFormComponent = ({ onSubmit }) => {
     maritalStatus: userData.maritalStatus || "",
     numberOfDependants: userData.numberOfDependants || "",
   });
+
   const [errors, setErrors] = useState({});
   const dispatch = useDispatch();
 
@@ -59,11 +61,43 @@ const BasicInfoFormComponent = ({ onSubmit }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (validateForm()) {
       const age = calculateAge(formData.dateOfBirth);
-      dispatch(setUserData({ ...formData, age }));
-      onSubmit("Income Status", { ...formData, age });
+      // dispatch(setUserData({ ...formData, age }));
+      const finalData = { ...formData, age };
+      try {
+        const token = localStorage.getItem("token");
+        const payload = {
+          name: finalData.name,
+          dateOfBirth: finalData.dateOfBirth,
+          gender: finalData.gender,
+          location: finalData.location,
+          maritalStatus: finalData.maritalStatus,
+          numberOfDependants: finalData.numberOfDependants,
+        };
+
+        console.log("payload is " + payload);
+        const response = await axios.post(
+          "http://127.0.0.1:8000/users/user/add/",
+          payload,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+          }
+        );
+        console.log(response.data);
+        onSubmit("Income Status", { ...formData, age });
+      } catch (error) {
+        if (error.response) {
+          console.error("Backend validation error:", error.response.data); // 👈 this will show exact field errors
+        } else {
+          console.error("Request failed:", error.message);
+        }
+      }
     }
   };
 
@@ -89,9 +123,8 @@ const BasicInfoFormComponent = ({ onSubmit }) => {
             </label>
             <input
               type="text"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                errors.name ? "border-red-500" : "border-gray-300"
-              }`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.name ? "border-red-500" : "border-gray-300"
+                }`}
               value={formData.name}
               onChange={(e) => handleChange("name", e.target.value)}
               placeholder="Enter your full name"
@@ -111,9 +144,8 @@ const BasicInfoFormComponent = ({ onSubmit }) => {
             </label>
             <input
               type="date"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                errors.dateOfBirth ? "border-red-500" : "border-gray-300"
-              }`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.dateOfBirth ? "border-red-500" : "border-gray-300"
+                }`}
               value={formData.dateOfBirth}
               onChange={(e) => handleChange("dateOfBirth", e.target.value)}
             />
@@ -137,9 +169,8 @@ const BasicInfoFormComponent = ({ onSubmit }) => {
               Gender *
             </label>
             <select
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                errors.gender ? "border-red-500" : "border-gray-300"
-              }`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.gender ? "border-red-500" : "border-gray-300"
+                }`}
               value={formData.gender}
               onChange={(e) => handleChange("gender", e.target.value)}
             >
@@ -164,9 +195,8 @@ const BasicInfoFormComponent = ({ onSubmit }) => {
             </label>
             <input
               type="text"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                errors.location ? "border-red-500" : "border-gray-300"
-              }`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.location ? "border-red-500" : "border-gray-300"
+                }`}
               value={formData.location}
               onChange={(e) => handleChange("location", e.target.value)}
               placeholder="City, State"
@@ -185,9 +215,8 @@ const BasicInfoFormComponent = ({ onSubmit }) => {
               Marital Status *
             </label>
             <select
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                errors.maritalStatus ? "border-red-500" : "border-gray-300"
-              }`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.maritalStatus ? "border-red-500" : "border-gray-300"
+                }`}
               value={formData.maritalStatus}
               onChange={(e) => handleChange("maritalStatus", e.target.value)}
             >
@@ -239,3 +268,4 @@ const BasicInfoFormComponent = ({ onSubmit }) => {
 };
 
 export default BasicInfoFormComponent;
+

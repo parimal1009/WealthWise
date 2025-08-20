@@ -78,6 +78,58 @@ const ChatInterface = ({ scenarios, setScenarios }) => {
     }, 1500);
   };
 
+  const handleSendMessageInput = async (message, data = null) => {
+    if (!message.trim() && !data) return;
+
+    // Add user message
+    const userMessage = {
+      id: Date.now(),
+      type: "user",
+      content: message || "Form submitted",
+      timestamp: new Date(),
+      data: data,
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInputValue("");
+    setIsTyping(true);
+    try {
+      // Call backend API
+      const response = await fetch("http://127.0.0.1:8000/chat/answer/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ user_message: message }),
+      });
+
+      const result = await response.json();
+
+      // Create bot message from API response
+      const botMessage = {
+        id: Date.now() + 1,
+        type: "bot",
+        content: result.bot_reply || "No response received",
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, botMessage]);
+    } catch (error) {
+      console.error("Error fetching bot response:", error);
+
+      // Show error as bot message
+      const errorMessage = {
+        id: Date.now() + 1,
+        type: "bot",
+        content: "Sorry, something went wrong.",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -138,7 +190,7 @@ const ChatInterface = ({ scenarios, setScenarios }) => {
                 }}
               />
               <button
-                onClick={() => handleSendMessage(inputValue)}
+                onClick={() => handleSendMessageInput(inputValue)}
                 disabled={!inputValue.trim() || isTyping}
                 className="px-4 py-4 bg-primary-600 text-white rounded-xl hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >

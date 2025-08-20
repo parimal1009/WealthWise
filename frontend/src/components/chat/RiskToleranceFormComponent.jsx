@@ -12,6 +12,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { setUserData } from "../../redux/slices/userDataSlice";
 import { zerodhaService } from "../../services/zerodhaService";
+import { numberToWords } from "../../utils/textUtils";
 import { API_BASE_URL } from "../../utils/constants";
 
 const RiskToleranceFormComponent = ({ onSubmit }) => {
@@ -360,7 +361,9 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
                 </label>
                 <input
                   type="number"
-                  className="input-field"
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                    errors.fdValue ? "border-red-500" : "border-gray-300"
+                  }`}
                   value={formData.fdValue}
                   onChange={(e) => handleChange("fdValue", e.target.value)}
                   placeholder="e.g., 500000"
@@ -369,6 +372,14 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
                   <p className="mt-1 text-xs text-red-600 flex items-center">
                     <AlertCircle className="h-3 w-3 mr-1" />
                     {errors.fdValue}
+                  </p>
+                )}
+                {formData.fdValue && (
+                  <p className="mt-1 text-xs text-primary-600">
+                    <span className="font-medium">
+                      {numberToWords(formData.fdValue)}
+                    </span>{" "}
+                    Rupees
                   </p>
                 )}
               </div>
@@ -419,13 +430,21 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
                   </label>
                   <input
                     type="number"
-                    className="input-field"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     value={formData.fixedDepositAmount}
                     onChange={(e) =>
                       handleChange("fixedDepositAmount", e.target.value)
                     }
                     placeholder="e.g., 500000"
                   />
+                  {formData.fixedDepositAmount && (
+                    <p className="mt-1 text-xs text-primary-600">
+                      <span className="font-medium">
+                        {numberToWords(formData.fixedDepositAmount)}
+                      </span>{" "}
+                      Rupees
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -434,13 +453,21 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
                   </label>
                   <input
                     type="number"
-                    className="input-field"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     value={formData.mutualFundAmount}
                     onChange={(e) =>
                       handleChange("mutualFundAmount", e.target.value)
                     }
                     placeholder="e.g., 300000"
                   />
+                  {formData.mutualFundAmount && (
+                    <p className="mt-1 text-xs text-primary-600">
+                      <span className="font-medium">
+                        {numberToWords(formData.mutualFundAmount)}
+                      </span>{" "}
+                      Rupees
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -449,13 +476,21 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
                   </label>
                   <input
                     type="number"
-                    className="input-field"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     value={formData.stockInvestmentAmount}
                     onChange={(e) =>
                       handleChange("stockInvestmentAmount", e.target.value)
                     }
                     placeholder="e.g., 200000"
                   />
+                  {formData.stockInvestmentAmount && (
+                    <p className="mt-1 text-xs text-primary-600">
+                      <span className="font-medium">
+                        {numberToWords(formData.stockInvestmentAmount)}
+                      </span>{" "}
+                      Rupees
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -476,6 +511,21 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
                   </span>
                 </div>
               )}
+              {(() => {
+                const total = parseInt(
+                  calculateTotalInvestments().toString().replace(/,/g, "")
+                );
+                return (
+                  total > 0 && (
+                    <p className="mt-1 text-xs text-primary-600">
+                      <span className="font-medium">
+                        {numberToWords(total)}
+                      </span>{" "}
+                      Rupees
+                    </p>
+                  )
+                );
+              })()}
             </div>
           </div>
         )}
@@ -487,7 +537,7 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
             disabled={
               (mode === "zerodha" && zerodhaStatus.loading) || apiStatus.loading
             }
-            className="btn-primary flex items-center space-x-2 disabled:opacity-50"
+            className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-600 flex items-center space-x-2 disabled:opacity-50"
           >
             {apiStatus.loading ? (
               <Loader className="h-4 w-4 animate-spin" />

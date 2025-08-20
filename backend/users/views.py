@@ -13,14 +13,16 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from allauth.socialaccount.models import SocialApp, SocialAccount, SocialToken
 from django.urls import reverse
 from urllib.parse import urlencode, quote
-
 from .models import RetirementInfo
 from .serializers import RetirementInfoSerializer
 # --- NEW IMPORTS FOR INCOME STATUS ---
 from .models import IncomeStatus
 from .serializers import IncomeStatusSerializer
 from rest_framework import status
-
+from .models import UserData
+from .serializers import UserDataSerializer
+from .models import LifeExpectancy
+from .serializers import LifeExpectancySerializer
 
 def get_google_data(user):
     """Get additional data from Google People API"""
@@ -165,7 +167,7 @@ def add_income_status(request):
     """Save income status"""
     serializer = IncomeStatusSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()
+        serializer.save(user=request.user)
         return Response({"message": "Income status saved!"}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -179,6 +181,9 @@ def list_income_status(request):
     return Response(serializer.data)
 
 
+# ==========================
+# RETIREMENT INFO APIs
+# ==========================
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def add_retirement_info(request):
@@ -188,7 +193,7 @@ def add_retirement_info(request):
     serializer = RetirementInfoSerializer(data=data)
     
     if serializer.is_valid():
-        serializer.save()
+        serializer.save(user=request.user)
         return Response({"message": "Retirement info saved!"}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -200,3 +205,106 @@ def list_retirement_info(request):
     records = RetirementInfo.objects.filter(user=request.user)
     serializer = RetirementInfoSerializer(records, many=True)
     return Response(serializer.data)
+
+
+# ==========================
+# USER DATA APIs
+# ==========================
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def add_user_data(request):
+    """
+    Save or update user personal details
+    """
+    try:
+        # Fetch existing UserData for this user (if any)
+        instance = UserData.objects.filter(user=request.user).first()
+
+        # Pass instance for update, or create if not exists
+        serializer = UserDataSerializer(instance, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(
+                {"message": "User data saved successfully!", "data": serializer.data},
+                status=status.HTTP_201_CREATED if not instance else status.HTTP_200_OK,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_user_data(request):
+    """
+    Get personal details of logged-in user
+    """
+    try:
+        instance = UserData.objects.filter(user=request.user).first()
+        if not instance:
+            return Response(
+                {"message": "No user data found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        serializer = UserDataSerializer(instance)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# ==========================
+# LIFE EXPECTANCY APIs
+# ==========================
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def add_life_expectancy(request):
+    """
+    Save life expectancy inputs, call FastAPI for prediction,
+    store result in DB, and return it to frontend
+    """
+    try:
+        # Step 1: Get data from frontend
+        input_data = request.data.copy()
+
+        # Step 2: Call FastAPI service
+        fastapi_url = "http://localhost:5000/life-expectancy"
+        response = requests.post(fastapi_url, json=input_data, timeout=10)
+
+        if response.status_code != 200:
+            return Response(
+                {"error": "Failed to fetch prediction from FastAPI"},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        prediction = response.json()
+        predicted_value = prediction.get("predicted_life_expectancy")
+
+        if predicted_value is None:
+            return Response(
+                {"error": "FastAPI did not return prediction"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        # Step 3: Save/update in LifeExpectancy model
+        instance = LifeExpectancy.objects.filter(user=request.user).first()
+        input_data["predicted_life_expectancy"] = predicted_value
+
+        serializer = LifeExpectancySerializer(
+            instance, data=input_data, partial=True
+        )
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Step 4: Return prediction to frontend
+        return Response(
+            {"predicted_life_expectancy": predicted_value},
+            status=status.HTTP_200_OK,
+        )
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

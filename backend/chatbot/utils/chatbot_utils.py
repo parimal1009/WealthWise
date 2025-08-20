@@ -24,8 +24,6 @@ class ChatBot:
             answer = self._answer_user_query(user_message)
             return answer
 
-        print(intent)
-
         return "Can you rephrase your question properly."
 
     def _answer_user_query(self, user_message: str, file=None) -> str:
@@ -106,8 +104,6 @@ class ChatBot:
             temperature=0.7,
         )
         response = interpreter_llm.predict(prompt)
-
-        print(response)
 
         try:
             data = extract_json_from_text(response)

@@ -10,4 +10,7 @@ urlpatterns = [
     path("income/list/", views.list_income_status, name="list_income_status"),
     path("retirement/add/", views.add_retirement_info, name="add_retirement_info"),
     path("retirement/list/", views.list_retirement_info, name="list_retirement_info"),
+    path('user/add/', views.add_user_data, name='add_user_data'),
+    path('user/get/', views.get_user_data, name='get_user_data'),
+    path("life-expectancy/add/", views.add_life_expectancy, name="add_life_expectancy"),
 ]

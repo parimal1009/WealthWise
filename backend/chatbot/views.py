@@ -31,6 +31,7 @@ def chat_with_bot(request):
             {
                 "success": True,
                 "chat_id": chat_id,
+                "user_id": request.user.id,
                 "bot_reply": response_text,
             }
         )
