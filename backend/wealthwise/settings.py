@@ -8,6 +8,9 @@ from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
 
+# Import directly from config
+from config import SITE_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -17,10 +20,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-rh+^nck42g_ow(jbvdk=ehr97uurrh@zmsj&grq+@#u=ad2ir_"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("ENV_MODE", "dev").lower() == "dev"
 
-SITE_URL = os.getenv("SITE_URL", "http://localhost:3000")
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", SITE_URL]
+ALLOWED_HOSTS = ["*"]
 
 # Application definition
 INSTALLED_APPS = [
@@ -109,7 +111,7 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # CORS Settings
-CORS_ALLOWED_ORIGINS = ["http://localhost:3000", SITE_URL]
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 # Authentication Backends
@@ -146,13 +148,13 @@ SOCIALACCOUNT_PROVIDERS = {
             "https://www.googleapis.com/auth/user.gender.read",
             "https://www.googleapis.com/auth/user.addresses.read",
         ],
-        "AUTH_PARAMS": {"access_type": "offline"},  # Changed from "online"
+        "AUTH_PARAMS": {"access_type": "offline"},
         "OAUTH_PKCE_ENABLED": True,
-        "FETCH_USERINFO": True,  # Add this line
-        "STORE_TOKENS": True,  # Add this line
+        "FETCH_USERINFO": True,
+        "STORE_TOKENS": True,
         "APP": {
-            "client_id": os.getenv("GOOGLE_CLIENT_ID", "your-google-client-id"),
-            "secret": os.getenv("GOOGLE_CLIENT_SECRET", "your-google-client-secret"),
+            "client_id": GOOGLE_CLIENT_ID,
+            "secret": GOOGLE_CLIENT_SECRET,
             "key": "",
         },
     }

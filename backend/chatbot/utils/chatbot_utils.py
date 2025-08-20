@@ -6,6 +6,8 @@ from chatbot.models import Chat
 from chatbot.prompts import ANSWER_USER_QUERY_PROMPT, INTERPRETER_USER_REQUEST
 from chatbot.utils.text_utils import extract_json_from_text
 
+from config import GOOGLE_API_KEY
+
 
 class ChatBot:
     def __init__(self, chat_id: int, user_id: int):
@@ -32,7 +34,7 @@ class ChatBot:
         If no context exists, still tries to answer the query.
         """
         llm = ChatGoogleGenerativeAI(
-            google_api_key=os.getenv("GOOGLE_API_KEY"),
+            google_api_key=GOOGLE_API_KEY,
             model="gemini-2.5-flash",
             temperature=0.6,
         )
@@ -99,7 +101,7 @@ class ChatBot:
             has_uploaded_document=has_uploaded_document,
         )
         interpreter_llm = ChatGoogleGenerativeAI(
-            google_api_key=os.getenv("GOOGLE_API_KEY"),
+            google_api_key=GOOGLE_API_KEY,
             model="gemini-2.5-flash",
             temperature=0.7,
         )

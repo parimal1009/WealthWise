@@ -13,9 +13,11 @@ from .models import ZerodhaUser
 from .models import RiskProfile
 from .stocks_list import stocks
 
+from config import KITE_API_KEY, KITE_API_SECRET
+
 # Initialize KiteConnect
-API_KEY = os.getenv("KITE_API_KEY")
-API_SECRET = os.getenv("KITE_API_SECRET")
+API_KEY = KITE_API_KEY
+API_SECRET = KITE_API_SECRET
 
 if not API_KEY or not API_SECRET:
     raise Exception("Please set KITE_API_KEY and KITE_API_SECRET in your environment variables.")

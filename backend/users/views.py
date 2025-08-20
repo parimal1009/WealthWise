@@ -24,6 +24,8 @@ from .serializers import UserDataSerializer
 from .models import LifeExpectancy
 from .serializers import LifeExpectancySerializer
 
+from config import SITE_URL, FASTAPI_URL
+
 def get_google_data(user):
     """Get additional data from Google People API"""
     try:
@@ -97,10 +99,9 @@ def google_login(request):
 @csrf_exempt
 def oauth_callback(request):
     """Handle OAuth callback and create JWT token"""
-    site_url = os.environ.get("SITE_URL", "http://localhost:3000")
     if not request.user.is_authenticated:
         return redirect(
-            f"{site_url}/login?error=auth_failed&reason=user_not_authenticated"
+            f"{SITE_URL}/login?error=auth_failed&reason=user_not_authenticated"
         )
 
     try:
@@ -121,7 +122,7 @@ def oauth_callback(request):
         user_encoded = quote(user_json)
 
         redirect_url = (
-            f"{site_url}/auth/callback?"
+            f"{SITE_URL}/auth/callback?"
             f"token={str(refresh.access_token)}&"
             f"refresh={str(refresh)}&"
             f"user={user_encoded}"
@@ -130,7 +131,7 @@ def oauth_callback(request):
 
     except Exception as e:
         return redirect(
-            f"{site_url}/login?error=auth_failed&reason=exception&message={str(e)}"
+            f"{SITE_URL}/login?error=auth_failed&reason=exception&message={str(e)}"
         )
 
 
@@ -270,7 +271,7 @@ def add_life_expectancy(request):
         input_data = request.data.copy()
 
         # Step 2: Call FastAPI service
-        fastapi_url = "http://localhost:5000/life-expectancy"
+        fastapi_url = f"{FASTAPI_URL}/life-expectancy"
         response = requests.post(fastapi_url, json=input_data, timeout=10)
 
         if response.status_code != 200:
