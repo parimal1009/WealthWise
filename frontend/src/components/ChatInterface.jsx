@@ -102,8 +102,16 @@ const ChatInterface = ({ scenarios, setScenarios }) => {
     setStagedFiles([]); // clear after sending
 
     try {
-      // Call backend API
-      const response = await fetch(`${API_BASE_URL}/chat/answer/`, {
+      // Use FormData instead of JSON
+      const formData = new FormData();
+      formData.append("user_message", message);
+
+      // Append files (multiple supported)
+      stagedFiles.forEach((file, index) => {
+        formData.append("files", file);
+      });
+
+      const response = await fetch("http://127.0.0.1:8000/chat/answer/", {
         method: "POST",
         body: formData,
       });
@@ -131,6 +139,7 @@ const ChatInterface = ({ scenarios, setScenarios }) => {
       setIsTyping(false);
     }
   };
+
 
 
   const handleKeyPress = (e) => {
