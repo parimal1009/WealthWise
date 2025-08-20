@@ -190,6 +190,12 @@ const SummaryComponent = () => {
         value: `${userData.cholesterol} mg/dL`,
         category: "health",
       });
+    if (hasValue(userData.predictedLifeExpectancy))
+      fields.push({
+        label: "Predicted Life Expectancy",
+        value: `${userData.predictedLifeExpectancy}`,
+        category: "health",
+      });
     
     // Add medical conditions if any exist
     const medicalConditions = getMedicalConditions();

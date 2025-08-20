@@ -58,6 +58,7 @@ const initialState = {
     diabetes: 0,
     heartDisease: 0,
     hypertension: 0,
+    predictedLifeExpectancy: null,
   },
 };
 
