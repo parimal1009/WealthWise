@@ -4,7 +4,6 @@ import { Send, Bot, Paperclip, X } from "lucide-react";
 import ChatMessage from "./ChatMessage";
 import { generateBotResponse } from "../utils/chatBot";
 import { setUserData } from "../redux/slices/userDataSlice";
-import { Paperclip } from "lucide-react";
 import { API_BASE_URL } from "../utils/constants";
 
 const ChatInterface = ({ scenarios, setScenarios }) => {
