@@ -1,5 +1,5 @@
 // Updated Chatbot logic for simplified risk tolerance assessment
-// Basic Information → Income Status → Retirement Information → Risk Tolerance Analysis
+// Basic Information → Income Status → Retirement Information → Life Expectancy → Risk Tolerance Analysis
 
 export const generateBotResponse = async (
   userMessage,
@@ -44,8 +44,18 @@ export const generateBotResponse = async (
     };
   }
 
-  // After retirement info form submission - Go to Risk Tolerance Analysis
-  if (formData && formData.plannedRetirementAge && (!userData.mode || userData.mode === "")) {
+  // After retirement info form submission - Go to Life Expectancy Assessment
+  if (formData && formData.plannedRetirementAge && !formData.height) {
+    return {
+      content:
+        "Great progress! Now let's assess your health profile to better estimate your life expectancy. This helps in creating more accurate retirement scenarios.",
+      component: "life-expectancy-form",
+      updateUserData: formData,
+    };
+  }
+
+  // After life expectancy form submission - Go to Risk Tolerance Analysis
+  if (formData && formData.height && (!userData.mode || userData.mode === "")) {
     return {
       content:
         "Almost done! Now let's determine your risk tolerance. You can either connect your Zerodha account for automatic analysis or enter your details manually.",
@@ -194,6 +204,11 @@ export const generateBotResponse = async (
         content: "Let's update your retirement planning information:",
         component: "retirement-info-form",
       };
+    } else if (!userData.height) {
+      return {
+        content: "Let's update your health and life expectancy information:",
+        component: "life-expectancy-form",
+      };
     } else if (!userData.mode) {
       return {
         content: "Let's update your risk tolerance analysis:",
@@ -202,7 +217,7 @@ export const generateBotResponse = async (
     } else {
       return {
         content:
-          "Which section would you like to update? I can help you modify your basic information, income details, retirement goals, or risk tolerance analysis.",
+          "Which section would you like to update? I can help you modify your basic information, income details, retirement goals, health profile, or risk tolerance analysis.",
         component: "quick-actions",
       };
     }
@@ -228,6 +243,7 @@ export const generateBotResponse = async (
   const hasBasicInfo = userData.name && userData.email && userData.age;
   const hasIncomeInfo = userData.currentSalary && userData.pensionBalance;
   const hasRetirementInfo = userData.plannedRetirementAge && userData.retirementLifestyle;
+  const hasHealthInfo = userData.height && userData.weight && userData.gender;
   const hasRiskAnalysis = userData.mode === "zerodha" || userData.mode === "manual";
 
   // Progressive flow based on completion
@@ -249,6 +265,12 @@ export const generateBotResponse = async (
         "Great progress! Let's finalize your retirement planning preferences:",
       component: "retirement-info-form",
     };
+  } else if (!hasHealthInfo) {
+    return {
+      content:
+        "Now let's assess your health profile to better estimate your life expectancy:",
+      component: "life-expectancy-form",
+    };
   } else if (!hasRiskAnalysis) {
     return {
       content:
@@ -260,7 +282,7 @@ export const generateBotResponse = async (
   // Default response with quick actions for completed profiles
   return {
     content:
-      "I have all your information including your risk profile! Here are some things I can help you with:",
+      "I have all your information including your health profile and risk tolerance! Here are some things I can help you with:",
     component: "quick-actions",
   };
 };

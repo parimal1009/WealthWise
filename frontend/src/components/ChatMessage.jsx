@@ -9,6 +9,7 @@ import ComparisonChartComponent from "./chat/ComparisonChartComponent";
 import RecommendationComponent from "./chat/RecommendationComponent";
 import QuickActionsComponent from "./chat/QuickActionsComponent";
 import DemoComponent from "./chat/DemoComponent";
+import LifeExpectancyFormComponent from "./chat/LifeExpectancyFormComponent";
 
 const ChatMessage = ({
   message,
@@ -28,6 +29,8 @@ const ChatMessage = ({
         return <IncomeStatusFormComponent onSubmit={onFormSubmit} />;
       case "retirement-info-form":
         return <RetirementInfoFormComponent onSubmit={onFormSubmit} />;
+      case "life-expectancy-form":
+        return <LifeExpectancyFormComponent onSubmit={onFormSubmit} />;
       case "risk-tolerance-form":
         return <RiskToleranceFormComponent onSubmit={onFormSubmit} />;
       case "scenario-visualization":

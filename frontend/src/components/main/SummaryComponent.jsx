@@ -1,5 +1,5 @@
 import { useSelector } from "react-redux";
-import { BarChart3, TrendingUp, DollarSign, PieChart, Shield, BarChart } from "lucide-react";
+import { BarChart3, TrendingUp, DollarSign, Shield, Heart } from "lucide-react";
 
 const SummaryComponent = () => {
   const { userData } = useSelector((state) => state.userData);
@@ -11,6 +11,25 @@ const SummaryComponent = () => {
   const formatCurrency = (value) => {
     if (!value) return "₹0";
     return `₹${parseInt(value).toLocaleString('en-IN')}`;
+  };
+
+  // Format BMI category
+  const getBMICategory = (bmi) => {
+    if (!bmi || bmi <= 0) return "";
+    if (bmi < 18.5) return "Underweight";
+    if (bmi < 25) return "Normal weight";
+    if (bmi < 30) return "Overweight";
+    return "Obese";
+  };
+
+  // Get medical conditions as string
+  const getMedicalConditions = () => {
+    const conditions = [];
+    if (userData.asthma === 1) conditions.push("Asthma");
+    if (userData.diabetes === 1) conditions.push("Diabetes");
+    if (userData.heartDisease === 1) conditions.push("Heart Disease");
+    if (userData.hypertension === 1) conditions.push("Hypertension");
+    return conditions.length > 0 ? conditions.join(", ") : "None";
   };
 
   // Get all non-empty fields
@@ -116,6 +135,78 @@ const SummaryComponent = () => {
         category: "retirement",
       });
 
+    // Health & Life Expectancy Information
+    if (hasValue(userData.height))
+      fields.push({
+        label: "Height",
+        value: `${userData.height} cm`,
+        category: "health",
+      });
+    if (hasValue(userData.weight))
+      fields.push({
+        label: "Weight",
+        value: `${userData.weight} kg`,
+        category: "health",
+      });
+    if (hasValue(userData.bmi))
+      fields.push({
+        label: "BMI",
+        value: `${userData.bmi} (${getBMICategory(userData.bmi)})`,
+        category: "health",
+      });
+    if (hasValue(userData.physicalActivity))
+      fields.push({
+        label: "Physical Activity",
+        value: userData.physicalActivity,
+        category: "health",
+      });
+    if (hasValue(userData.smokingStatus))
+      fields.push({
+        label: "Smoking Status",
+        value: userData.smokingStatus,
+        category: "health",
+      });
+    if (hasValue(userData.alcoholConsumption))
+      fields.push({
+        label: "Alcohol Consumption",
+        value: userData.alcoholConsumption,
+        category: "health",
+      });
+    if (hasValue(userData.diet))
+      fields.push({
+        label: "Diet Quality",
+        value: userData.diet,
+        category: "health",
+      });
+    if (hasValue(userData.bloodPressure))
+      fields.push({
+        label: "Blood Pressure",
+        value: userData.bloodPressure,
+        category: "health",
+      });
+    if (hasValue(userData.cholesterol))
+      fields.push({
+        label: "Cholesterol Level",
+        value: `${userData.cholesterol} mg/dL`,
+        category: "health",
+      });
+    if (hasValue(userData.predictedLifeExpectancy))
+      fields.push({
+        label: "Predicted Life Expectancy",
+        value: `${userData.predictedLifeExpectancy}`,
+        category: "health",
+      });
+    
+    // Add medical conditions if any exist
+    const medicalConditions = getMedicalConditions();
+    if (medicalConditions !== "None") {
+      fields.push({
+        label: "Medical Conditions",
+        value: medicalConditions,
+        category: "health",
+      });
+    }
+
     // Risk Tolerance Analysis
     if (hasValue(userData.mode)) {
       fields.push({
@@ -190,12 +281,14 @@ const SummaryComponent = () => {
     income: <DollarSign className="w-5 h-5" />,
     retirement: <TrendingUp className="w-5 h-5" />,
     risk: <Shield className="w-5 h-5" />,
+    health: <Heart className="w-5 h-5" />,
   };
 
   const categoryTitles = {
     basic: "Personal Information",
     income: "Income & Employment",
     retirement: "Retirement Planning",
+    health: "Health & Life Expectancy",
     risk: "Risk Tolerance Analysis",
   };
 
@@ -203,8 +296,12 @@ const SummaryComponent = () => {
     basic: "from-purple-500 to-pink-500",
     income: "from-green-500 to-blue-500",
     retirement: "from-orange-500 to-red-500",
+    health: "from-pink-500 to-rose-500",
     risk: "from-indigo-500 to-purple-500",
   };
+
+  // Force display order (risk after health)
+  const categoryOrder = ["basic", "income", "retirement", "health", "risk"];
 
   if (!hasData) {
     return (
@@ -233,36 +330,38 @@ const SummaryComponent = () => {
 
   return (
     <div className="space-y-6">
-      {Object.entries(groupedFields).map(([category, fields]) => (
-        <div
-          key={category}
-          className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 break-words whitespace-normal"
-        >
-          <div className="flex items-center gap-3 mb-4">
-            <div
-              className={`w-8 h-8 bg-gradient-to-r ${categoryColors[category]} rounded-lg flex items-center justify-center text-white`}
-            >
-              {categoryIcons[category]}
-            </div>
-            <h4 className="font-semibold text-gray-900">
-              {categoryTitles[category]}
-            </h4>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {fields.map((field, index) => (
-              <div key={index} className="flex flex-col">
-                <dt className="text-xs font-medium text-gray-500 mb-1">
-                  {field.label}
-                </dt>
-                <dd className="text-sm text-gray-900 font-medium">
-                  {field.value}
-                </dd>
+      {categoryOrder
+        .filter((category) => groupedFields[category])
+        .map((category) => (
+          <div
+            key={category}
+            className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 break-words whitespace-normal"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div
+                className={`w-8 h-8 bg-gradient-to-r ${categoryColors[category]} rounded-lg flex items-center justify-center text-white`}
+              >
+                {categoryIcons[category]}
               </div>
-            ))}
+              <h4 className="font-semibold text-gray-900">
+                {categoryTitles[category]}
+              </h4>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {groupedFields[category].map((field, index) => (
+                <div key={index} className="flex flex-col">
+                  <dt className="text-xs font-medium text-gray-500 mb-1">
+                    {field.label}
+                  </dt>
+                  <dd className="text-sm text-gray-900 font-medium">
+                    {field.value}
+                  </dd>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
     </div>
   );
 };

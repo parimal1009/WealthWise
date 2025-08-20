@@ -43,6 +43,22 @@ const initialState = {
     total_portfolio_value: "",
     stock_breakdown: {},
     calculated_at: "",
+
+    // Health & Life Expectancy Information
+    height: "",
+    weight: "",
+    bmi: "",
+    physicalActivity: "",
+    smokingStatus: "",
+    alcoholConsumption: "",
+    diet: "",
+    bloodPressure: "",
+    cholesterol: "",
+    asthma: 0,
+    diabetes: 0,
+    heartDisease: 0,
+    hypertension: 0,
+    predictedLifeExpectancy: null,
   },
 };
 
@@ -65,8 +81,14 @@ const userData = createSlice({
         ...action.payload,
       };
     },
+    updateHealthProfile: (state, action) => {
+      state.userData = {
+        ...state.userData,
+        ...action.payload,
+      };
+    },
   },
 });
 
-export const { setUserData, resetUserData, updateRiskProfile } = userData.actions;
+export const { setUserData, resetUserData, updateRiskProfile, updateHealthProfile } = userData.actions;
 export default userData.reducer;
