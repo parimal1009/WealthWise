@@ -52,3 +52,8 @@ def get_inflation_data(req: YearRequest):
     # Build response
     results = pd.DataFrame({"Date": future_dates, "Predicted_Inflation": forecast})
     return results.to_dict(orient="records")
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app:app", host="0.0.0.0", port=5000, reload=True)
