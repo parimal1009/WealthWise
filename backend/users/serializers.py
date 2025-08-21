@@ -60,10 +60,12 @@ class RetirementInfoSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 class LifeExpectancySerializer(serializers.ModelSerializer):
-    """Serializer for Life Expectancy model"""
-    user = UserSerializer(read_only=True)
-
     class Meta:
         model = LifeExpectancy
-        fields = "__all__"
-        read_only_fields = ["id", "user", "created_at"]
+        fields = [
+            'Height', 'Weight', 'Gender', 'BMI', 'Physical_Activity',
+            'Smoking_Status', 'Alcohol_Consumption', 'Diet', 'Blood_Pressure',
+            'Cholesterol', 'Asthma', 'Diabetes', 'Heart_Disease', 'Hypertension',
+            'predicted_life_expectancy', 'is_skipped', 'created_at'
+        ]
+        read_only_fields = ['created_at']

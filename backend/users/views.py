@@ -292,6 +292,7 @@ def add_life_expectancy(request):
         # Step 3: Save/update in LifeExpectancy model
         instance = LifeExpectancy.objects.filter(user=request.user).first()
         input_data["predicted_life_expectancy"] = predicted_value
+        input_data["is_skipped"] = False  # Mark as not skipped since user filled the form
 
         serializer = LifeExpectancySerializer(
             instance, data=input_data, partial=True
@@ -307,5 +308,55 @@ def add_life_expectancy(request):
             status=status.HTTP_200_OK,
         )
 
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def skip_life_expectancy(request):
+    """
+    Handle when user skips life expectancy form - set default value of 72
+    """
+    try:
+        # Check if user already has life expectancy data
+        instance = LifeExpectancy.objects.filter(user=request.user).first()
+        
+        # Create minimal data with default life expectancy
+        default_data = {
+            'predicted_life_expectancy': 72.00,
+            'is_skipped': True  # This will be added to model
+        }
+        
+        if instance:
+            # Update existing record
+            for key, value in default_data.items():
+                setattr(instance, key, value)
+            instance.save()
+        else:
+            # Create new record with minimal required fields
+            LifeExpectancy.objects.create(
+                user=request.user,
+                Height=0,  # Default values for required fields
+                Weight=0,
+                Gender=request.user.user_data.gender.capitalize() if hasattr(request.user, 'user_data') and request.user.user_data.gender else 'Male',
+                BMI=0,
+                Physical_Activity='Not Specified',
+                Smoking_Status='Not Specified',
+                Alcohol_Consumption='Not Specified',
+                Diet='Not Specified',
+                Blood_Pressure='Not Specified',
+                Cholesterol=0,
+                predicted_life_expectancy=72.00,
+                is_skipped=True
+            )
+        
+        return Response(
+            {
+                "predicted_life_expectancy": 72.00,
+                "message": "Default life expectancy set successfully"
+            },
+            status=status.HTTP_200_OK,
+        )
+        
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

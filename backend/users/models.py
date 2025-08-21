@@ -71,6 +71,9 @@ class LifeExpectancy(models.Model):
     Hypertension = models.BooleanField(default=False)
 
     predicted_life_expectancy = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    
+    # field to track if user skipped the form
+    is_skipped = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
