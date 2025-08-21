@@ -23,6 +23,7 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
     diabetes: 0,
     heartDisease: 0,
     hypertension: 0,
+    formName: "life-expectancy-form",
   });
 
   // Load existing data from Redux on component mount
@@ -55,10 +56,10 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
 
   const submitLifeExpectancyData = async (data) => {
     try {
-      const token = localStorage.getItem('token');
-      
+      const token = localStorage.getItem("token");
+
       if (!token) {
-        throw new Error('Authentication token not found');
+        throw new Error("Authentication token not found");
       }
 
       const apiPayload = {
@@ -75,27 +76,32 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
         Asthma: data.asthma,
         Diabetes: data.diabetes,
         Heart_Disease: data.heartDisease,
-        Hypertension: data.hypertension
+        Hypertension: data.hypertension,
       };
 
-      const response = await fetch(`${API_BASE_URL}/users/life-expectancy/add/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(apiPayload)
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/users/life-expectancy/add/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(apiPayload),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
       }
 
       const result = await response.json();
       return result;
     } catch (error) {
-      console.error('API request failed:', error);
+      console.error("API request failed:", error);
       throw error;
     }
   };
@@ -121,21 +127,21 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
       // Update Redux store with form data and prediction
       const updatedData = {
         ...dataToSubmit,
-        predictedLifeExpectancy: apiResponse.predicted_life_expectancy
+        predictedLifeExpectancy: apiResponse.predicted_life_expectancy,
       };
-      
+
       dispatch(updateHealthProfile(updatedData));
 
       // Call parent onSubmit if provided
       if (onSubmit) {
         onSubmit("Life expectancy form submitted", {
           ...updatedData,
-          apiResponse
+          apiResponse,
         });
       }
     } catch (error) {
-      setError(error.message || 'Failed to submit life expectancy data');
-      console.error('Submission error:', error);
+      setError(error.message || "Failed to submit life expectancy data");
+      console.error("Submission error:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -146,7 +152,7 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
       ...prev,
       [field]: value,
     }));
-    
+
     // Clear error when user starts typing
     if (error) {
       setError(null);
@@ -178,7 +184,8 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
             Health & Life Expectancy Assessment
           </h3>
           <p className="text-sm text-gray-600">
-            Help us understand your health profile for better retirement planning
+            Help us understand your health profile for better retirement
+            planning
           </p>
         </div>
       </div>
@@ -238,7 +245,9 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
             </label>
             <select
               value={formData.physicalActivity}
-              onChange={(e) => handleInputChange("physicalActivity", e.target.value)}
+              onChange={(e) =>
+                handleInputChange("physicalActivity", e.target.value)
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               required
               disabled={isSubmitting}
@@ -277,7 +286,9 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
             </label>
             <select
               value={formData.smokingStatus}
-              onChange={(e) => handleInputChange("smokingStatus", e.target.value)}
+              onChange={(e) =>
+                handleInputChange("smokingStatus", e.target.value)
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               required
               disabled={isSubmitting}
@@ -295,7 +306,9 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
             </label>
             <select
               value={formData.alcoholConsumption}
-              onChange={(e) => handleInputChange("alcoholConsumption", e.target.value)}
+              onChange={(e) =>
+                handleInputChange("alcoholConsumption", e.target.value)
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               required
               disabled={isSubmitting}
@@ -316,7 +329,9 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
             </label>
             <select
               value={formData.bloodPressure}
-              onChange={(e) => handleInputChange("bloodPressure", e.target.value)}
+              onChange={(e) =>
+                handleInputChange("bloodPressure", e.target.value)
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               required
               disabled={isSubmitting}

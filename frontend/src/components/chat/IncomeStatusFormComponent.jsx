@@ -17,6 +17,7 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
     pensionScheme: userData.pensionScheme || "",
     pensionBalance: userData.pensionBalance || "",
     employerContribution: userData.employerContribution || "",
+    formName: "income-status-form",
   });
   const [errors, setErrors] = useState({});
   const dispatch = useDispatch();
@@ -82,7 +83,7 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
           pensionScheme: formData.pensionScheme,
           pensionBalance: formData.pensionBalance,
           employerContribution: formData.employerContribution,
-        }
+        };
         console.log("payload is " + payload);
         const response = axios.post(
           `${API_BASE_URL}/users/income/add/`,
@@ -90,11 +91,10 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
           {
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`,
+              Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify(payload),
           }
-
         );
       } catch (error) {
         if (error.response) {
@@ -126,8 +126,9 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
             </label>
             <input
               type="number"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.currentSalary ? "border-red-500" : "border-gray-300"
-                }`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.currentSalary ? "border-red-500" : "border-gray-300"
+              }`}
               value={formData.currentSalary}
               onChange={(e) => handleChange("currentSalary", e.target.value)}
               placeholder="e.g., 150000"
@@ -154,8 +155,9 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
             </label>
             <input
               type="number"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.yearsOfService ? "border-red-500" : "border-gray-300"
-                }`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.yearsOfService ? "border-red-500" : "border-gray-300"
+              }`}
               value={formData.yearsOfService}
               onChange={(e) => handleChange("yearsOfService", e.target.value)}
               placeholder="e.g., 15"
@@ -182,8 +184,9 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
               Employer Type *
             </label>
             <select
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.employerType ? "border-red-500" : "border-gray-300"
-                }`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.employerType ? "border-red-500" : "border-gray-300"
+              }`}
               value={formData.employerType}
               onChange={(e) => handleChange("employerType", e.target.value)}
             >
@@ -205,8 +208,9 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
               Pension Scheme *
             </label>
             <select
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.pensionScheme ? "border-red-500" : "border-gray-300"
-                }`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.pensionScheme ? "border-red-500" : "border-gray-300"
+              }`}
               value={formData.pensionScheme}
               onChange={(e) => handleChange("pensionScheme", e.target.value)}
             >
@@ -230,8 +234,9 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
             </label>
             <input
               type="number"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.pensionBalance ? "border-red-500" : "border-gray-300"
-                }`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.pensionBalance ? "border-red-500" : "border-gray-300"
+              }`}
               value={formData.pensionBalance}
               onChange={(e) => handleChange("pensionBalance", e.target.value)}
               placeholder="e.g., 2000000"

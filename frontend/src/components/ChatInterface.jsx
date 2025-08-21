@@ -105,14 +105,18 @@ const ChatInterface = ({ scenarios, setScenarios }) => {
       // Use FormData instead of JSON
       const formData = new FormData();
       formData.append("user_message", message);
+      const token = localStorage.getItem("token");
 
       // Append files (multiple supported)
       stagedFiles.forEach((file, index) => {
         formData.append("files", file);
       });
 
-      const response = await fetch("http://127.0.0.1:8000/chat/answer/", {
+      const response = await fetch(`${API_BASE_URL}/chat/answer/`, {
         method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: formData,
       });
 
@@ -139,8 +143,6 @@ const ChatInterface = ({ scenarios, setScenarios }) => {
       setIsTyping(false);
     }
   };
-
-
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -258,7 +260,9 @@ const ChatInterface = ({ scenarios, setScenarios }) => {
               {/* Send Button */}
               <button
                 onClick={() => handleSendMessageInput(inputValue)}
-                disabled={(!inputValue.trim() && stagedFiles.length === 0) || isTyping}
+                disabled={
+                  (!inputValue.trim() && stagedFiles.length === 0) || isTyping
+                }
                 className="px-4 py-4 bg-primary-600 text-white rounded-xl hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <Send className="h-4 w-4" />

@@ -15,6 +15,7 @@ const RetirementInfoFormComponent = ({ onSubmit }) => {
     retirementLifestyle: safeUserData.retirementLifestyle || "",
     monthlyRetirementExpense: safeUserData.monthlyRetirementExpense || "",
     legacyGoal: safeUserData.legacyGoal || "",
+    formName: "retirement-info-form",
   });
 
   const [errors, setErrors] = useState({});
@@ -48,8 +49,9 @@ const RetirementInfoFormComponent = ({ onSubmit }) => {
       formData.plannedRetirementAge <= currentAge ||
       formData.plannedRetirementAge > 75
     ) {
-      newErrors.plannedRetirementAge = `Please enter a valid retirement age (${currentAge + 1
-        }-75)`;
+      newErrors.plannedRetirementAge = `Please enter a valid retirement age (${
+        currentAge + 1
+      }-75)`;
     }
 
     if (!formData.retirementLifestyle) {
@@ -86,7 +88,7 @@ const RetirementInfoFormComponent = ({ onSubmit }) => {
             retirementLifestyle: formData.retirementLifestyle,
             monthlyRetirementExpense: formData.monthlyRetirementExpense,
             legacyGoal: formData.legacyGoal,
-          }
+          };
           console.log("payload is " + JSON.stringify(payload));
           const response = axios.post(
             `${API_BASE_URL}/users/retirement/add/`,
@@ -94,11 +96,10 @@ const RetirementInfoFormComponent = ({ onSubmit }) => {
             {
               headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
+                Authorization: `Bearer ${token}`,
               },
               body: JSON.stringify(payload),
             }
-
           );
         } catch (error) {
           if (error.response) {
@@ -156,10 +157,11 @@ const RetirementInfoFormComponent = ({ onSubmit }) => {
             </label>
             <input
               type="number"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.plannedRetirementAge
-                ? "border-red-500"
-                : "border-gray-300"
-                }`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                errors.plannedRetirementAge
+                  ? "border-red-500"
+                  : "border-gray-300"
+              }`}
               value={formData.plannedRetirementAge}
               onChange={(e) =>
                 handleChange("plannedRetirementAge", e.target.value)
@@ -182,10 +184,11 @@ const RetirementInfoFormComponent = ({ onSubmit }) => {
             </label>
             <input
               type="number"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.monthlyRetirementExpense
-                ? "border-red-500"
-                : "border-gray-300"
-                }`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                errors.monthlyRetirementExpense
+                  ? "border-red-500"
+                  : "border-gray-300"
+              }`}
               value={formData.monthlyRetirementExpense}
               onChange={(e) =>
                 handleChange("monthlyRetirementExpense", e.target.value)
@@ -213,10 +216,11 @@ const RetirementInfoFormComponent = ({ onSubmit }) => {
                 onClick={() =>
                   handleChange("retirementLifestyle", option.value)
                 }
-                className={`p-4 border-2 rounded-lg transition-colors cursor-pointer ${formData.retirementLifestyle === option.value
-                  ? "border-blue-500 bg-blue-50"
-                  : "border-gray-200 hover:border-gray-300"
-                  }`}
+                className={`p-4 border-2 rounded-lg transition-colors cursor-pointer ${
+                  formData.retirementLifestyle === option.value
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">

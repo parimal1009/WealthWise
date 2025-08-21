@@ -10,6 +10,7 @@ import RecommendationComponent from "./chat/RecommendationComponent";
 import QuickActionsComponent from "./chat/QuickActionsComponent";
 import DemoComponent from "./chat/DemoComponent";
 import LifeExpectancyFormComponent from "./chat/LifeExpectancyFormComponent";
+import Markdown from "react-markdown";
 
 const ChatMessage = ({
   message,
@@ -65,13 +66,15 @@ const ChatMessage = ({
 
   return (
     <div
-      className={`flex items-start space-x-3 ${isBot ? "" : "flex-row-reverse space-x-reverse"
-        }`}
+      className={`flex items-start space-x-3 ${
+        isBot ? "" : "flex-row-reverse space-x-reverse"
+      }`}
     >
       {/* Avatar */}
       <div
-        className={`flex items-center justify-center w-8 h-8 rounded-full flex-shrink-0 ${isBot ? "bg-primary-600" : "bg-gray-600"
-          }`}
+        className={`flex items-center justify-center w-8 h-8 rounded-full flex-shrink-0 ${
+          isBot ? "bg-primary-600" : "bg-gray-600"
+        }`}
       >
         {isBot ? (
           <Bot className="h-4 w-4 text-white" />
@@ -84,26 +87,30 @@ const ChatMessage = ({
       <div className={`max-w-3xl ${isBot ? "" : "text-right"}`}>
         {(message.content || (message.files && message.files.length > 0)) && (
           <div
-            className={`rounded-2xl px-4 py-3 shadow-sm mb-3 ${isBot
-              ? "bg-white rounded-tl-sm"
-              : "bg-primary text-white rounded-tr-sm"
-              }`}
+            className={`rounded-2xl px-4 py-3 shadow-sm mb-3 ${
+              isBot
+                ? "bg-white rounded-tl-sm"
+                : "bg-primary text-white rounded-tr-sm"
+            }`}
           >
             {/* Message text */}
             {message.content && (
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                {message.content}
-              </p>
+              <div className="prose prose-sm max-w-none">
+                {/* eslint-disable-next-line */}
+                <Markdown>{message.content}</Markdown>
+              </div>
             )}
-
             {/* ✅ File attachments */}
             {message.files && message.files.length > 0 && (
               <div className="mt-2 space-y-1">
                 {message.files.map((file, idx) => (
                   <div
                     key={idx}
-                    className={`flex items-center gap-2 px-2 py-1 rounded-md text-sm ${isBot ? "bg-gray-100 text-gray-800" : "bg-white text-gray-800"
-                      }`}
+                    className={`flex items-center gap-2 px-2 py-1 rounded-md text-sm ${
+                      isBot
+                        ? "bg-gray-100 text-gray-800"
+                        : "bg-white text-gray-800"
+                    }`}
                   >
                     <Paperclip size={14} className="text-gray-500" />
                     <span className="truncate">{file.name}</span>

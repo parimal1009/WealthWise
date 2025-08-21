@@ -27,11 +27,7 @@ export const generateBotResponse = async (
   }
 
   // After basic info form submission
-  if (
-    formData &&
-    (formData.name || formData.email || formData.age) &&
-    !formData.currentSalary
-  ) {
+  if (formData?.formName === "basic-info-form") {
     return {
       content:
         "Perfect! Now let's understand your current income and employment details. This information is crucial for calculating your retirement scenarios.",
@@ -41,7 +37,7 @@ export const generateBotResponse = async (
   }
 
   // After income status form submission
-  if (formData && formData.currentSalary && !formData.plannedRetirementAge) {
+  if (formData?.formName === "income-status-form") {
     return {
       content:
         "Excellent! Now let's plan your retirement goals and lifestyle preferences. This will help me create the perfect retirement strategy for you.",
@@ -51,7 +47,7 @@ export const generateBotResponse = async (
   }
 
   // After retirement info form submission - Go to Life Expectancy Assessment
-  if (formData && formData.plannedRetirementAge && !formData.height) {
+  if (formData?.formName == "retirement-info-form") {
     return {
       content:
         "Great progress! Now let's assess your health profile to better estimate your life expectancy. This helps in creating more accurate retirement scenarios.",
@@ -61,7 +57,7 @@ export const generateBotResponse = async (
   }
 
   // After life expectancy form submission - Go to Risk Tolerance Analysis
-  if (formData && formData.height && (!userData.mode || userData.mode === "")) {
+  if (formData?.formName === "life-expectancy-form") {
     return {
       content:
         "Almost done! Now let's determine your risk tolerance. You can either connect your Zerodha account for automatic analysis or enter your details manually.",
@@ -71,7 +67,7 @@ export const generateBotResponse = async (
   }
 
   // After risk tolerance form submission - Generate scenarios
-  if (formData && (formData.mode === "zerodha" || formData.mode === "manual")) {
+  if (formData?.formName === "risk-tolerance-form") {
     const scenarios = generateScenarios(userData, formData);
     return {
       content:
@@ -228,22 +224,6 @@ export const generateBotResponse = async (
         component: "quick-actions",
       };
     }
-  }
-
-  // Sample data or demo requests
-  if (
-    message.includes("sample") ||
-    message.includes("demo") ||
-    message.includes("example")
-  ) {
-    const sampleScenarios = generateSampleScenarios();
-    return {
-      content:
-        "Here's a demo with sample retirement scenarios showing how risk tolerance affects recommendations:",
-      component: "scenario-visualization",
-      data: { scenarios: sampleScenarios },
-      updateScenarios: sampleScenarios,
-    };
   }
 
   // Check if user has completed all steps
@@ -766,75 +746,4 @@ const getTaxRecommendation = (scenarios, userData) => {
       "Consult with a tax professional",
     ],
   };
-};
-
-const generateSampleScenarios = () => {
-  return [
-    {
-      id: "lump-sum",
-      name: "Lump Sum Withdrawal",
-      description: "Take the entire amount now and invest it yourself",
-      totalValue: 2000000,
-      monthlyIncome: 45000,
-      taxImplication: 600000,
-      pros: [
-        "Full control over investments",
-        "Liquidity for emergencies",
-        "Potential for higher returns",
-      ],
-      cons: [
-        "Market risk",
-        "High immediate tax burden",
-        "Risk of outliving money",
-      ],
-      riskLevel: "High",
-      suitability: 75,
-      riskScore: 85,
-      mode: "sample",
-    },
-    {
-      id: "annuity",
-      name: "Life Annuity",
-      description: "Guaranteed monthly income for life",
-      totalValue: 2000000,
-      monthlyIncome: 38000,
-      taxImplication: 200000,
-      pros: [
-        "Guaranteed income for life",
-        "Protection against longevity risk",
-        "Lower tax burden",
-      ],
-      cons: [
-        "No liquidity",
-        "Fixed payments (inflation risk)",
-        "No inheritance value",
-      ],
-      riskLevel: "Low",
-      suitability: 90,
-      riskScore: 25,
-      mode: "sample",
-    },
-    {
-      id: "phased",
-      name: "Phased Withdrawal",
-      description: "Systematic withdrawal over time with remaining invested",
-      totalValue: 2000000,
-      monthlyIncome: 42000,
-      taxImplication: 300000,
-      pros: [
-        "Balanced approach",
-        "Some liquidity maintained",
-        "Potential for growth",
-      ],
-      cons: [
-        "Market risk on remaining amount",
-        "Complex management required",
-        "Sequence of returns risk",
-      ],
-      riskLevel: "Medium",
-      suitability: 85,
-      riskScore: 60,
-      mode: "sample",
-    },
-  ];
 };

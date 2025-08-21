@@ -1,5 +1,6 @@
 import os
 
+
 class Config:
     ENV_MODE = os.environ.get("ENV_MODE", "dev").lower()
     SUFFIX = "_DEV" if ENV_MODE == "dev" else "_PROD"
@@ -7,6 +8,7 @@ class Config:
     def __getattr__(self, name: str):
         """Automatically fetch environment variable with suffix."""
         return os.environ.get(name + self.SUFFIX) or os.environ.get(name)
+
 
 # Single config instance
 config = Config()

@@ -85,13 +85,17 @@ const BasicInfoFormComponent = ({ onSubmit }) => {
           {
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`,
+              Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify(payload),
           }
         );
         console.log(response.data);
-        onSubmit("Income Status", { ...formData, age });
+        onSubmit("Income Status", {
+          ...formData,
+          age,
+          formName: "basic-info-form",
+        });
       } catch (error) {
         if (error.response) {
           console.error("Backend validation error:", error.response.data); // 👈 this will show exact field errors
@@ -124,8 +128,9 @@ const BasicInfoFormComponent = ({ onSubmit }) => {
             </label>
             <input
               type="text"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.name ? "border-red-500" : "border-gray-300"
-                }`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.name ? "border-red-500" : "border-gray-300"
+              }`}
               value={formData.name}
               onChange={(e) => handleChange("name", e.target.value)}
               placeholder="Enter your full name"
@@ -145,8 +150,9 @@ const BasicInfoFormComponent = ({ onSubmit }) => {
             </label>
             <input
               type="date"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.dateOfBirth ? "border-red-500" : "border-gray-300"
-                }`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.dateOfBirth ? "border-red-500" : "border-gray-300"
+              }`}
               value={formData.dateOfBirth}
               onChange={(e) => handleChange("dateOfBirth", e.target.value)}
             />
@@ -170,8 +176,9 @@ const BasicInfoFormComponent = ({ onSubmit }) => {
               Gender *
             </label>
             <select
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.gender ? "border-red-500" : "border-gray-300"
-                }`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.gender ? "border-red-500" : "border-gray-300"
+              }`}
               value={formData.gender}
               onChange={(e) => handleChange("gender", e.target.value)}
             >
@@ -196,8 +203,9 @@ const BasicInfoFormComponent = ({ onSubmit }) => {
             </label>
             <input
               type="text"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.location ? "border-red-500" : "border-gray-300"
-                }`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.location ? "border-red-500" : "border-gray-300"
+              }`}
               value={formData.location}
               onChange={(e) => handleChange("location", e.target.value)}
               placeholder="City, State"
@@ -216,8 +224,9 @@ const BasicInfoFormComponent = ({ onSubmit }) => {
               Marital Status *
             </label>
             <select
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.maritalStatus ? "border-red-500" : "border-gray-300"
-                }`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.maritalStatus ? "border-red-500" : "border-gray-300"
+              }`}
               value={formData.maritalStatus}
               onChange={(e) => handleChange("maritalStatus", e.target.value)}
             >
@@ -269,4 +278,3 @@ const BasicInfoFormComponent = ({ onSubmit }) => {
 };
 
 export default BasicInfoFormComponent;
-

@@ -30,6 +30,7 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
     fixedDepositAmount: userData.fixedDepositAmount || "",
     mutualFundAmount: userData.mutualFundAmount || "",
     stockInvestmentAmount: userData.stockInvestmentAmount || "",
+    formName: "risk-tolerance-form",
   });
 
   const [errors, setErrors] = useState({});
@@ -138,32 +139,38 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
 
       if (mode === "zerodha") {
         // Call Zerodha mode API
-        response = await fetch(`${API_BASE_URL}/api/financial/risk/calculate/`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            mode: "zerodha",
-            fd_value: parseFloat(formData.fdValue),
-          }),
-        });
+        response = await fetch(
+          `${API_BASE_URL}/api/financial/risk/calculate/`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              mode: "zerodha",
+              fd_value: parseFloat(formData.fdValue),
+            }),
+          }
+        );
       } else {
         // Call manual mode API
-        response = await fetch(`${API_BASE_URL}/api/financial/risk/calculate/`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            mode: "manual",
-            fd_value: parseFloat(formData.fixedDepositAmount) || 0,
-            stock_value: parseFloat(formData.stockInvestmentAmount) || 0,
-            mf_value: parseFloat(formData.mutualFundAmount) || 0,
-          }),
-        });
+        response = await fetch(
+          `${API_BASE_URL}/api/financial/risk/calculate/`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              mode: "manual",
+              fd_value: parseFloat(formData.fixedDepositAmount) || 0,
+              stock_value: parseFloat(formData.stockInvestmentAmount) || 0,
+              mf_value: parseFloat(formData.mutualFundAmount) || 0,
+            }),
+          }
+        );
       }
 
       if (!response.ok) {
