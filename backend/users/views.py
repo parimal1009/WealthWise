@@ -20,7 +20,7 @@ from .models import IncomeStatus
 from .serializers import IncomeStatusSerializer
 from rest_framework import status
 from .models import UserData
-from .serializers import UserDataSerializer
+from .serializers import UserDataSerializer, UserRegistrationSerializer, UserLoginSerializer
 from .models import LifeExpectancy
 from .serializers import LifeExpectancySerializer
 
@@ -157,6 +157,71 @@ def logout_view(request):
     """Logout user"""
     logout(request)
     return Response({"message": "Logged out successfully"})
+
+
+# ==========================
+# MANUAL AUTH APIs
+# ==========================
+@api_view(["POST"])
+def register_user(request):
+    """Manual user registration with email, password, first_name, last_name"""
+    serializer = UserRegistrationSerializer(data=request.data)
+    
+    if serializer.is_valid():
+        user = serializer.save()
+        
+        # Generate JWT tokens for the new user
+        refresh = RefreshToken.for_user(user)
+        
+        user_data = {
+            "id": user.id,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "name": user.get_full_name(),
+        }
+        
+        return Response({
+            "message": "User registered successfully",
+            "user": user_data,
+            "tokens": {
+                "access": str(refresh.access_token),
+                "refresh": str(refresh)
+            }
+        }, status=status.HTTP_201_CREATED)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+def login_user(request):
+    """Manual user login with email and password"""
+    serializer = UserLoginSerializer(data=request.data)
+    
+    if serializer.is_valid():
+        user = serializer.validated_data['user']
+        
+        # Generate JWT tokens
+        refresh = RefreshToken.for_user(user)
+        
+        user_data = {
+            "id": user.id,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "name": user.get_full_name(),
+        }
+        
+        return Response({
+            "message": "Login successful",
+            "user": user_data,
+            "tokens": {
+                "access": str(refresh.access_token),
+                "refresh": str(refresh)
+            }
+        }, status=status.HTTP_200_OK)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 # ==========================

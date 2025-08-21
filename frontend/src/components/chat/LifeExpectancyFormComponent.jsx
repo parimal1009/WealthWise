@@ -195,6 +195,7 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
       const updatedData = {
         predictedLifeExpectancy: apiResponse.predicted_life_expectancy,
         isSkipped: true,
+        formName: "life-expectancy-form",
       };
 
       dispatch(updateHealthProfile(updatedData));
