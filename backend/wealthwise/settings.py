@@ -8,10 +8,11 @@ from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
 
+load_dotenv()
+
 # Import directly from config
 from config import SITE_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
 
-load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
