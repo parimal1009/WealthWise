@@ -2,12 +2,21 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { authService } from "../services/authService";
-import { TrendingUp, Shield, Zap } from "lucide-react";
+import { TrendingUp, Shield, Zap, Eye, EyeOff } from "lucide-react";
 
 const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const { user } = useAuth();
+  const [isLogin, setIsLogin] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    first_name: "",
+    last_name: "",
+    password_confirm: ""
+  });
+  const { user, login, register } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if already logged in
@@ -16,6 +25,13 @@ const LoginPage = () => {
     return null;
   }
 
+  const handleInputChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
   const handleGoogleLogin = async () => {
     setLoading(true);
     setError("");
@@ -23,6 +39,40 @@ const LoginPage = () => {
       await authService.googleLogin();
     } catch (error) {
       setError("Login failed. Please try again. " + error);
+      setLoading(false);
+    }
+  };
+
+  const handleManualAuth = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      let response;
+      if (isLogin) {
+        response = await login({
+          email: formData.email,
+          password: formData.password
+        });
+      } else {
+        if (formData.password !== formData.password_confirm) {
+          setError("Passwords do not match");
+          setLoading(false);
+          return;
+        }
+        response = await register({
+          email: formData.email,
+          password: formData.password,
+          password_confirm: formData.password_confirm,
+          first_name: formData.first_name,
+          last_name: formData.last_name
+        });
+      }
+
+      navigate("/home");
+    } catch (error) {
+      setError(error.message || "Authentication failed. Please try again.");
       setLoading(false);
     }
   };
@@ -108,10 +158,13 @@ const LoginPage = () => {
 
               <div className="text-center mb-8">
                 <h2 className="text-2xl font-bold text-slate-900 mb-2">
-                  Welcome Back
+                  {isLogin ? "Welcome Back" : "Create Account"}
                 </h2>
                 <p className="text-slate-600">
-                  Access your pension optimization dashboard
+                  {isLogin 
+                    ? "Access your pension optimization dashboard"
+                    : "Start optimizing your retirement benefits"
+                  }
                 </p>
               </div>
 
@@ -146,11 +199,132 @@ const LoginPage = () => {
                 </div>
               )}
 
+              {/* Manual Auth Form */}
+              <form onSubmit={handleManualAuth} className="space-y-4 mb-6">
+                {!isLogin && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        First Name
+                      </label>
+                      <input
+                        type="text"
+                        name="first_name"
+                        value={formData.first_name}
+                        onChange={handleInputChange}
+                        required={!isLogin}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="John"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Last Name
+                      </label>
+                      <input
+                        type="text"
+                        name="last_name"
+                        value={formData.last_name}
+                        onChange={handleInputChange}
+                        required={!isLogin}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Doe"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="you@example.com"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-3 py-2 pr-10 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-slate-400" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-slate-400" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {!isLogin && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Confirm Password
+                    </label>
+                    <input
+                      type="password"
+                      name="password_confirm"
+                      value={formData.password_confirm}
+                      onChange={handleInputChange}
+                      required={!isLogin}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="••••••••"
+                    />
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-xl font-medium hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow-md"
+                >
+                  {loading ? (
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                      {isLogin ? "Signing in..." : "Creating account..."}
+                    </div>
+                  ) : (
+                    isLogin ? "Sign In" : "Create Account"
+                  )}
+                </button>
+              </form>
+
+              {/* Divider */}
+              <div className="relative mb-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-200"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-slate-500">Or continue with</span>
+                </div>
+              </div>
+
               {/* Google Login Button */}
               <button
                 onClick={handleGoogleLogin}
                 disabled={loading}
-                className="w-full flex items-center justify-center py-3 px-4 border border-slate-200 rounded-xl text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow-md group"
+                className="w-full flex items-center justify-center py-3 px-4 border border-slate-200 rounded-xl text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow-md group mb-6"
               >
                 {loading ? (
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-3"></div>
@@ -179,7 +353,31 @@ const LoginPage = () => {
                 </span>
               </button>
 
-              <div className="mt-6 text-center">
+              {/* Toggle between Login/Register */}
+              <div className="text-center mb-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsLogin(!isLogin);
+                    setError("");
+                    setFormData({
+                      email: "",
+                      password: "",
+                      first_name: "",
+                      last_name: "",
+                      password_confirm: ""
+                    });
+                  }}
+                  className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+                >
+                  {isLogin 
+                    ? "Don't have an account? Sign up" 
+                    : "Already have an account? Sign in"
+                  }
+                </button>
+              </div>
+
+              <div className="text-center">
                 <p className="text-sm text-slate-500">
                   By continuing, you agree to our Terms of Service and Privacy
                   Policy
