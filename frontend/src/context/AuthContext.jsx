@@ -39,7 +39,20 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await authService.login(credentials);
       setUser(response.user);
-      localStorage.setItem('token', response.token);
+      localStorage.setItem('token', response.tokens.access);
+      localStorage.setItem('refresh_token', response.tokens.refresh);
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const register = async (userData) => {
+    try {
+      const response = await authService.register(userData);
+      setUser(response.user);
+      localStorage.setItem('token', response.tokens.access);
+      localStorage.setItem('refresh_token', response.tokens.refresh);
       return response;
     } catch (error) {
       throw error;
@@ -49,13 +62,16 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('token');
+    localStorage.removeItem('refresh_token');
   };
 
   const value = {
     user,
     login,
+    register,
     logout,
-    loading
+    loading,
+    setUser
   };
 
   return (

@@ -48,6 +48,93 @@ class AuthService {
     }
   }
 
+  async register(userData) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        
+        // Handle detailed validation errors
+        if (errorData.password || errorData.email || errorData.first_name || errorData.last_name) {
+          const errorMessages = [];
+          
+          if (errorData.password) {
+            errorMessages.push(...errorData.password);
+          }
+          if (errorData.email) {
+            errorMessages.push(...errorData.email);
+          }
+          if (errorData.first_name) {
+            errorMessages.push(`First name: ${errorData.first_name.join(', ')}`);
+          }
+          if (errorData.last_name) {
+            errorMessages.push(`Last name: ${errorData.last_name.join(', ')}`);
+          }
+          
+          throw new Error(errorMessages.join(' '));
+        }
+        
+        throw new Error(errorData.message || 'Registration failed');
+      }
+
+      const data = await response.json();
+      
+      // Don't store tokens here - AuthContext will handle it
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async login(credentials) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        
+        // Handle detailed validation errors
+        if (errorData.email || errorData.password || errorData.non_field_errors) {
+          const errorMessages = [];
+          
+          if (errorData.email) {
+            errorMessages.push(...errorData.email);
+          }
+          if (errorData.password) {
+            errorMessages.push(...errorData.password);
+          }
+          if (errorData.non_field_errors) {
+            errorMessages.push(...errorData.non_field_errors);
+          }
+          
+          throw new Error(errorMessages.join(' '));
+        }
+        
+        throw new Error(errorData.message || 'Login failed');
+      }
+
+      const data = await response.json();
+      
+      // Don't store tokens here - AuthContext will handle it
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   handleOAuthCallback() {
     const urlParams = new URLSearchParams(window.location.search);
 

@@ -26,7 +26,7 @@ const OAuthCallback = () => {
 
         if (result) {
           setUser(result.user);
-          navigate("/dashboard");
+          navigate("/home");
         } else {
           navigate("/login?error=auth_failed&reason=no_token");
         }
