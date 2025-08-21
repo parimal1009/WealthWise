@@ -35,7 +35,7 @@ class IncomeStatus(models.Model):
     pensionScheme = models.CharField(max_length=100)
     pensionBalance = models.DecimalField(max_digits=15, decimal_places=2)
     employerContribution = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-
+    yourContribution = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     def __str__(self):
         return f"{self.user.username} - {self.employerType} - {self.currentSalary}"
 
