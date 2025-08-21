@@ -201,6 +201,7 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
         total_portfolio_value: result.total_portfolio_value,
         stock_breakdown: result.stock_breakdown || {},
         calculated_at: result.calculated_at || new Date().toISOString(),
+        formName: "risk-tolerance-form",
       };
 
       dispatch(setUserData(updatedUserData));
