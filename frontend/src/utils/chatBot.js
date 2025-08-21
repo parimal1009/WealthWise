@@ -57,12 +57,19 @@ export const generateBotResponse = async (
   }
 
   // After life expectancy form submission - Go to Risk Tolerance Analysis
+<<<<<<< HEAD
   if (formData?.formName === "life-expectancy-form") {
+=======
+  if ((formData && (formData.height || formData.isSkipped))) {
+>>>>>>> 0dcd69ead0eb0e49177f321ea5451fff24f9ec01
     return {
       content:
         "Almost done! Now let's determine your risk tolerance. You can either connect your Zerodha account for automatic analysis or enter your details manually.",
       component: "risk-tolerance-form",
-      updateUserData: formData,
+      updateUserData: {
+        ...formData,
+        isSkipped: formData.isSkipped || false, // take directly from formData
+      },
     };
   }
 

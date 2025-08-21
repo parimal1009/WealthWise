@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Heart, Loader2 } from "lucide-react";
+import { Heart, Loader2, Info, SkipForward } from "lucide-react";
 import { updateHealthProfile } from "../../redux/slices/userDataSlice";
 import { API_BASE_URL } from "../../utils/constants";
 
@@ -8,6 +8,7 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
   const dispatch = useDispatch();
   const { userData } = useSelector((state) => state.userData);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSkipping, setIsSkipping] = useState(false);
   const [error, setError] = useState(null);
 
   const [formData, setFormData] = useState({
@@ -106,6 +107,40 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
     }
   };
 
+  const skipLifeExpectancyForm = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("Authentication token not found");
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/users/life-expectancy/skip/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error("Skip API request failed:", error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -128,6 +163,7 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
       const updatedData = {
         ...dataToSubmit,
         predictedLifeExpectancy: apiResponse.predicted_life_expectancy,
+        isSkipped: false,
       };
 
       dispatch(updateHealthProfile(updatedData));
@@ -144,6 +180,37 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
       console.error("Submission error:", error);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleSkip = async () => {
+    setIsSkipping(true);
+    setError(null);
+
+    try {
+      // Make API request to skip the form
+      const apiResponse = await skipLifeExpectancyForm();
+
+      // Update Redux store with default data
+      const updatedData = {
+        predictedLifeExpectancy: apiResponse.predicted_life_expectancy,
+        isSkipped: true,
+      };
+
+      dispatch(updateHealthProfile(updatedData));
+
+      // Call parent onSubmit if provided
+      if (onSubmit) {
+        onSubmit("Life expectancy form skipped", {
+          ...updatedData,
+          apiResponse,
+        });
+      }
+    } catch (error) {
+      setError(error.message || "Failed to skip life expectancy form");
+      console.error("Skip error:", error);
+    } finally {
+      setIsSkipping(false);
     }
   };
 
@@ -190,6 +257,21 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
         </div>
       </div>
 
+      {/* Information Banner */}
+      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="flex items-start space-x-3">
+          <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm text-blue-800">
+              <strong>Optional but Recommended:</strong> Providing your health
+              information helps us give you a more accurate life expectancy
+              estimate for better retirement planning. If you skip this form,
+              we'll use the average Indian life expectancy of 72 years.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-sm text-red-600">{error}</p>
@@ -209,8 +291,7 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
               onChange={(e) => handleInputChange("height", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               placeholder="170"
-              required
-              disabled={isSubmitting}
+              disabled={isSubmitting || isSkipping}
             />
           </div>
           <div>
@@ -223,8 +304,7 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
               onChange={(e) => handleInputChange("weight", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               placeholder="65"
-              required
-              disabled={isSubmitting}
+              disabled={isSubmitting || isSkipping}
             />
           </div>
           <div>
@@ -249,8 +329,7 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
                 handleInputChange("physicalActivity", e.target.value)
               }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-              required
-              disabled={isSubmitting}
+              disabled={isSubmitting || isSkipping}
             >
               <option value="">Select activity level</option>
               <option value="High">High</option>
@@ -267,8 +346,7 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
               value={formData.diet}
               onChange={(e) => handleInputChange("diet", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-              required
-              disabled={isSubmitting}
+              disabled={isSubmitting || isSkipping}
             >
               <option value="">Select diet type</option>
               <option value="Balanced">Balanced</option>
@@ -290,8 +368,7 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
                 handleInputChange("smokingStatus", e.target.value)
               }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-              required
-              disabled={isSubmitting}
+              disabled={isSubmitting || isSkipping}
             >
               <option value="">Select smoking status</option>
               <option value="Never">Never</option>
@@ -310,8 +387,7 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
                 handleInputChange("alcoholConsumption", e.target.value)
               }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-              required
-              disabled={isSubmitting}
+              disabled={isSubmitting || isSkipping}
             >
               <option value="">Select consumption level</option>
               <option value="Never">Never</option>
@@ -333,8 +409,7 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
                 handleInputChange("bloodPressure", e.target.value)
               }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-              required
-              disabled={isSubmitting}
+              disabled={isSubmitting || isSkipping}
             >
               <option value="">Select blood pressure level</option>
               <option value="Low">Low</option>
@@ -353,8 +428,7 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
               onChange={(e) => handleInputChange("cholesterol", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               placeholder="180"
-              required
-              disabled={isSubmitting}
+              disabled={isSubmitting || isSkipping}
             />
           </div>
         </div>
@@ -379,7 +453,7 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
                     handleInputChange(condition.key, e.target.checked ? 1 : 0)
                   }
                   className="mr-2 text-primary-600"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isSkipping}
                 />
                 <span className="text-sm text-gray-700">{condition.label}</span>
               </label>
@@ -387,20 +461,42 @@ const LifeExpectancyFormComponent = ({ onSubmit }) => {
           </div>
         </div>
 
-        <button
-          type="submit"
-          disabled={!isFormValid() || isSubmitting}
-          className="w-full bg-primary-600 text-white py-3 px-4 rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="animate-spin h-5 w-5 mr-2" />
-              Processing...
-            </>
-          ) : (
-            "Continue to Risk Assessment"
-          )}
-        </button>
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            type="button"
+            onClick={handleSkip}
+            disabled={isSubmitting || isSkipping}
+            className="flex-1 bg-gray-200 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+          >
+            {isSkipping ? (
+              <>
+                <Loader2 className="animate-spin h-5 w-5 mr-2" />
+                Skipping...
+              </>
+            ) : (
+              <>
+                <SkipForward className="h-5 w-5 mr-2" />
+                Skip This Step
+              </>
+            )}
+          </button>
+
+          <button
+            type="submit"
+            disabled={!isFormValid() || isSubmitting || isSkipping}
+            className="flex-1 bg-primary-600 text-white py-3 px-4 rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="animate-spin h-5 w-5 mr-2" />
+                Processing...
+              </>
+            ) : (
+              "Continue to Risk Assessment"
+            )}
+          </button>
+        </div>
       </form>
     </div>
   );

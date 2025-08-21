@@ -35,7 +35,7 @@ class IncomeStatus(models.Model):
     pensionScheme = models.CharField(max_length=100)
     pensionBalance = models.DecimalField(max_digits=15, decimal_places=2)
     employerContribution = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-
+    yourContribution = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     def __str__(self):
         return f"{self.user.username} - {self.employerType} - {self.currentSalary}"
 
@@ -71,6 +71,9 @@ class LifeExpectancy(models.Model):
     Hypertension = models.BooleanField(default=False)
 
     predicted_life_expectancy = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    
+    # field to track if user skipped the form
+    is_skipped = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
