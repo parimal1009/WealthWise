@@ -52,9 +52,15 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
       [field]: processedValue,
     }));
 
-    // Reset pension scheme if employer type changes
+    // Reset pension scheme and contributions if employer type changes
     if (field === "employerType") {
-      setFormData((prev) => ({ ...prev, pensionScheme: "" }));
+      setFormData((prev) => ({
+        ...prev,
+        pensionScheme: "",
+        pensionBalance: "",
+        employerContribution: "",
+        yourContribution: "",
+      }));
     }
 
     if (errors[field]) {
@@ -81,7 +87,11 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
       newErrors.pensionScheme = "Please select your pension scheme";
     }
 
-    if (!formData.pensionBalance || formData.pensionBalance < 0) {
+    // Pension Balance required only if NOT government
+    if (
+      formData.employerType !== "government" &&
+      (!formData.pensionBalance || formData.pensionBalance < 0)
+    ) {
       newErrors.pensionBalance = "Please enter a valid pension balance";
     }
 
@@ -93,17 +103,34 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
     if (validateForm()) {
       try {
         const token = localStorage.getItem("token");
-        const payload = { ...formData };
 
-        await axios.post(`${API_BASE_URL}/users/income/add/`, payload, {
+        // ✅ Normalize hidden fields to 0 before sending
+        const normalizedData = {
+          ...formData,
+          pensionBalance:
+            formData.employerType === "government"
+              ? 0
+              : formData.pensionBalance || 0,
+          employerContribution:
+            formData.employerType === "private"
+              ? formData.employerContribution || 0
+              : 0,
+          yourContribution:
+            formData.employerType === "government"
+              ? 0
+              : formData.yourContribution || 0,
+        };
+        console.log(normalizedData);
+
+        await axios.post(`${API_BASE_URL}/users/income/add/`, normalizedData, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         });
 
-        dispatch(setUserData(payload));
-        onSubmit("I've completed my income status information", formData);
+        dispatch(setUserData(normalizedData));
+        onSubmit("I've completed my income status information", normalizedData);
       } catch (error) {
         if (error.response) {
           console.error("Backend validation error:", error.response.data);
@@ -139,9 +166,8 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
             </label>
             <input
               type="number"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                errors.currentSalary ? "border-red-500" : "border-gray-300"
-              }`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.currentSalary ? "border-red-500" : "border-gray-300"
+                }`}
               value={formData.currentSalary}
               onChange={(e) => handleChange("currentSalary", e.target.value)}
               placeholder="e.g., 150000"
@@ -169,9 +195,8 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
             </label>
             <input
               type="number"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                errors.yearsOfService ? "border-red-500" : "border-gray-300"
-              }`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.yearsOfService ? "border-red-500" : "border-gray-300"
+                }`}
               value={formData.yearsOfService}
               onChange={(e) => handleChange("yearsOfService", e.target.value)}
               placeholder="e.g., 15"
@@ -199,9 +224,8 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
               Employer Type *
             </label>
             <select
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                errors.employerType ? "border-red-500" : "border-gray-300"
-              }`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.employerType ? "border-red-500" : "border-gray-300"
+                }`}
               value={formData.employerType}
               onChange={(e) => handleChange("employerType", e.target.value)}
             >
@@ -224,9 +248,8 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
               Pension Scheme *
             </label>
             <select
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                errors.pensionScheme ? "border-red-500" : "border-gray-300"
-              }`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.pensionScheme ? "border-red-500" : "border-gray-300"
+                }`}
               value={formData.pensionScheme}
               onChange={(e) => handleChange("pensionScheme", e.target.value)}
               disabled={!formData.employerType}
@@ -246,81 +269,88 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
             )}
           </div>
 
-          {/* Pension Balance */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Current Pension Balance (₹) *
-            </label>
-            <input
-              type="number"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                errors.pensionBalance ? "border-red-500" : "border-gray-300"
-              }`}
-              value={formData.pensionBalance}
-              onChange={(e) => handleChange("pensionBalance", e.target.value)}
-              placeholder="e.g., 2000000"
-            />
-            {errors.pensionBalance && (
-              <p className="mt-1 text-xs text-red-600 flex items-center">
-                <AlertCircle className="h-3 w-3 mr-1" />
-                {errors.pensionBalance}
-              </p>
-            )}
-            {formData.pensionBalance && (
-              <p className="mt-1 text-xs text-primary-600">
-                <span className="font-medium">
-                  {numberToWords(formData.pensionBalance)}
-                </span>{" "}
-                Rupees
-              </p>
-            )}
-          </div>
+          {/* Pension Balance - show only if NOT government */}
+          {formData.employerType !== "government" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Current Pension Balance (₹) *
+              </label>
+              <input
+                type="number"
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.pensionBalance ? "border-red-500" : "border-gray-300"
+                  }`}
+                value={formData.pensionBalance}
+                onChange={(e) => handleChange("pensionBalance", e.target.value)}
+                placeholder="e.g., 2000000"
+              />
+              {errors.pensionBalance && (
+                <p className="mt-1 text-xs text-red-600 flex items-center">
+                  <AlertCircle className="h-3 w-3 mr-1" />
+                  {errors.pensionBalance}
+                </p>
+              )}
+              {formData.pensionBalance && (
+                <p className="mt-1 text-xs text-primary-600">
+                  <span className="font-medium">
+                    {numberToWords(formData.pensionBalance)}
+                  </span>{" "}
+                  Rupees
+                </p>
+              )}
+            </div>
+          )}
 
-          {/* Employer Contribution */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Monthly Employer Contribution (₹)
-            </label>
-            <input
-              type="number"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              value={formData.employerContribution}
-              onChange={(e) =>
-                handleChange("employerContribution", e.target.value)
-              }
-              placeholder="e.g., 15000"
-            />
-            {formData.employerContribution && (
-              <p className="mt-1 text-xs text-primary-600">
-                <span className="font-medium">
-                  {numberToWords(formData.employerContribution)}
-                </span>{" "}
-                Rupees
-              </p>
-            )}
-          </div>
+          {/* Employer Contribution - show only if Private */}
+          {formData.employerType === "private" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Monthly Employer Contribution (₹)
+              </label>
+              <input
+                type="number"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                value={formData.employerContribution}
+                onChange={(e) =>
+                  handleChange("employerContribution", e.target.value)
+                }
+                placeholder="e.g., 15000"
+              />
+              {formData.employerContribution && (
+                <p className="mt-1 text-xs text-primary-600">
+                  <span className="font-medium">
+                    {numberToWords(formData.employerContribution)}
+                  </span>{" "}
+                  Rupees
+                </p>
+              )}
+            </div>
+          )}
 
-          {/* ✅ Your Contribution */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Your Contribution (₹)
-            </label>
-            <input
-              type="number"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              value={formData.yourContribution}
-              onChange={(e) => handleChange("yourContribution", e.target.value)}
-              placeholder="e.g., 10000"
-            />
-            {formData.yourContribution && (
-              <p className="mt-1 text-xs text-primary-600">
-                <span className="font-medium">
-                  {numberToWords(formData.yourContribution)}
-                </span>{" "}
-                Rupees
-              </p>
-            )}
-          </div>
+          {/* Your Contribution - show if NOT government */}
+          {formData.employerType !== "government" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Your Contribution (₹)
+              </label>
+              <input
+                type="number"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                value={formData.yourContribution}
+                onChange={(e) =>
+                  handleChange("yourContribution", e.target.value)
+                }
+                placeholder="e.g., 10000"
+              />
+              {formData.yourContribution && (
+                <p className="mt-1 text-xs text-primary-600">
+                  <span className="font-medium">
+                    {numberToWords(formData.yourContribution)}
+                  </span>{" "}
+                  Rupees
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Information Note */}
