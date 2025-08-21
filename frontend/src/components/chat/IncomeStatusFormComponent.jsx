@@ -7,6 +7,20 @@ import { LIMITS } from "../../utils/constants";
 import axios from "axios";
 import { API_BASE_URL } from "../../utils/constants";
 
+const EMPLOYER_SCHEME_OPTIONS = {
+  government: [
+    { value: "ops", label: "OPS (Old Pension Scheme)" },
+    { value: "nps", label: "NPS (National Pension System)" },
+  ],
+  private: [
+    { value: "nps", label: "NPS (National Pension System)" },
+    { value: "epf", label: "EPF (Employee Provident Fund)" },
+  ],
+  "self-employed": [
+    { value: "nps", label: "NPS (National Pension System)" },
+  ],
+};
+
 const IncomeStatusFormComponent = ({ onSubmit }) => {
   const userData = useSelector((state) => state.userData);
 
@@ -17,14 +31,15 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
     pensionScheme: userData.pensionScheme || "",
     pensionBalance: userData.pensionBalance || "",
     employerContribution: userData.employerContribution || "",
+    yourContribution: userData.yourContribution || "", // ✅ New field
   });
+
   const [errors, setErrors] = useState({});
   const dispatch = useDispatch();
 
   const handleChange = (field, value) => {
     let processedValue = value;
 
-    // Only clamp if the value is not an empty string and is a valid number
     if (LIMITS[field] && value !== "" && !isNaN(value)) {
       const numericValue = Number(value);
       processedValue = Math.max(
@@ -37,6 +52,11 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
       ...prev,
       [field]: processedValue,
     }));
+
+    // Reset pension scheme if employer type changes
+    if (field === "employerType") {
+      setFormData((prev) => ({ ...prev, pensionScheme: "" }));
+    }
 
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: null }));
@@ -70,42 +90,37 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (validateForm()) {
-      // dispatch(setUserData({ ...formData }));
       try {
         const token = localStorage.getItem("token");
-        const payload = {
-          currentSalary: formData.currentSalary,
-          yearsOfService: formData.yearsOfService,
-          employerType: formData.employerType,
-          pensionScheme: formData.pensionScheme,
-          pensionBalance: formData.pensionBalance,
-          employerContribution: formData.employerContribution,
-        }
-        console.log("payload is " + payload);
-        const response = axios.post(
-          `${API_BASE_URL}/users/income/add/`,
-          payload,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`,
-            },
-            body: JSON.stringify(payload),
-          }
+        const payload = { ...formData };
 
-        );
+        console.log("payload is", payload);
+
+        await axios.post(`${API_BASE_URL}/users/income/add/`, payload, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        dispatch(setUserData(payload)); // ✅ Save in redux
+        onSubmit("I've completed my income status information", formData);
       } catch (error) {
         if (error.response) {
-          console.error("Backend validation error:", error.response.data); // 👈 this will show exact field errors
+          console.error("Backend validation error:", error.response.data);
         } else {
           console.error("Request failed:", error.message);
         }
       }
-      onSubmit("I've completed my income status information", formData);
     }
   };
+
+  // Pension scheme options based on employer type
+  const pensionOptions = formData.employerType
+    ? EMPLOYER_SCHEME_OPTIONS[formData.employerType] || []
+    : [];
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 max-w-2xl">
@@ -120,6 +135,7 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
 
       <div className="space-y-4">
         <div className="grid md:grid-cols-2 gap-4">
+          {/* Current Salary */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Current Salary (₹/month) *
@@ -148,6 +164,7 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
             )}
           </div>
 
+          {/* Years of Service */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Years of Service *
@@ -177,6 +194,7 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
             )}
           </div>
 
+          {/* Employer Type */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Employer Type *
@@ -200,6 +218,7 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
             )}
           </div>
 
+          {/* Pension Scheme - Dynamic */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Pension Scheme *
@@ -209,12 +228,14 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
                 }`}
               value={formData.pensionScheme}
               onChange={(e) => handleChange("pensionScheme", e.target.value)}
+              disabled={!formData.employerType}
             >
               <option value="">Select Pension Scheme</option>
-              <option value="ops">OPS (Old Pension Scheme)</option>
-              <option value="nps">NPS (National Pension System)</option>
-              <option value="epf">EPF (Employee Provident Fund)</option>
-              <option value="other">Other</option>
+              {pensionOptions.map((scheme) => (
+                <option key={scheme.value} value={scheme.value}>
+                  {scheme.label}
+                </option>
+              ))}
             </select>
             {errors.pensionScheme && (
               <p className="mt-1 text-xs text-red-600 flex items-center">
@@ -224,6 +245,7 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
             )}
           </div>
 
+          {/* Pension Balance */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Current Pension Balance (₹) *
@@ -252,6 +274,7 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
             )}
           </div>
 
+          {/* Employer Contribution */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Monthly Employer Contribution (₹)
@@ -274,8 +297,33 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
               </p>
             )}
           </div>
+
+          {/* ✅ Your Contribution */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Your Contribution (₹)
+            </label>
+            <input
+              type="number"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              value={formData.yourContribution}
+              onChange={(e) =>
+                handleChange("yourContribution", e.target.value)
+              }
+              placeholder="e.g., 10000"
+            />
+            {formData.yourContribution && (
+              <p className="mt-1 text-xs text-primary-600">
+                <span className="font-medium">
+                  {numberToWords(formData.yourContribution)}
+                </span>{" "}
+                Rupees
+              </p>
+            )}
+          </div>
         </div>
 
+        {/* Information Note */}
         <div className="bg-blue-50 rounded-lg p-4">
           <h4 className="font-medium text-blue-900 text-sm mb-2">
             Information Note:

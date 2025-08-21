@@ -15,15 +15,11 @@ from .stocks_list import stocks
 
 from config import KITE_API_KEY, KITE_API_SECRET
 
-# Initialize KiteConnect
-API_KEY = KITE_API_KEY
-API_SECRET = KITE_API_SECRET
-
-if not API_KEY or not API_SECRET:
+if not KITE_API_KEY or not KITE_API_SECRET:
     raise Exception("Please set KITE_API_KEY and KITE_API_SECRET in your environment variables.")
 
 # Initialize KiteConnect with redirect URL
-kite = KiteConnect(api_key=API_KEY)
+kite = KiteConnect(api_key=KITE_API_KEY)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -97,7 +93,7 @@ def kite_callback(request):
         except Exception as e:
             print(f"Cache cleanup error: {e}")
         
-        data = kite.generate_session(request_token, api_secret=API_SECRET)
+        data = kite.generate_session(request_token, api_secret=KITE_API_SECRET)
         access_token = data["access_token"]
         
         print(f"Generated access_token: {access_token[:10]}...")
@@ -113,7 +109,7 @@ def kite_callback(request):
             user=request.user,
             defaults={
                 'access_token': access_token,
-                'api_key': API_KEY,
+                'api_key': KITE_API_KEY,
                 'zerodha_user_id': profile.get('user_id'),
                 'user_name': profile.get('user_name'),
                 'email': profile.get('email'),

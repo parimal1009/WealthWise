@@ -165,21 +165,33 @@ def logout_view(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def add_income_status(request):
-    """Save income status"""
-    serializer = IncomeStatusSerializer(data=request.data)
+    """Create or update income status for a user"""
+    try:
+        # Check if the user already has an income status
+        income_status = IncomeStatus.objects.get(user=request.user)
+        # If exists, update it
+        serializer = IncomeStatusSerializer(income_status, data=request.data, partial=True)
+    except IncomeStatus.DoesNotExist:
+        # If not exists, create new
+        serializer = IncomeStatusSerializer(data=request.data)
+
     if serializer.is_valid():
         serializer.save(user=request.user)
-        return Response({"message": "Income status saved!"}, status=status.HTTP_201_CREATED)
+        return Response(
+            {"message": "Income status saved/updated!", "data": serializer.data},
+            status=status.HTTP_200_OK,
+        )
+
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def list_income_status(request):
-    """List all income status records"""
+    """List all income status records (for all users)"""
     records = IncomeStatus.objects.all()
     serializer = IncomeStatusSerializer(records, many=True)
-    return Response(serializer.data)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 # ==========================
@@ -188,14 +200,23 @@ def list_income_status(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def add_retirement_info(request):
-    """Save retirement info for a user"""
-    data = request.data.copy()
-    data["user"] = request.user.id  # associate with logged-in user
-    serializer = RetirementInfoSerializer(data=data)
-    
+    """Create or update retirement info for a user"""
+    try:
+        # Check if the user already has a retirement info record
+        retirement_info = RetirementInfo.objects.get(user=request.user)
+        # If exists, update it
+        serializer = RetirementInfoSerializer(retirement_info, data=request.data, partial=True)
+    except RetirementInfo.DoesNotExist:
+        # If not exists, create new
+        serializer = RetirementInfoSerializer(data=request.data)
+
     if serializer.is_valid():
         serializer.save(user=request.user)
-        return Response({"message": "Retirement info saved!"}, status=status.HTTP_201_CREATED)
+        return Response(
+            {"message": "Retirement info saved/updated!", "data": serializer.data},
+            status=status.HTTP_200_OK,
+        )
+
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -205,7 +226,7 @@ def list_retirement_info(request):
     """List retirement info of the logged-in user"""
     records = RetirementInfo.objects.filter(user=request.user)
     serializer = RetirementInfoSerializer(records, many=True)
-    return Response(serializer.data)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 # ==========================
