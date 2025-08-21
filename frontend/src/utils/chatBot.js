@@ -55,39 +55,38 @@ export const generateBotResponse = async (
   }
 
   // After life expectancy form submission - Go to Risk Tolerance Analysis
-  if (formData?.formName === "life-expectancy-form") {
-    return {
-      content:
-        "Almost done! Now let's determine your risk tolerance. You can either connect your Zerodha account for automatic analysis or enter your details manually.",
-      component: "risk-tolerance-form",
-      updateUserData: {
-        ...formData,
-        isSkipped: formData.isSkipped || false, // take directly from formData
-      },
-    };
-  }
+if (formData?.formName === "life-expectancy-form") {
+  return {
+    content:
+      "Almost done! Now let's determine your risk tolerance. You can either connect your Zerodha account for automatic analysis or enter your details manually.",
+    component: "risk-tolerance-form",
+    updateUserData: {
+      ...formData,
+      formName: "risk-tolerance-form", // prevent locking into same form
+      isSkipped: formData.isSkipped || false,
+    },
+  };
+}
 
-  // After risk tolerance form submission - Generate scenarios
-  if (formData?.formName === "risk-tolerance-form") {
-    const scenarios = generateScenarios(userData, formData);
-    return {
-      content:
-        formData.mode === "zerodha"
-          ? "Perfect! I've analyzed your Zerodha portfolio data and calculated your risk tolerance automatically. Here are your personalized retirement scenarios:"
-          : "Excellent! Based on your investment portfolio details, here are your personalized retirement scenarios:",
-      component: "scenario-visualization",
-      data: { scenarios },
-      updateUserData: formData,
-      updateScenarios: scenarios,
-    };
-  }
+// After risk tolerance form submission
+if (formData?.formName === "risk-tolerance-form") {
+  const scenarios = generateScenarios(userData, formData);
+  return {
+    content:
+      formData.mode === "zerodha"
+        ? "Perfect! I've analyzed your Zerodha portfolio data and calculated your risk tolerance automatically. Here are your personalized retirement scenarios:"
+        : "Excellent! Based on your investment portfolio details, here are your personalized retirement scenarios:",
+    component: "scenario-visualization",
+    data: { scenarios },
+    updateUserData: { ...formData, formName: "scenario-visualization" }, // prevent loop
+    updateScenarios: scenarios,
+  };
+}
+
 
   // Risk tolerance specific queries
   if (
-    message.includes("risk") ||
-    message.includes("investment") ||
-    message.includes("portfolio") ||
-    message.includes("tolerance")
+    formData?.formName === "scenario-visualization"
   ) {
     if (userData.mode === "zerodha" || userData.mode === "manual") {
       return {
