@@ -12,6 +12,8 @@ from kiteconnect import KiteConnect
 from .models import ZerodhaUser
 from .models import RiskProfile
 from .stocks_list import stocks
+from django.utils import timezone
+from datetime import datetime, timedelta
 
 from config import KITE_API_KEY, KITE_API_SECRET
 
@@ -20,6 +22,24 @@ if not KITE_API_KEY or not KITE_API_SECRET:
 
 # Initialize KiteConnect with redirect URL
 kite = KiteConnect(api_key=KITE_API_KEY)
+
+def is_token_expired(zerodha_user):
+    """Check if access token is expired based on update time"""
+    if not zerodha_user.updated_at:
+        return True
+    
+    # Zerodha tokens expire after market hours (around 3:30 PM IST)
+    # We'll consider tokens older than 18 hours as expired
+    token_age = timezone.now() - zerodha_user.updated_at
+    return token_age > timedelta(hours=18)
+
+def handle_token_error(zerodha_user, error_message):
+    """Handle token expiration by clearing the stored token"""
+    if "api_key" in error_message.lower() or "access_token" in error_message.lower() or "token" in error_message.lower():
+        print(f"Token expired for user {zerodha_user.user.username}, clearing stored data")
+        zerodha_user.delete()
+        return True
+    return False
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -43,19 +63,23 @@ def kite_callback(request):
         
         print(f"Processing callback with request_token: {request_token[:10]}...")
         
-        # Check if user already has a Zerodha account linked
+        # Check if user already has a valid Zerodha account linked
         try:
             existing_user = ZerodhaUser.objects.get(user=request.user)
-            print(f"User already has Zerodha account linked: {existing_user.user_name}")
-            return Response({
-                "message": "Zerodha account already linked",
-                "profile": {
-                    "user_name": existing_user.user_name,
-                    "user_id": existing_user.zerodha_user_id,
-                    "email": existing_user.email,
-                    "broker": existing_user.broker
-                }
-            })
+            if not is_token_expired(existing_user):
+                print(f"User already has valid Zerodha account linked: {existing_user.user_name}")
+                return Response({
+                    "message": "Zerodha account already linked",
+                    "profile": {
+                        "user_name": existing_user.user_name,
+                        "user_id": existing_user.zerodha_user_id,
+                        "email": existing_user.email,
+                        "broker": existing_user.broker
+                    }
+                })
+            else:
+                print(f"Existing token expired for user {existing_user.user_name}, proceeding with re-auth")
+                existing_user.delete()  # Remove expired token
         except ZerodhaUser.DoesNotExist:
             pass  # Continue with linking process
         
@@ -179,12 +203,34 @@ def kite_profile(request):
         try:
             zerodha_user = ZerodhaUser.objects.get(user=request.user)
         except ZerodhaUser.DoesNotExist:
-            return Response({"error": "Zerodha account not linked"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({
+                "error": "Zerodha account not linked",
+                "code": "ACCOUNT_NOT_LINKED",
+                "action_required": "Please connect your Zerodha account first"
+            }, status=status.HTTP_404_NOT_FOUND)
         
-        kite.set_access_token(zerodha_user.access_token)
-        profile = kite.profile()
+        # Check if token is expired
+        if is_token_expired(zerodha_user):
+            zerodha_user.delete()
+            return Response({
+                "error": "Zerodha session has expired",
+                "code": "SESSION_EXPIRED",
+                "action_required": "Please reconnect your Zerodha account"
+            }, status=status.HTTP_401_UNAUTHORIZED)
         
-        return Response(profile)
+        try:
+            kite.set_access_token(zerodha_user.access_token)
+            profile = kite.profile()
+            return Response(profile)
+        except Exception as e:
+            # Handle token error
+            if handle_token_error(zerodha_user, str(e)):
+                return Response({
+                    "error": "Zerodha session has expired",
+                    "code": "SESSION_EXPIRED",
+                    "action_required": "Please reconnect your Zerodha account"
+                }, status=status.HTTP_401_UNAUTHORIZED)
+            raise e
         
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -325,7 +371,20 @@ def calculate_risk_tolerance(request):
             try:
                 zerodha_user = ZerodhaUser.objects.get(user=request.user)
             except ZerodhaUser.DoesNotExist:
-                return Response({"error": "Zerodha account not linked"}, status=status.HTTP_404_NOT_FOUND)
+                return Response({
+                    "error": "Zerodha account not linked",
+                    "code": "ACCOUNT_NOT_LINKED",
+                    "action_required": "Please connect your Zerodha account first"
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Check if token is expired
+            if is_token_expired(zerodha_user):
+                zerodha_user.delete()
+                return Response({
+                    "error": "Zerodha session has expired",
+                    "code": "SESSION_EXPIRED",
+                    "action_required": "Please reconnect your Zerodha account"
+                }, status=status.HTTP_401_UNAUTHORIZED)
             
             # Set access token
             kite.set_access_token(zerodha_user.access_token)
@@ -344,6 +403,13 @@ def calculate_risk_tolerance(request):
                         total_stock_value += current_value
                 
             except Exception as e:
+                # Handle token error
+                if handle_token_error(zerodha_user, str(e)):
+                    return Response({
+                        "error": "Zerodha session has expired",
+                        "code": "SESSION_EXPIRED",
+                        "action_required": "Please reconnect your Zerodha account"
+                    }, status=status.HTTP_401_UNAUTHORIZED)
                 return Response({"error": f"Failed to fetch stock holdings: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
             # Fetch mutual fund holdings from Zerodha
@@ -355,12 +421,19 @@ def calculate_risk_tolerance(request):
                     total_mf_value += mf_holding['quantity'] * mf_holding['average_price']
                     
             except Exception as e:
-                # If MF API fails, continue with 0 value
+                # Check if it's a token error
+                if handle_token_error(zerodha_user, str(e)):
+                    return Response({
+                        "error": "Zerodha session has expired",
+                        "code": "SESSION_EXPIRED",
+                        "action_required": "Please reconnect your Zerodha account"
+                    }, status=status.HTTP_401_UNAUTHORIZED)
+                # If MF API fails for other reasons, continue with 0 value
                 total_mf_value = 0
                 print(f"MF holdings fetch failed: {str(e)}")
             
             # For FD, use a hardcoded value (you can make this configurable later)
-            fd_value = request.data.get('fd_value', 500000)  # Use provided FD value or default
+            fd_value = request.data.get('fd_value')  # Use provided FD value or default
             
             # Calculate risk tolerance
             risk_score, risk_category = calc_final_risk(
