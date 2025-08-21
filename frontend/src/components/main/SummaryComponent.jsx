@@ -192,7 +192,7 @@ const SummaryComponent = () => {
       });
     if (hasValue(userData.predictedLifeExpectancy))
       fields.push({
-        label: "Predicted Life Expectancy",
+        label: userData.isSkipped ? "Estimated Life Expectancy" : "Predicted Life Expectancy",
         value: `${userData.predictedLifeExpectancy}`,
         category: "health",
       });

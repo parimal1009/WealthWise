@@ -59,6 +59,7 @@ const initialState = {
     heartDisease: 0,
     hypertension: 0,
     predictedLifeExpectancy: null,
+    isSkipped: false
   },
 };
 

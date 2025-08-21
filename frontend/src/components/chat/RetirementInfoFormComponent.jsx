@@ -296,7 +296,7 @@ const RetirementInfoFormComponent = ({ onSubmit }) => {
             onClick={handleSubmit}
             className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 flex items-center space-x-2"
           >
-            <span>Generate My Retirement Plan</span>
+            <span>Continue to Health Assessment</span>
             <ArrowRight className="h-4 w-4" />
           </button>
         </div>
