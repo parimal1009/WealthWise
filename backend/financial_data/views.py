@@ -433,7 +433,7 @@ def calculate_risk_tolerance(request):
                 print(f"MF holdings fetch failed: {str(e)}")
             
             # For FD, use a hardcoded value (you can make this configurable later)
-            fd_value = request.data.get('fd_value', 500000)  # Use provided FD value or default
+            fd_value = request.data.get('fd_value')  # Use provided FD value or default
             
             # Calculate risk tolerance
             risk_score, risk_category = calc_final_risk(
