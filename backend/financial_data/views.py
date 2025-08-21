@@ -17,15 +17,11 @@ from datetime import datetime, timedelta
 
 from config import KITE_API_KEY, KITE_API_SECRET
 
-# Initialize KiteConnect
-API_KEY = KITE_API_KEY
-API_SECRET = KITE_API_SECRET
-
-if not API_KEY or not API_SECRET:
+if not KITE_API_KEY or not KITE_API_SECRET:
     raise Exception("Please set KITE_API_KEY and KITE_API_SECRET in your environment variables.")
 
 # Initialize KiteConnect with redirect URL
-kite = KiteConnect(api_key=API_KEY)
+kite = KiteConnect(api_key=KITE_API_KEY)
 
 def is_token_expired(zerodha_user):
     """Check if access token is expired based on update time"""
@@ -113,7 +109,15 @@ def kite_callback(request):
         # Mark token as being processed
         cache.set(cache_key, True, timeout=300)  # 5 minutes timeout
         
-        data = kite.generate_session(request_token, api_secret=API_SECRET)
+        # Clean up old processed tokens (older than 10 minutes)
+        try:
+            from django.core.cache import cache
+            # This is a simple cleanup - in production, you might want a more sophisticated approach
+            # For now, we'll rely on the timeout mechanism
+        except Exception as e:
+            print(f"Cache cleanup error: {e}")
+        
+        data = kite.generate_session(request_token, api_secret=KITE_API_SECRET)
         access_token = data["access_token"]
         
         print(f"Generated access_token: {access_token[:10]}...")
@@ -129,7 +133,7 @@ def kite_callback(request):
             user=request.user,
             defaults={
                 'access_token': access_token,
-                'api_key': API_KEY,
+                'api_key': KITE_API_KEY,
                 'zerodha_user_id': profile.get('user_id'),
                 'user_name': profile.get('user_name'),
                 'email': profile.get('email'),

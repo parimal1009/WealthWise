@@ -47,7 +47,8 @@ class IncomeStatusSerializer(serializers.ModelSerializer):
             "employerType",
             "pensionScheme",
             "pensionBalance",
-            "employerContribution"
+            "employerContribution",
+            "yourContribution",
         ]
 
 
