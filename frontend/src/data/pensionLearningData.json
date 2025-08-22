@@ -23,7 +23,7 @@
           "id": 2,
           "title": "The Power of Compound Interest",
           "type": "video",
-          "duration": "20 min",
+          "duration": "5 min",
           "videoId": "svbkVpeuwE4",
           "isCompleted": false
         },
@@ -53,7 +53,7 @@
           "id": 5,
           "title": "NPS Plans Explained",
           "type": "video",
-          "duration": "30 min",
+          "duration": "9 min",
           "videoId": "sIDjCkwRBls",
           "isCompleted": false
         },
@@ -74,17 +74,17 @@
       "topics": [
         {
           "id": 7,
-          "title": "IRA vs Roth IRA: Which is Better?",
+          "title": "Employee Pension Scheme?",
           "type": "article",
           "duration": "20 min",
           "isCompleted": false
         },
         {
           "id": 8,
-          "title": "Employer Match Strategies",
+          "title": "Best Private Pension Plans",
           "type": "video",
-          "duration": "25 min",
-          "videoId": "dQw4w9WgXcQ",
+          "duration": "5 min",
+          "videoId": "QGES0q2yBwM",
           "isCompleted": false
         }
       ]
@@ -106,8 +106,8 @@
           "id": 10,
           "title": "Risk Management in Retirement Planning",
           "type": "video",
-          "duration": "35 min",
-          "videoId": "dQw4w9WgXcQ",
+          "duration": "33 min",
+          "videoId": "qCSyQ5eXP0o",
           "isCompleted": false
         }
       ]
@@ -129,8 +129,8 @@
           "id": 12,
           "title": "Withdrawal Strategies to Minimize Taxes",
           "type": "video",
-          "duration": "40 min",
-          "videoId": "dQw4w9WgXcQ",
+          "duration": "5 min",
+          "videoId": "3v9hFUq4of0",
           "isCompleted": false
         }
       ]
