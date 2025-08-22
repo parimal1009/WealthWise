@@ -1,21 +1,23 @@
 # WealthWise 💰
 **Plan Smart, Retire Confident.**
 
-A comprehensive pension optimization platform that combines AI-powered financial advice, document analysis, and predictive modeling to help users make informed retirement planning decisions.
+An AI-assisted, privacy-first platform that helps retirees and near-retirees maximize their lifetime pension benefits through smart scenario modeling, optimization, and plain-language guidance.
 
 ## 🌟 Features
+
+### 📊 Financial Analytics
+- **Data-Driven Modeling**: Verified formulas, not AI guesses.
+- **Scenario Generation**: Compares various payout options.
+- **Portfolio Analysis**: Track and analyze investment portfolios
+- **Risk Assessment**: Evaluate risk tolerance and investment preferences
+- **Retirement Planning**: Calculate retirement needs and projections
+- **Stock Market Integration**: Real-time financial data integration
 
 ### 🤖 AI-Powered Chatbot
 - **Intelligent Conversations**: Context-aware chatbot with conversation history
 - **Document Analysis**: Upload PDFs for information extraction or Q&A
 - **RAG (Retrieval-Augmented Generation)**: Semantic search through uploaded documents using Pinecone
 - **Multi-Intent Processing**: Handles questions, document extraction, and general queries
-
-### 📊 Financial Analytics
-- **Portfolio Analysis**: Track and analyze investment portfolios
-- **Risk Assessment**: Evaluate risk tolerance and investment preferences
-- **Retirement Planning**: Calculate retirement needs and projections
-- **Stock Market Integration**: Real-time financial data integration
 
 ### 🔮 Predictive Modeling
 - **Life Expectancy Prediction**: ML models for health-based life expectancy estimation
@@ -119,7 +121,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # Run FastAPI server
-python app.py
+fastapi run app.py
 ```
 
 ## ⚙️ Configuration
@@ -129,23 +131,37 @@ python app.py
 Create `.env` file in the `backend/` directory:
 
 ```env
-# Django Settings
-SECRET_KEY=your_django_secret_key
-DEBUG=True
+# ===========================================
+# ENVIRONMENT MODE (Change this to switch between dev/prod)
+# ===========================================
+ENV_MODE=dev # dev or prod
+
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
 
 # Google AI Configuration
 GOOGLE_API_KEY=your_google_api_key_here
 
-# Pinecone Configuration (for RAG)
+# ===========================================
+# DEVELOPMENT ENVIRONMENT CONFIGS
+# ===========================================
+SITE_URL_DEV=http://localhost:3000
+FASTAPI_URL_DEV=http://localhost:5000
+KITE_API_KEY_DEV=
+KITE_API_SECRET_DEV=
+
+# ===========================================
+# PRODUCTION ENVIRONMENT CONFIGS
+# ===========================================
+SITE_URL_PROD=
+FASTAPI_URL_PROD=
+KITE_API_KEY_PROD=
+KITE_API_SECRET_PROD=
+
+# Pinecone Configuration for RAG
 PINECONE_API_KEY=your_pinecone_api_key_here
 PINECONE_ENVIRONMENT=us-east-1
 PINECONE_INDEX_NAME=pension-chatbot
-
-# Database (SQLite by default)
-# For production, configure PostgreSQL/MySQL
-
-# CORS Settings
-CORS_ALLOWED_ORIGINS=http://localhost:5173
 ```
 
 ### API Keys Required
@@ -167,7 +183,7 @@ CORS_ALLOWED_ORIGINS=http://localhost:5173
 #### 1. Document Information Extraction
 ```
 User: "Extract my personal information from this PDF"
-System: Processes PDF and returns structured JSON with:
+System: Processes PDF and returns structured JSON which updates global user states:
 - Personal details (name, age, location)
 - Financial information (salary, investments)
 - Health data (BMI, medical conditions)
@@ -308,58 +324,6 @@ System: Analyzes user profile and provides personalized advice
    uvicorn app:app --host 0.0.0.0 --port 8001
    ```
 
-### Docker Deployment (Optional)
-```dockerfile
-# Example Dockerfile for backend
-FROM python:3.10
-WORKDIR /app
-COPY requirements*.txt ./
-RUN pip install -r requirements.txt -r requirements_rag.txt
-COPY . .
-CMD ["gunicorn", "wealthwise.wsgi:application"]
-```
-
-## 🧪 Testing
-
-### Backend Tests
-```bash
-cd backend
-python manage.py test
-```
-
-### Frontend Tests
-```bash
-cd frontend
-npm test
-```
-
-### API Testing
-Use tools like Postman or curl to test API endpoints:
-```bash
-# Test chatbot endpoint
-curl -X POST http://localhost:8000/api/chatbot/chat/ \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -d '{"message": "Hello", "file": null}'
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
-
-### Development Guidelines
-- Follow PEP 8 for Python code
-- Use ESLint for JavaScript/React code
-- Write comprehensive tests
-- Update documentation for new features
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🆘 Troubleshooting
 
@@ -386,20 +350,20 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
    python manage.py migrate --fake-initial
    ```
 
-### Performance Optimization
-
-- **Database**: Use connection pooling for production
-- **Caching**: Implement Redis for session and query caching
-- **CDN**: Use CDN for static assets
-- **Monitoring**: Set up application monitoring (Sentry, New Relic)
 
 ## 📞 Support
 
 For support and questions:
 - Create an issue in the repository
-- Check existing documentation
-- Review troubleshooting section
+- Contact: mailto:miranfirdausi027@gmail.com
 
 ---
+
+## Team Prestige
+
+- Onkar Mendhapurkar
+- Miran Firdausi
+- Janmejay Pandya
+- Parimal Kulkarni
 
 **Built with ❤️ for better financial planning and retirement security.**
