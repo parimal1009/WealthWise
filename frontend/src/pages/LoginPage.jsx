@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { authService } from "../services/authService";
@@ -14,21 +14,22 @@ const LoginPage = () => {
     password: "",
     first_name: "",
     last_name: "",
-    password_confirm: ""
+    password_confirm: "",
   });
   const { user, login, register } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if already logged in
-  if (user) {
-    navigate("/home");
-    return null;
-  }
+  useEffect(() => {
+    if (user) {
+      navigate("/home", { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleInputChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
@@ -53,7 +54,7 @@ const LoginPage = () => {
       if (isLogin) {
         response = await login({
           email: formData.email,
-          password: formData.password
+          password: formData.password,
         });
       } else {
         if (formData.password !== formData.password_confirm) {
@@ -66,7 +67,7 @@ const LoginPage = () => {
           password: formData.password,
           password_confirm: formData.password_confirm,
           first_name: formData.first_name,
-          last_name: formData.last_name
+          last_name: formData.last_name,
         });
       }
 
@@ -161,10 +162,9 @@ const LoginPage = () => {
                   {isLogin ? "Welcome Back" : "Create Account"}
                 </h2>
                 <p className="text-slate-600">
-                  {isLogin 
+                  {isLogin
                     ? "Access your pension optimization dashboard"
-                    : "Start optimizing your retirement benefits"
-                  }
+                    : "Start optimizing your retirement benefits"}
                 </p>
               </div>
 
@@ -304,8 +304,10 @@ const LoginPage = () => {
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
                       {isLogin ? "Signing in..." : "Creating account..."}
                     </div>
+                  ) : isLogin ? (
+                    "Sign In"
                   ) : (
-                    isLogin ? "Sign In" : "Create Account"
+                    "Create Account"
                   )}
                 </button>
               </form>
@@ -316,7 +318,9 @@ const LoginPage = () => {
                   <div className="w-full border-t border-slate-200"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-slate-500">Or continue with</span>
+                  <span className="px-2 bg-white text-slate-500">
+                    Or continue with
+                  </span>
                 </div>
               </div>
 
@@ -365,15 +369,14 @@ const LoginPage = () => {
                       password: "",
                       first_name: "",
                       last_name: "",
-                      password_confirm: ""
+                      password_confirm: "",
                     });
                   }}
                   className="text-blue-600 hover:text-blue-700 font-medium text-sm"
                 >
-                  {isLogin 
-                    ? "Don't have an account? Sign up" 
-                    : "Already have an account? Sign in"
-                  }
+                  {isLogin
+                    ? "Don't have an account? Sign up"
+                    : "Already have an account? Sign in"}
                 </button>
               </div>
 
