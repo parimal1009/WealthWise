@@ -208,6 +208,10 @@ const ChatInterface = ({ scenarios, setScenarios }) => {
     } else {
       alert("Please upload a valid PDF file");
     }
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const removeStagedFile = (index) => {
