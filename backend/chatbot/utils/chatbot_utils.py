@@ -45,7 +45,6 @@ class ChatBot:
                 "Warning: Pinecone API key not found. RAG functionality will be disabled."
             )
 
-        print("failing before embeddings")
         # Initialize embeddings model
         try:
             asyncio.get_running_loop()
@@ -55,15 +54,12 @@ class ChatBot:
             model="models/embedding-001", google_api_key=GOOGLE_API_KEY
         )
 
-        print("embeddings initialized")
-
         # Text splitter for chunking documents
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
             chunk_overlap=200,
             length_function=len,
         )
-        print("Initialized successfully")
 
     def _initialize_pinecone_index(self):
         """Initialize Pinecone index if it doesn't exist."""
@@ -107,7 +103,7 @@ class ChatBot:
         if intent.get("category") == "EXTRACT_USER_INFO_FROM_DOCUMENT":
             if file and self._is_pdf_file(file):
                 extraction_result = self._extract_user_info_from_pdf(file)
-                self._save_message_to_history(extraction_result, "assistant")
+                # self._save_message_to_history(f"{extraction_result}", "assistant")
                 return extraction_result
             response = "Please upload a PDF document to extract your information."
             self._save_message_to_history(response, "assistant")
@@ -301,27 +297,6 @@ class ChatBot:
         except Exception as e:
             print(f"Error saving message to history: {e}")
 
-    def clear_conversation_history(self):
-        """
-        Clears all conversation history for the current user.
-        """
-        try:
-            Chat.objects.filter(user_id=self.user_id).delete()
-            return True
-        except Exception as e:
-            print(f"Error clearing conversation history: {e}")
-            return False
-
-    def get_conversation_count(self) -> int:
-        """
-        Returns the total number of messages in the conversation history.
-        """
-        try:
-            return Chat.objects.filter(user_id=self.user_id).count()
-        except Exception as e:
-            print(f"Error getting conversation count: {e}")
-            return 0
-
     def _is_pdf_file(self, file) -> bool:
         """Check if the uploaded file is a PDF."""
         if hasattr(file, "name"):
@@ -445,46 +420,6 @@ class ChatBot:
             print(f"Error retrieving RAG context: {e}")
             return ""
 
-    def delete_user_documents(self) -> bool:
-        """
-        Delete all documents for the current user from Pinecone.
-
-        Returns:
-            True if successful, False otherwise
-        """
-        if not self.pc or not self.index:
-            return False
-
-        try:
-            # Delete all vectors for this user
-            self.index.delete(filter={"user_id": str(self.user_id)})
-            return True
-
-        except Exception as e:
-            print(f"Error deleting user documents: {e}")
-            return False
-
-    def get_user_document_count(self) -> int:
-        """
-        Get the number of document chunks stored for the current user.
-
-        Returns:
-            Number of document chunks
-        """
-        if not self.pc or not self.index:
-            return 0
-
-        try:
-            # Query with user filter to get count
-            stats = self.index.describe_index_stats()
-            # Note: Pinecone doesn't provide exact counts with filters in free tier
-            # This is an approximation
-            return stats.total_vector_count if stats else 0
-
-        except Exception as e:
-            print(f"Error getting document count: {e}")
-            return 0
-
     def _extract_user_info_from_pdf(self, file) -> str:
         """
         Extract user information from PDF document using LLM.
@@ -528,9 +463,7 @@ class ChatBot:
             try:
                 extracted_data = extract_json_from_text(extracted_text)
                 if extracted_data:
-                    # Format the response nicely
-                    formatted_json = json.dumps(extracted_data, indent=2)
-                    return f"Successfully extracted the following information from your document:\n\n```json\n{formatted_json}\n```\n\nYou can use this information to update your profile."
+                    return extracted_data
                 else:
                     return "I couldn't extract structured information from the document. The document might not contain the expected personal/financial information."
             except Exception as json_error:

@@ -29,14 +29,23 @@ def chat_with_bot(request):
         bot = ChatBot(chat_id=chat_id, user_id=user_id)
 
         # Pass both text + file
-        response_text = bot.reply(user_message=user_message, file=uploaded_file)
+        response = bot.reply(user_message=user_message, file=uploaded_file)
+
+        extracted_user_data = None
+        try:
+            if isinstance(response, dict):
+                extracted_user_data = response
+                response = f"I have extracted these information from your document ```json {extracted_user_data}```"
+        except Exception:
+            pass
 
         return JsonResponse(
             {
                 "success": True,
                 "chat_id": chat_id,
                 "user_id": user_id,
-                "bot_reply": response_text,
+                "extracted_user_data": extracted_user_data,
+                "bot_reply": response,
             }
         )
 

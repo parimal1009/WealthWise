@@ -108,7 +108,7 @@ const ChatInterface = ({ scenarios, setScenarios }) => {
       const token = localStorage.getItem("token");
 
       // Append files (multiple supported)
-      stagedFiles.forEach((file, index) => {
+      stagedFiles.forEach((file) => {
         formData.append("files", file);
       });
 
@@ -130,6 +130,55 @@ const ChatInterface = ({ scenarios, setScenarios }) => {
       };
 
       setMessages((prev) => [...prev, botMessage]);
+
+      // Handle extracted user data from bot response
+      if (
+        result.extracted_user_data &&
+        Object.keys(result.extracted_user_data).length > 0
+      ) {
+        console.log(
+          "Updating user data with extracted information:",
+          result.extracted_user_data
+        );
+
+        try {
+          // Update Redux state with extracted data
+          dispatch(setUserData(result.extracted_user_data));
+
+          // Create a summary of what was extracted
+          const extractedFields = Object.keys(result.extracted_user_data);
+          const fieldCount = extractedFields.length;
+
+          // Show a notification to user about successful data extraction
+          const dataUpdateMessage = {
+            id: Date.now() + 2,
+            type: "bot",
+            content: `✅ Successfully extracted and updated ${fieldCount} field${
+              fieldCount > 1 ? "s" : ""
+            } in your profile! You can view the updated information in your profile section.`,
+            timestamp: new Date(),
+          };
+
+          setTimeout(() => {
+            setMessages((prev) => [...prev, dataUpdateMessage]);
+          }, 500);
+        } catch (error) {
+          console.error("Error updating user data:", error);
+
+          // Show error message to user
+          const errorMessage = {
+            id: Date.now() + 2,
+            type: "bot",
+            content:
+              "⚠️ I extracted information from your document, but there was an issue updating your profile. Please try again or update your profile manually.",
+            timestamp: new Date(),
+          };
+
+          setTimeout(() => {
+            setMessages((prev) => [...prev, errorMessage]);
+          }, 500);
+        }
+      }
     } catch (error) {
       console.error("Error fetching bot response:", error);
       const errorMessage = {
