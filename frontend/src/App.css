@@ -1,3 +1,5 @@
+@import './styles/highlight.css';
+
 .chat-scroll {
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 #f1f5f9;
@@ -47,4 +49,4 @@
   animation-delay: 400ms;
 }
 
-@import './styles/highlight.css';
+
