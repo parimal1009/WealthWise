@@ -6,8 +6,56 @@ import {
   Users,
   ArrowRight,
 } from "lucide-react";
+import { useHighlight } from "../../context/HighlightContext";
+import { useCharacter } from "../Character/CharacterProvider";
 
 const WelcomeComponent = ({ onAction }) => {
+  const { getHighlightClass, clearAllHighlights } = useHighlight();
+  const { showCharacter, hideCharacter } = useCharacter();
+  
+  // Debug: Log the highlight class being applied
+  const highlightClass = getHighlightClass('get-started-button', 'pulse');
+  console.log('Button highlight class:', highlightClass);
+
+  const handleGetStartedClick = () => {
+    // Clear highlights immediately
+    clearAllHighlights();
+    
+    // Show goodbye messages
+    const goodbyeMessages = [
+      { pose: 'greeting1', text: 'Awesome! You\'ll automatically be guided to the next step.', position: 'bottom-right' },
+      { pose: 'greeting1', text: 'Bye!', position: 'bottom-right' }
+    ];
+
+    showCharacter({
+      pose: goodbyeMessages[0].pose,
+      message: goodbyeMessages[0].text,
+      position: 'bottom-right',
+      messages: goodbyeMessages,
+      currentIndex: 0
+    });
+
+    // Auto-progress to second message after 2 seconds
+    setTimeout(() => {
+      showCharacter({
+        pose: goodbyeMessages[1].pose,
+        message: goodbyeMessages[1].text,
+        position: 'bottom-right',
+        messages: goodbyeMessages,
+        currentIndex: 1
+      });
+    }, 2000);
+
+    // Hide character after 3.5 seconds, then proceed
+    setTimeout(() => {
+      hideCharacter();
+    }, 3500);
+
+    // Proceed to next step after character is hidden
+    setTimeout(() => {
+      onAction("I'd like to start by providing my basic information");
+    }, 4000);
+  };
   const features = [
     {
       icon: Calculator,
@@ -67,10 +115,12 @@ const WelcomeComponent = ({ onAction }) => {
 
       <div className="space-y-3">
         <button
-          onClick={() =>
-            onAction("I'd like to start by providing my basic information")
-          }
-          className="w-full btn-primary flex items-center justify-center space-x-2"
+          id="get-started-button"
+          onClick={handleGetStartedClick}
+          className={`w-full btn-primary flex items-center justify-center space-x-2 ${highlightClass}`}
+          style={{
+            transition: 'all 0.3s ease'
+          }}
         >
           <span>Get Started with Profile Setup</span>
           <ArrowRight className="h-4 w-4" />

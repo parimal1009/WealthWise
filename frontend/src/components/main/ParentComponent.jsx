@@ -1,8 +1,22 @@
 import { Outlet, useNavigate } from "react-router-dom";
 import SideNavComponent from "./SideNavComponent";
+import CharacterCompanion from "../Character/CharacterCompanion";
+import CallCassButton from "../Character/CallCassButton";
+import { CharacterProvider, useCharacter } from "../Character/CharacterProvider";
+import { HighlightProvider } from "../../context/HighlightContext";
+import useCharacterGreeting from "../../hooks/useCharacterGreeting";
+import useCharacterHighlight from "../../hooks/useCharacterHighlight";
 
-const ParentComponent = ({ userData }) => {
+// Inner component that uses the character context
+const ParentComponentContent = ({ userData }) => {
   const navigate = useNavigate();
+  const { characterState, showCharacter, hideCharacter, nextMessage, previousMessage } = useCharacter();
+
+  // Use the greeting hook
+  useCharacterGreeting(showCharacter);
+  
+  // Use character highlight hook
+  useCharacterHighlight(characterState);
 
   const handleNavClick = (page) => {
     navigate(page === "home" ? "/home" : `/home/${page}`);
@@ -21,7 +35,29 @@ const ParentComponent = ({ userData }) => {
         {/* Main Content */}
         <Outlet />
       </div>
+
+      {/* Character Companion */}
+      <CharacterCompanion
+        characterState={characterState}
+        onClose={hideCharacter}
+        onNext={nextMessage}
+        onPrevious={previousMessage}
+      />
+
+      {/* Call Cass Button */}
+      <CallCassButton />
     </div>
+  );
+};
+
+// Main component wrapped with providers
+const ParentComponent = ({ userData }) => {
+  return (
+    <HighlightProvider>
+      <CharacterProvider>
+        <ParentComponentContent userData={userData} />
+      </CharacterProvider>
+    </HighlightProvider>
   );
 };
 
