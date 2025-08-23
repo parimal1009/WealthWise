@@ -131,3 +131,6 @@ body {
     transform: translateY(0);
   }
 }
+
+/* Import highlight styles */
+@import "./styles/highlight.css";
