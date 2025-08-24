@@ -7,6 +7,7 @@ import {
   useCharacter,
 } from "../Character/CharacterProvider";
 import { HighlightProvider } from "../../context/HighlightContext";
+import { ChartHighlightProvider } from "../../context/ChartHighlightContext";
 import useCharacterGreeting from "../../hooks/useCharacterGreeting";
 import useCharacterHighlight from "../../hooks/useCharacterHighlight";
 
@@ -63,9 +64,11 @@ const ParentComponentContent = ({ userData }) => {
 const ParentComponent = ({ userData }) => {
   return (
     <HighlightProvider>
-      <CharacterProvider>
-        <ParentComponentContent userData={userData} />
-      </CharacterProvider>
+      <ChartHighlightProvider>
+        <CharacterProvider>
+          <ParentComponentContent userData={userData} />
+        </CharacterProvider>
+      </ChartHighlightProvider>
     </HighlightProvider>
   );
 };

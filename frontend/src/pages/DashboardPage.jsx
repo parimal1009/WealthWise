@@ -17,6 +17,7 @@ import RetirementChart from "../components/dashboard/RetirementChart";
 import RetirementSimulationChart from "../components/dashboard/RetirementSimulationChart";
 import PayoutComparison from "../components/dashboard/PayoutComparison";
 import HybridPayoutChart from "../components/dashboard/HybridPayoutOptions";
+import ChartExplanationIcon from "../components/ChartExplanationIcon";
 
 ChartJS.register(
   CategoryScale,
@@ -441,7 +442,8 @@ const DashboardPage = () => {
           {/* Bento Grid Layout for Charts */}
           <div className="flex flex-col gap-4 mb-3">
             {/* Income Triangle Chart - Large Card */}
-            <div className="rounded-3xl shadow-xl p-8 border border-blue-200/50 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+            <div className="col-span-12 lg:col-span-6 bg-gradient-to-br rounded-3xl shadow-xl p-8 border border-blue-200/50 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] relative">
+              <ChartExplanationIcon chartType="retirementCorpus" />
               <h3 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
                 <span className="bg-gradient-to-br from-blue-500 to-blue-600 p-2 rounded-xl mr-4 shadow-lg">
                   📈
