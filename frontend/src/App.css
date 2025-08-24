@@ -1,3 +1,5 @@
+@import './styles/highlight.css';
+
 .chat-scroll {
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 #f1f5f9;
@@ -20,7 +22,8 @@
 .chat-scroll::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
-*/ .typing-indicator {
+
+.typing-indicator {
   display: flex;
   align-items: center;
 }
@@ -45,3 +48,5 @@
 .typing-dot:nth-child(3) {
   animation-delay: 400ms;
 }
+
+
