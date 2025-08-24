@@ -26,5 +26,4 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     path("api/auth/", include("users.urls")),
     path("api/financial/", include("financial_data.urls")),
-    path("api/stocks/", include("stock_analysis.urls")),
 ]
