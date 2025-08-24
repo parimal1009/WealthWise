@@ -25,15 +25,19 @@ const RetirementChart = ({
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
 
-  // Calculate retirement data
-  const calculateRetirementData = () => {
+  // Flexible calculator for different assumptions
+  const calculateRetirementData = (
+    gRate = growthRate,
+    wRate = withdrawalRate,
+    postRate = postRetirementGrowthRate
+  ) => {
     const data = [];
     const labels = [];
 
     let corpus = initialSavings;
     const currentYear = new Date().getFullYear();
 
-    // Growth phase (current age to retirement)
+    // Growth phase
     for (let age = currentAge; age <= retirementAge; age++) {
       const year = currentYear + (age - currentAge);
       labels.push(year);
@@ -41,39 +45,50 @@ const RetirementChart = ({
       if (age === currentAge) {
         data.push(corpus);
       } else {
-        // Corpus grows with returns + annual contributions
-        corpus = corpus * (1 + growthRate / 100) + annualContribution;
+        corpus = corpus * (1 + gRate / 100) + annualContribution;
         data.push(Math.round(corpus));
       }
     }
 
-    // Withdrawal phase (retirement to life expectancy)
+    // Withdrawal phase
     let peakCorpus = corpus;
     for (let age = retirementAge + 1; age <= lifeExpectancy; age++) {
       const year = currentYear + (age - currentAge);
       labels.push(year);
 
-      // Withdrawal first, then remaining corpus grows
-      const annualWithdrawal = peakCorpus * (withdrawalRate / 100);
-      corpus =
-        (corpus - annualWithdrawal) * (1 + postRetirementGrowthRate / 100);
+      const annualWithdrawal = peakCorpus * (wRate / 100);
+      corpus = (corpus - annualWithdrawal) * (1 + postRate / 100);
 
-      corpus = Math.max(0, corpus); // avoid negatives
+      corpus = Math.max(0, corpus);
       data.push(Math.round(corpus));
     }
 
     return { labels, data };
   };
 
-  // Create or update chart
   const createChart = () => {
     if (chartInstance.current) {
       chartInstance.current.destroy();
     }
 
     const ctx = chartRef.current.getContext("2d");
-    const { labels, data } = calculateRetirementData();
-    const retirementYearIndex = retirementAge - currentAge;
+
+    // Base Case
+    const { labels, data: baseData } = calculateRetirementData();
+
+    // Best Case (slightly optimistic)
+    const { data: bestData } = calculateRetirementData(
+      growthRate + 2,
+      withdrawalRate,
+      postRetirementGrowthRate + 1
+    );
+
+    // Worst Case (pessimistic)
+    const { data: worstData } = calculateRetirementData(
+      growthRate - 2,
+      withdrawalRate + 1,
+      postRetirementGrowthRate - 1
+    );
 
     chartInstance.current = new Chart.Chart(ctx, {
       type: "line",
@@ -81,25 +96,30 @@ const RetirementChart = ({
         labels,
         datasets: [
           {
-            label: "Retirement Corpus",
-            data,
+            label: "Base Case",
+            data: baseData,
             borderColor: "#3b82f6",
             backgroundColor: "rgba(59, 130, 246, 0.1)",
-            fill: true,
+            fill: false,
             tension: 0.1,
-            pointBackgroundColor: (ctx) => {
-              return ctx.dataIndex === retirementYearIndex
-                ? "#ef4444"
-                : "#3b82f6";
-            },
-            pointBorderColor: (ctx) => {
-              return ctx.dataIndex === retirementYearIndex
-                ? "#ef4444"
-                : "#3b82f6";
-            },
-            pointRadius: (ctx) => {
-              return ctx.dataIndex === retirementYearIndex ? 6 : 3;
-            },
+          },
+          {
+            label: "Best Case (Optimistic)",
+            data: bestData,
+            borderColor: "#16a34a",
+            backgroundColor: "rgba(22, 163, 74, 0.1)",
+            fill: false,
+            borderDash: [5, 5], // dashed line for distinction
+            tension: 0.1,
+          },
+          {
+            label: "Worst Case (Pessimistic)",
+            data: worstData,
+            borderColor: "#dc2626",
+            backgroundColor: "rgba(220, 38, 38, 0.1)",
+            fill: false,
+            borderDash: [3, 3],
+            tension: 0.1,
           },
         ],
       },
@@ -147,7 +167,7 @@ const RetirementChart = ({
                   style: "currency",
                   currency: "INR",
                   maximumFractionDigits: 0,
-                  notation: "compact", // gives ₹1.2L, ₹3Cr etc.
+                  notation: "compact",
                 }).format(value);
               },
             },
@@ -165,7 +185,6 @@ const RetirementChart = ({
         chartInstance.current.destroy();
       }
     };
-    // eslint-disable-next-line
   }, [
     currentAge,
     retirementAge,
@@ -178,7 +197,6 @@ const RetirementChart = ({
 
   return (
     <div className="w-full max-w-6xl mx-auto bg-white">
-      {/* Chart */}
       <div className="bg-gray-50 p-4 rounded-lg" style={{ height: "500px" }}>
         <canvas ref={chartRef}></canvas>
       </div>

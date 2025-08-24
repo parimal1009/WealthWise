@@ -118,13 +118,8 @@ export default function PayoutComparison() {
   const data = getPayoutData();
 
   return (
-    <div className="p-6 bg-white">
+    <div>
       <div className="flex flex-col gap-2 items-center mb-4">
-        <h2 className="text-xl font-bold">
-          {mode === "tax"
-            ? "Tax Impact on Payout Options"
-            : "Monthly Net Payout Comparison (After Tax)"}
-        </h2>
         <PillToggle
           value={mode}
           onChange={setMode}
