@@ -1,6 +1,6 @@
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { User, Home, MessageCircle, BookOpen, Settings } from "lucide-react";
+import { User, Home, MessageCircle, BookOpen, Settings, Banknote } from "lucide-react";
 import { APP_NAME } from "../../utils/constants";
 import { useAuth } from "../../context/AuthContext";
 const SideNavComponent = ({ onNavClick }) => {
@@ -8,13 +8,10 @@ const SideNavComponent = ({ onNavClick }) => {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const navItems = [
-    {
-      name: "Dashboard",
-      path: "dashboard",
-      icon: <Home className="w-5 h-5" />,
-    },
+    { name: "Dashboard", path: "dashboard", icon: <Home className="w-5 h-5" />, },
     { name: "Chat", path: "home", icon: <MessageCircle className="w-5 h-5" /> },
     { name: "Learn", path: "learn", icon: <BookOpen className="w-5 h-5" /> },
+    { name: "Finance", path: "finance", icon: <Banknote className="w-5 h-5" /> },
   ];
 
   const hasAvatar = userData.avatar && userData.avatar.trim() !== "";
