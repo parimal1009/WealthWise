@@ -18,9 +18,12 @@ const CharacterCompanion = ({
       // Financial terms
       { pattern: /retirement corpus|corpus/gi, className: 'text-blue-600 font-semibold bg-blue-50 px-1 rounded' },
       { pattern: /compound interest|compound growth/gi, className: 'text-purple-600 font-semibold bg-purple-50 px-1 rounded' },
-      { pattern: /growth phase|withdrawal phase/gi, className: 'text-green-600 font-semibold bg-green-50 px-1 rounded' },
+      { pattern: /growth phase/gi, className: 'text-green-600 font-semibold bg-green-50 px-1 rounded' },
+      { pattern: /withdrawal phase/gi, className: 'text-orange-600 font-semibold bg-orange-50 px-1 rounded' },
       { pattern: /red dot|retirement year/gi, className: 'text-red-600 font-semibold bg-red-50 px-1 rounded' },
-      { pattern: /blue line/gi, className: 'text-blue-600 font-semibold bg-blue-50 px-1 rounded' },
+      { pattern: /blue line|base case/gi, className: 'text-blue-600 font-semibold bg-blue-50 px-1 rounded' },
+      { pattern: /green line|best case/gi, className: 'text-green-600 font-semibold bg-green-50 px-1 rounded' },
+      { pattern: /red line|worst case/gi, className: 'text-red-600 font-semibold bg-red-50 px-1 rounded' },
       { pattern: /green section|orange section|orange area/gi, className: 'text-orange-600 font-semibold bg-orange-50 px-1 rounded' },
       
       // Strategy terms
@@ -30,7 +33,10 @@ const CharacterCompanion = ({
       
       // Percentages and numbers
       { pattern: /\d+%|\d+\/\d+/g, className: 'text-slate-800 font-bold bg-slate-100 px-1 rounded' },
-      { pattern: /50%|60-40|80-20/gi, className: 'text-slate-800 font-bold bg-slate-100 px-1 rounded' },
+      { pattern: /50%|60-40|80-20|last 10 years/gi, className: 'text-slate-800 font-bold bg-slate-100 px-1 rounded' },
+      { pattern: /peak|peaks/gi, className: 'text-purple-600 font-semibold bg-purple-50 px-1 rounded' },
+      { pattern: /two key phases/gi, className: 'text-indigo-600 font-semibold bg-indigo-50 px-1 rounded' },
+      { pattern: /this button/gi, className: 'text-yellow-700 font-semibold bg-yellow-100 px-1 rounded' },
       
       // Emojis and special characters
       { pattern: /📈|💰|🎯/g, className: 'text-lg' }
@@ -104,7 +110,7 @@ const CharacterCompanion = ({
   };
 
   const handleClose = () => {
-    setIsAnimating(false);
+    // Don't immediately hide animation - let the goodbye message show first
     onClose && onClose();
   };
 
@@ -208,12 +214,15 @@ const CharacterCompanion = ({
         </div>
 
         {/* Character Image - Dynamic Size */}
-        <div className="flex justify-center">
+        <div className={`flex justify-center ${
+          characterState.pose === 'greeting1' ? 'items-end' : 'items-center'
+        }`}>
           <img
             src={`/avatar/${characterState.pose}.png`}
             alt="WealthWise Assistant"
-            className={`object-contain ${
-              characterState.size === 'large' ? 'w-96 h-96' : 'w-80 h-80'
+            className={`object-contain object-bottom ${
+              characterState.size === 'large' ? 'w-96 h-96' : 
+              characterState.pose === 'greeting1' ? 'w-80 h-96' : 'w-80 h-80'
             }`}
             style={{
               filter: 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2))'

@@ -20,7 +20,9 @@ export const CharacterProvider = ({ children }) => {
     message: '',
     position: 'bottom-right',
     messages: [],
-    currentIndex: 0
+    currentIndex: 0,
+    highlightIcon: false,
+    calledViaChartIcon: false
   });
 
   const showCharacter = ({ pose = 'greeting1', message, position = 'bottom-right', messages = [], currentIndex = 0 }) => {
@@ -86,24 +88,39 @@ export const CharacterProvider = ({ children }) => {
     // Reset all highlights when hiding character
     resetHighlights('retirementChart');
     
-    // Show bye message first
-    setCharacterState(prev => ({
-      ...prev,
-      message: 'Bye! Call me anytime you need help!',
-      pose: 'greeting1'
-    }));
-
-    // Hide after showing bye message
+    // Small delay to ensure character is visible before showing goodbye message
     setTimeout(() => {
-      setCharacterState({
-        isVisible: false,
-        pose: 'greeting1',
-        message: '',
-        position: 'bottom-right',
-        messages: [],
-        currentIndex: 0
+      // Show appropriate bye message based on how Cass was called
+      setCharacterState(prev => {
+        const wasCalledViaChartIcon = prev.calledViaChartIcon;
+        const goodbyeMessage = wasCalledViaChartIcon 
+          ? 'Bye Chief! If you need me again for any chart explanation, just click on this button!' 
+          : 'Bye Chief! See you later!';
+        
+        return {
+          ...prev,
+          message: goodbyeMessage,
+          pose: 'greeting1',
+          highlightIcon: wasCalledViaChartIcon,
+          messages: [{ pose: 'greeting1', text: goodbyeMessage }], // Single goodbye message
+          currentIndex: 0
+        };
       });
-    }, 2000);
+
+      // Hide after showing bye message and remove icon highlight
+      setTimeout(() => {
+        setCharacterState({
+          isVisible: false,
+          pose: 'greeting1',
+          message: '',
+          position: 'bottom-right',
+          messages: [],
+          currentIndex: 0,
+          highlightIcon: false,
+          calledViaChartIcon: false
+        });
+      }, 3000);
+    }, 100);
   };
 
   const callCharacterBack = () => {
@@ -119,7 +136,9 @@ export const CharacterProvider = ({ children }) => {
       message: messages[0].text,
       position: 'bottom-right',
       messages: messages,
-      currentIndex: 0
+      currentIndex: 0,
+      calledViaChartIcon: false,
+      highlightIcon: false
     });
   };
 
@@ -134,11 +153,18 @@ export const CharacterProvider = ({ children }) => {
       case 'retirementCorpus':
         messages = [
           { pose: 'greeting1', text: `Hey ${userName}! Let me explain this Retirement Corpus chart for you!` },
-          { pose: 'explain_right1', text: `The blue line shows how your retirement corpus grows over time through contributions and compound interest.`, highlight: 'blueLine' },
-          { pose: 'point_left1', text: `See that red dot? That marks your planned retirement year when you'll start withdrawing money.`, highlight: 'redDot' },
-          { pose: 'explain_left1', text: `There are two key phases: Growth phase (green section before retirement) and Withdrawal phase (orange section after retirement).`, highlight: 'bothPhases' },
-          { pose: 'explain_right1', text: `Notice how the withdrawal phase (orange area) shows the corpus declining as you use it for retirement expenses.`, highlight: 'withdrawalPhase' },
-          { pose: 'greeting1', text: `Pro tip: The last 10 years contribute about 50% of your total corpus due to compound growth! 📈` }
+          { pose: 'explain_right1', text: `There are three lines here – Blue is your Base Case, Green is the Best Case (when the market is in good condition), and Red is the Worst Case (when the market might not do so well).`, highlight: 'allLines' },
+          { pose: 'point_left1', text: `The Blue line shows a realistic and balanced estimate of how your retirement savings could grow and decline over time.`, highlight: 'blueLine' },
+          { pose: 'explain_left1', text: `The Green line is optimistic – it shows your money growing faster and lasting longer if things go really well.`, highlight: 'greenLine' },
+          { pose: 'explain_right1', text: `The Red line is the cautious view – it shows what happens if returns are lower or expenses are higher, like when the market isn't performing well.`, highlight: 'redLine' },
+          { pose: 'point_left1', text: `Notice that each curve has a peak – that's the point where your retirement corpus is at its highest, just before withdrawals start to reduce it.`, highlight: 'curvePeaks' },
+          { pose: 'explain_left1', text: `There are two key phases: Growth phase (before retirement) and Withdrawal phase (after retirement).`, highlight: 'bothPhases' },
+          { pose: 'explain_right1', text: `Notice how the Withdrawal phase shows the corpus declining as you use it for retirement expenses.`, highlight: 'withdrawalPhase' },
+          { pose: 'explain_left1', text: `Now here's the key difference – in the Green line, even after your lifetime there's money left over.`, highlight: 'greenLineEnd' },
+          { pose: 'explain_right1', text: `In the Red line, the money actually runs out before your lifetime ends, which is why it touches the baseline early.`, highlight: 'redLineEnd' },
+          { pose: 'explain_left1', text: `And the Blue line sits right in the middle – the optimal balance where your corpus supports you throughout retirement.`, highlight: 'blueLineEnd' },
+          { pose: 'greeting1', text: `Pro tip: The last 10 years before retirement contribute about 50% of your total corpus due to the power of compounding! 📈`, highlight: 'lastTenYears' },
+          { pose: 'greeting1', text: `So in short – Blue is optimal, Green leaves extra, and Red means running out early. This helps you prepare for any future scenario! 🚀` }
         ];
         break;
       case 'payoutStrategy':
@@ -177,7 +203,9 @@ export const CharacterProvider = ({ children }) => {
       message: messages[0].text,
       position: 'bottom-right',
       messages: messages,
-      currentIndex: 0
+      currentIndex: 0,
+      calledViaChartIcon: true,
+      highlightIcon: false
     });
   };
 
