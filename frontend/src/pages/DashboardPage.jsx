@@ -16,6 +16,7 @@ import { Line, Bar, Doughnut } from "react-chartjs-2";
 import RetirementChart from "../components/dashboard/RetirementChart";
 import RetirementSimulationChart from "../components/dashboard/RetirementSimulationChart";
 import PayoutComparison from "../components/dashboard/PayoutComparison";
+import HybridPayoutChart from "../components/dashboard/HybridPayoutOptions";
 
 ChartJS.register(
   CategoryScale,
@@ -337,7 +338,7 @@ const DashboardPage = () => {
           </div>
 
           {/* Enhanced KPI Inputs */}
-          <div className="bg-gradient-to-r rounded-xl p-8 mb-3 col-span-12 lg:col-span-8 shadow-xl border border-blue-200/50 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+          <div className="bg-gradient-to-r rounded-xl p-8 mb-3 col-span-12 lg:col-span-8 shadow-xl border border-blue-200/50 transition-all duration-300">
             <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
               <span className="bg-blue-100 p-2 rounded-full mr-3">👤</span>
               Personal Information
@@ -438,9 +439,9 @@ const DashboardPage = () => {
           </div>
 
           {/* Bento Grid Layout for Charts */}
-          <div className="grid grid-cols-12 gap-4 mb-3 auto-rows-fr">
+          <div className="flex flex-col gap-4 mb-3">
             {/* Income Triangle Chart - Large Card */}
-            <div className="col-span-12 lg:col-span-6 bg-gradient-to-br rounded-3xl shadow-xl p-8 border border-blue-200/50 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+            <div className="rounded-3xl shadow-xl p-8 border border-blue-200/50 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
               <h3 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
                 <span className="bg-gradient-to-br from-blue-500 to-blue-600 p-2 rounded-xl mr-4 shadow-lg">
                   📈
@@ -448,6 +449,7 @@ const DashboardPage = () => {
                 Retirement Corpus Projection
               </h3>
               <RetirementChart />
+              <HybridPayoutChart />
               <div className="bg-white/70 backdrop-blur-sm rounded-2xl border border-blue-200/30">
                 <p className="text-blue-800 text-sm leading-relaxed">
                   <strong>AI Insight:</strong> Your income peaks around age{" "}
@@ -459,32 +461,19 @@ const DashboardPage = () => {
             </div>
 
             {/* Optimal Retirement Age - Medium Card */}
-            <div className="col-span-12 lg:col-span-6 bg-gradient-to-br rounded-3xl shadow-xl p-6 border border-green-200/50 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
-              <div className="h-64 mb-4">
+            <div className="rounded-3xl shadow-xl p-6 border border-green-200/50 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+              <div className="mb-4">
+                <h3 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                  <span className="bg-gradient-to-br from-blue-500 to-blue-600 p-2 rounded-xl mr-4 shadow-lg">
+                    📈
+                  </span>
+                  Payout Comparison
+                </h3>
                 <PayoutComparison />
               </div>
             </div>
 
-            {/* Payout Options - Medium Card */}
-            <div className="col-span-12 lg:col-span-4 bg-gradient-to-br rounded-3xl shadow-xl p-6 border border-purple-200/50 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
-              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                <span className="bg-gradient-to-br from-purple-500 to-purple-600 p-2 rounded-xl mr-3 shadow-lg">
-                  💰
-                </span>
-                Payout Strategy Analysis
-              </h3>
-              <div className="h-72 mb-4">
-                <Doughnut data={generatePayoutData()} options={pieOptions} />
-              </div>
-              <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-purple-200/30">
-                <p className="text-purple-800 text-sm leading-relaxed">
-                  <strong>AI Insight:</strong> 60% annuity + 40% lump-sum offers
-                  optimal tax efficiency and liquidity.
-                </p>
-              </div>
-            </div>
-
-            <div className="col-span-12 lg:col-span-8 bg-gradient-to-br rounded-3xl shadow-xl p-6 border border-green-200/50 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+            <div className="rounded-3xl shadow-xl p-6 border border-green-200/50 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
               <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
                 <span className="bg-gradient-to-br from-green-500 to-green-600 p-2 rounded-xl mr-3 shadow-lg">
                   🎯
@@ -498,49 +487,6 @@ const DashboardPage = () => {
                 <p className="text-green-800 text-xs leading-relaxed">
                   <strong>AI:</strong> Age 62 provides maximum lifetime
                   benefits. Each additional year increases corpus by 12-15%.
-                </p>
-              </div>
-            </div>
-
-            {/* Tax Optimization - Medium Card */}
-            <div className="col-span-12 lg:col-span-6 bg-gradient-to-br rounded-3xl shadow-xl p-6 border border-amber-200/50 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
-              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                <span className="bg-gradient-to-br from-amber-500 to-yellow-500 p-2 rounded-xl mr-3 shadow-lg">
-                  🛡️
-                </span>
-                Tax Savings Strategy
-              </h3>
-              <div className="h-72 mb-4">
-                <Bar data={generateTaxSavingsData()} options={chartOptions} />
-              </div>
-              <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-amber-200/30">
-                <p className="text-amber-800 text-sm leading-relaxed">
-                  <strong>AI Insight:</strong> Save ₹
-                  {calculations.taxSavingsAnnual}K annually through strategic
-                  EPF, NPS, PPF planning.
-                </p>
-              </div>
-            </div>
-
-            {/* Corpus Growth Chart - Full Width */}
-            <div className="col-span-12 bg-gradient-to-br  rounded-3xl shadow-xl p-8 border border-teal-200/50 hover:shadow-2xl transition-all duration-300 hover:scale-[1.01]">
-              <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                <span className="bg-gradient-to-br from-teal-500 to-cyan-600 p-3 rounded-2xl mr-4 shadow-lg">
-                  🌱
-                </span>
-                Pension Corpus Growth Projection
-              </h3>
-              <div className="h-80 mb-4">
-                <Line
-                  data={generateCorpusGrowthData()}
-                  options={chartOptions}
-                />
-              </div>
-              <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-5 border border-teal-200/30">
-                <p className="text-teal-800 text-sm leading-relaxed">
-                  <strong>AI Insight:</strong> Your corpus grows exponentially
-                  through compound interest. The last 10 years contribute 50% of
-                  your total retirement corpus. Start early for maximum benefit!
                 </p>
               </div>
             </div>

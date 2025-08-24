@@ -2,7 +2,10 @@ import { Outlet, useNavigate } from "react-router-dom";
 import SideNavComponent from "./SideNavComponent";
 import CharacterCompanion from "../Character/CharacterCompanion";
 import CallCassButton from "../Character/CallCassButton";
-import { CharacterProvider, useCharacter } from "../Character/CharacterProvider";
+import {
+  CharacterProvider,
+  useCharacter,
+} from "../Character/CharacterProvider";
 import { HighlightProvider } from "../../context/HighlightContext";
 import useCharacterGreeting from "../../hooks/useCharacterGreeting";
 import useCharacterHighlight from "../../hooks/useCharacterHighlight";
@@ -10,11 +13,17 @@ import useCharacterHighlight from "../../hooks/useCharacterHighlight";
 // Inner component that uses the character context
 const ParentComponentContent = ({ userData }) => {
   const navigate = useNavigate();
-  const { characterState, showCharacter, hideCharacter, nextMessage, previousMessage } = useCharacter();
+  const {
+    characterState,
+    showCharacter,
+    hideCharacter,
+    nextMessage,
+    previousMessage,
+  } = useCharacter();
 
   // Use the greeting hook
   useCharacterGreeting(showCharacter);
-  
+
   // Use character highlight hook
   useCharacterHighlight(characterState);
 
@@ -37,15 +46,15 @@ const ParentComponentContent = ({ userData }) => {
       </div>
 
       {/* Character Companion */}
-      <CharacterCompanion
+      {/* <CharacterCompanion
         characterState={characterState}
         onClose={hideCharacter}
         onNext={nextMessage}
         onPrevious={previousMessage}
-      />
+      /> */}
 
       {/* Call Cass Button */}
-      <CallCassButton />
+      {/* <CallCassButton /> */}
     </div>
   );
 };

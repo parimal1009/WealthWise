@@ -70,10 +70,10 @@ const RetirementHeatmap = ({
         <span>Low</span>
         <div className="flex space-x-1">
           <div className="w-4 h-4 bg-blue-200"></div>
-          <div className="w-4 h-4 bg-yellow-400"></div>
-          <div className="w-4 h-4 bg-orange-400"></div>
-          <div className="w-4 h-4 bg-red-400"></div>
-          <div className="w-4 h-4 bg-red-600"></div>
+          <div className="w-4 h-4 bg-blue-300"></div>
+          <div className="w-4 h-4 bg-blue-500"></div>
+          <div className="w-4 h-4 bg-blue-700"></div>
+          <div className="w-4 h-4 bg-blue-900"></div>
         </div>
         <span>High</span>
       </div>
