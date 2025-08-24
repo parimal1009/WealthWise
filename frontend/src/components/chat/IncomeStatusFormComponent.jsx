@@ -63,6 +63,35 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
       }));
     }
 
+    // Auto-calculate EPF contributions when pension scheme is EPF or salary changes
+    if (
+      field === "pensionScheme" &&
+      value === "epf" &&
+      formData.currentSalary
+    ) {
+      const epfContribution = Math.min(
+        15000,
+        Math.round(formData.currentSalary * 0.12)
+      );
+      setFormData((prev) => ({
+        ...prev,
+        [field]: processedValue,
+        employerContribution: epfContribution,
+        yourContribution: epfContribution,
+      }));
+    } else if (field === "currentSalary" && formData.pensionScheme === "epf") {
+      const epfContribution = Math.min(
+        15000,
+        Math.round(processedValue * 0.12)
+      );
+      setFormData((prev) => ({
+        ...prev,
+        [field]: processedValue,
+        employerContribution: epfContribution,
+        yourContribution: epfContribution,
+      }));
+    }
+
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: null }));
     }
@@ -87,9 +116,14 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
       newErrors.pensionScheme = "Please select your pension scheme";
     }
 
-    // Pension Balance required only if NOT government
+    // Pension Balance required only if NOT (government with OPS)
     if (
-      formData.employerType !== "government" &&
+      !(
+        formData.employerType === "government" &&
+        formData.pensionScheme === "ops"
+      ) &&
+      formData.employerType !== "" &&
+      formData.pensionScheme !== "" &&
       (!formData.pensionBalance || formData.pensionBalance < 0)
     ) {
       newErrors.pensionBalance = "Please enter a valid pension balance";
@@ -108,7 +142,8 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
         const normalizedData = {
           ...formData,
           pensionBalance:
-            formData.employerType === "government"
+            formData.employerType === "government" &&
+            formData.pensionScheme === "ops"
               ? 0
               : formData.pensionBalance || 0,
           employerContribution:
@@ -116,7 +151,8 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
               ? formData.employerContribution || 0
               : 0,
           yourContribution:
-            formData.employerType === "government"
+            formData.employerType === "government" &&
+            formData.pensionScheme === "ops"
               ? 0
               : formData.yourContribution || 0,
         };
@@ -166,8 +202,9 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
             </label>
             <input
               type="number"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.currentSalary ? "border-red-500" : "border-gray-300"
-                }`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.currentSalary ? "border-red-500" : "border-gray-300"
+              }`}
               value={formData.currentSalary}
               onChange={(e) => handleChange("currentSalary", e.target.value)}
               placeholder="e.g., 150000"
@@ -195,8 +232,9 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
             </label>
             <input
               type="number"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.yearsOfService ? "border-red-500" : "border-gray-300"
-                }`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.yearsOfService ? "border-red-500" : "border-gray-300"
+              }`}
               value={formData.yearsOfService}
               onChange={(e) => handleChange("yearsOfService", e.target.value)}
               placeholder="e.g., 15"
@@ -224,8 +262,9 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
               Employer Type *
             </label>
             <select
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.employerType ? "border-red-500" : "border-gray-300"
-                }`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.employerType ? "border-red-500" : "border-gray-300"
+              }`}
               value={formData.employerType}
               onChange={(e) => handleChange("employerType", e.target.value)}
             >
@@ -248,8 +287,9 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
               Pension Scheme *
             </label>
             <select
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.pensionScheme ? "border-red-500" : "border-gray-300"
-                }`}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.pensionScheme ? "border-red-500" : "border-gray-300"
+              }`}
               value={formData.pensionScheme}
               onChange={(e) => handleChange("pensionScheme", e.target.value)}
               disabled={!formData.employerType}
@@ -269,51 +309,31 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
             )}
           </div>
 
-          {/* Pension Balance - show only if NOT government */}
-          {formData.employerType !== "government" && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Current Pension Balance (₹) *
-              </label>
-              <input
-                type="number"
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.pensionBalance ? "border-red-500" : "border-gray-300"
-                  }`}
-                value={formData.pensionBalance}
-                onChange={(e) => handleChange("pensionBalance", e.target.value)}
-                placeholder="e.g., 2000000"
-              />
-              {errors.pensionBalance && (
-                <p className="mt-1 text-xs text-red-600 flex items-center">
-                  <AlertCircle className="h-3 w-3 mr-1" />
-                  {errors.pensionBalance}
-                </p>
-              )}
-              {formData.pensionBalance && (
-                <p className="mt-1 text-xs text-primary-600">
-                  <span className="font-medium">
-                    {numberToWords(formData.pensionBalance)}
-                  </span>{" "}
-                  Rupees
-                </p>
-              )}
-            </div>
-          )}
-
           {/* Employer Contribution - show only if Private */}
           {formData.employerType === "private" && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Monthly Employer Contribution (₹)
+                {formData.pensionScheme === "epf" && (
+                  <span className="text-xs text-blue-600 ml-1">
+                    (Auto-calculated: 12% of salary, max ₹15,000)
+                  </span>
+                )}
               </label>
               <input
                 type="number"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                  formData.pensionScheme === "epf"
+                    ? "bg-gray-100 cursor-not-allowed"
+                    : ""
+                }`}
                 value={formData.employerContribution}
                 onChange={(e) =>
                   handleChange("employerContribution", e.target.value)
                 }
                 placeholder="e.g., 15000"
+                readOnly={formData.pensionScheme === "epf"}
+                disabled={formData.pensionScheme === "epf"}
               />
               {formData.employerContribution && (
                 <p className="mt-1 text-xs text-primary-600">
@@ -326,31 +346,84 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
             </div>
           )}
 
-          {/* Your Contribution - show if NOT government */}
-          {formData.employerType !== "government" && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Your Contribution (₹)
-              </label>
-              <input
-                type="number"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                value={formData.yourContribution}
-                onChange={(e) =>
-                  handleChange("yourContribution", e.target.value)
-                }
-                placeholder="e.g., 10000"
-              />
-              {formData.yourContribution && (
-                <p className="mt-1 text-xs text-primary-600">
-                  <span className="font-medium">
-                    {numberToWords(formData.yourContribution)}
-                  </span>{" "}
-                  Rupees
-                </p>
-              )}
-            </div>
-          )}
+          {/* Your Contribution - show if NOT (government with OPS) */}
+          {!(
+            formData.employerType === "government" &&
+            formData.pensionScheme === "ops"
+          ) &&
+            formData.employerType !== "" && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Your Contribution (₹)
+                  {formData.pensionScheme === "epf" && (
+                    <span className="text-xs text-blue-600 ml-1">
+                      (Auto-calculated: 12% of salary, max ₹15,000)
+                    </span>
+                  )}
+                </label>
+                <input
+                  type="number"
+                  className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                    formData.pensionScheme === "epf"
+                      ? "bg-gray-100 cursor-not-allowed"
+                      : ""
+                  }`}
+                  value={formData.yourContribution}
+                  onChange={(e) =>
+                    handleChange("yourContribution", e.target.value)
+                  }
+                  placeholder="e.g., 10000"
+                  readOnly={formData.pensionScheme === "epf"}
+                  disabled={formData.pensionScheme === "epf"}
+                />
+                {formData.yourContribution && (
+                  <p className="mt-1 text-xs text-primary-600">
+                    <span className="font-medium">
+                      {numberToWords(formData.yourContribution)}
+                    </span>{" "}
+                    Rupees
+                  </p>
+                )}
+              </div>
+            )}
+
+          {/* Pension Balance - show if NOT (government with OPS) */}
+          {!(
+            formData.employerType === "government" &&
+            formData.pensionScheme === "ops"
+          ) &&
+            formData.employerType !== "" && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Current Pension Balance (₹) *
+                </label>
+                <input
+                  type="number"
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                    errors.pensionBalance ? "border-red-500" : "border-gray-300"
+                  }`}
+                  value={formData.pensionBalance}
+                  onChange={(e) =>
+                    handleChange("pensionBalance", e.target.value)
+                  }
+                  placeholder="e.g., 2000000"
+                />
+                {errors.pensionBalance && (
+                  <p className="mt-1 text-xs text-red-600 flex items-center">
+                    <AlertCircle className="h-3 w-3 mr-1" />
+                    {errors.pensionBalance}
+                  </p>
+                )}
+                {formData.pensionBalance && (
+                  <p className="mt-1 text-xs text-primary-600">
+                    <span className="font-medium">
+                      {numberToWords(formData.pensionBalance)}
+                    </span>{" "}
+                    Rupees
+                  </p>
+                )}
+              </div>
+            )}
         </div>
 
         {/* Information Note */}
@@ -368,6 +441,10 @@ const IncomeStatusFormComponent = ({ onSubmit }) => {
             </li>
             <li>
               • EPF: Fixed returns with tax benefits, withdrawable after 5 years
+            </li>
+            <li>
+              • EPF contributions are automatically calculated at 12% of monthly
+              salary for both employer and employee (capped at ₹15,000)
             </li>
           </ul>
         </div>

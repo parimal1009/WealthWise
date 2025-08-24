@@ -93,9 +93,7 @@ class ChatBot:
         intent = self._get_message_intent(user_message, has_uploaded_document)
 
         if intent.get("category") == "INCOMPLETE_REQUEST":
-            response = (
-                "I couldn't understand that. Could you please rephrase it clearly?"
-            )
+            response = "Can you elaborate on it or try rephrasing it?"
             self._save_message_to_history(response, "assistant")
             return response
 

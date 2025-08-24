@@ -29,8 +29,7 @@ def chat_with_bot(request):
         bot = ChatBot(chat_id=chat_id, user_id=user_id)
 
         # Pass both text + file
-        # response = bot.reply(user_message=user_message, file=uploaded_file)
-        response = "Message"
+        response = bot.reply(user_message=user_message, file=uploaded_file)
 
         extracted_user_data = None
         try:
