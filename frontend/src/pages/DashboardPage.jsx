@@ -13,6 +13,9 @@ import {
   Legend,
 } from "chart.js";
 import { Line, Bar, Doughnut } from "react-chartjs-2";
+import RetirementChart from "../components/dashboard/RetirementChart";
+import RetirementSimulationChart from "../components/dashboard/RetirementSimulationChart";
+import PayoutComparison from "../components/dashboard/PayoutComparison";
 
 ChartJS.register(
   CategoryScale,
@@ -47,20 +50,26 @@ const DashboardPage = () => {
     const annualIncome = monthlyIncome * 12;
 
     // Calculate corpus needed
-    const futureValueExpense = retirementExpense * Math.pow(1 + inflationRate / 100, yearsToRetirement);
-    const requiredCorpus = (futureValueExpense * 12 * retirementYears) / Math.pow(1.06, yearsToRetirement);
+    const futureValueExpense =
+      retirementExpense * Math.pow(1 + inflationRate / 100, yearsToRetirement);
+    const requiredCorpus =
+      (futureValueExpense * 12 * retirementYears) /
+      Math.pow(1.06, yearsToRetirement);
 
     // Calculate required monthly SIP
     const monthlyReturn = 0.12 / 12; // 12% annual return
     const monthsToRetirement = yearsToRetirement * 12;
-    const requiredMonthlySIP = requiredCorpus * monthlyReturn / (Math.pow(1 + monthlyReturn, monthsToRetirement) - 1);
+    const requiredMonthlySIP =
+      (requiredCorpus * monthlyReturn) /
+      (Math.pow(1 + monthlyReturn, monthsToRetirement) - 1);
 
     // Tax savings calculation
-    const taxSavingsAnnual = Math.min(annualIncome * 0.25, 200000) * (taxBracket / 100);
+    const taxSavingsAnnual =
+      Math.min(annualIncome * 0.25, 200000) * (taxBracket / 100);
     const lifetimeTaxSavings = taxSavingsAnnual * yearsToRetirement;
 
     // Income replacement ratio
-    const replacementRatio = (requiredMonthlySIP * 12 / annualIncome) * 100;
+    const replacementRatio = ((requiredMonthlySIP * 12) / annualIncome) * 100;
 
     return {
       requiredCorpus: Math.round(requiredCorpus / 100000) / 10, // In Crores
@@ -70,21 +79,36 @@ const DashboardPage = () => {
       lifetimeTaxSavings: Math.round(lifetimeTaxSavings / 100000) / 10, // In Lakhs
       replacementRatio: Math.round(replacementRatio),
       yearsToRetirement,
-      retirementYears
+      retirementYears,
     };
-  }, [currentAge, monthlyIncome, retirementAge, lifeExpectancy, retirementExpense, inflationRate, taxBracket]);
+  }, [
+    currentAge,
+    monthlyIncome,
+    retirementAge,
+    lifeExpectancy,
+    retirementExpense,
+    inflationRate,
+    taxBracket,
+  ]);
 
   // ---------- Chart Data Generation ----------
   const generateIncomeTriangleData = () => {
-    const ages = Array.from({ length: lifeExpectancy - currentAge }, (_, i) => currentAge + i);
-    const incomes = ages.map(age => {
+    const ages = Array.from(
+      { length: lifeExpectancy - currentAge },
+      (_, i) => currentAge + i
+    );
+    const incomes = ages.map((age) => {
       if (age < retirementAge) {
         // Growing income until retirement
         const growthFactor = Math.min(1 + (age - currentAge) * 0.05, 2.5);
         return monthlyIncome * growthFactor;
       } else {
         // Pension income after retirement
-        return calculations.monthlyPension * 1000 * Math.pow(0.98, age - retirementAge);
+        return (
+          calculations.monthlyPension *
+          1000 *
+          Math.pow(0.98, age - retirementAge)
+        );
       }
     });
 
@@ -92,21 +116,21 @@ const DashboardPage = () => {
       labels: ages,
       datasets: [
         {
-          label: 'Monthly Income (₹)',
+          label: "Monthly Income (₹)",
           data: incomes,
-          borderColor: 'rgb(59, 130, 246)',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderColor: "rgb(59, 130, 246)",
+          backgroundColor: "rgba(59, 130, 246, 0.1)",
           fill: true,
           tension: 0.4,
           pointRadius: 1,
-        }
-      ]
+        },
+      ],
     };
   };
 
   const generateBenefitAgeData = () => {
     const retirementAges = [58, 60, 62, 65, 67];
-    const benefits = retirementAges.map(age => {
+    const benefits = retirementAges.map((age) => {
       const workingYears = age - currentAge;
       const retirementYears = lifeExpectancy - age;
       const corpus = calculations.requiredMonthlySIP * 12 * workingYears * 1.5;
@@ -114,131 +138,150 @@ const DashboardPage = () => {
     });
 
     return {
-      labels: retirementAges.map(age => `Age ${age}`),
+      labels: retirementAges.map((age) => `Age ${age}`),
       datasets: [
         {
-          label: 'Lifetime Benefits (₹ Crores)',
+          label: "Lifetime Benefits (₹ Crores)",
           data: benefits,
           backgroundColor: benefits.map((_, idx) =>
-            idx === 2 ? 'rgba(34, 197, 94, 0.8)' : 'rgba(59, 130, 246, 0.8)'
+            idx === 2 ? "rgba(34, 197, 94, 0.8)" : "rgba(59, 130, 246, 0.8)"
           ),
           borderColor: benefits.map((_, idx) =>
-            idx === 2 ? 'rgb(34, 197, 94)' : 'rgb(59, 130, 246)'
+            idx === 2 ? "rgb(34, 197, 94)" : "rgb(59, 130, 246)"
           ),
-          borderWidth: 2
-        }
-      ]
+          borderWidth: 2,
+        },
+      ],
     };
   };
 
   const generatePayoutData = () => {
     const baseValue = calculations.requiredCorpus;
     return {
-      labels: ['100% Annuity', '60% Annuity + 40% Lump-sum', '80% Lump-sum + 20% Annuity'],
+      labels: [
+        "100% Annuity",
+        "60% Annuity + 40% Lump-sum",
+        "80% Lump-sum + 20% Annuity",
+      ],
       datasets: [
         {
           data: [baseValue * 1.1, baseValue * 1.2, baseValue * 0.9],
           backgroundColor: [
-            'rgba(59, 130, 246, 0.8)',
-            'rgba(34, 197, 94, 0.8)',
-            'rgba(251, 191, 36, 0.8)'
+            "rgba(59, 130, 246, 0.8)",
+            "rgba(34, 197, 94, 0.8)",
+            "rgba(251, 191, 36, 0.8)",
           ],
           borderColor: [
-            'rgb(59, 130, 246)',
-            'rgb(34, 197, 94)',
-            'rgb(251, 191, 36)'
+            "rgb(59, 130, 246)",
+            "rgb(34, 197, 94)",
+            "rgb(251, 191, 36)",
           ],
-          borderWidth: 2
-        }
-      ]
+          borderWidth: 2,
+        },
+      ],
     };
   };
 
   const generateTaxSavingsData = () => {
-    const withoutPlanning = (monthlyIncome * 12) * (taxBracket / 100) / 100000;
+    const withoutPlanning = (monthlyIncome * 12 * (taxBracket / 100)) / 100000;
     const withEPF = withoutPlanning * 0.85;
     const withNPS = withoutPlanning * 0.7;
     const optimized = withoutPlanning * 0.55;
 
     return {
-      labels: ['No Planning', 'EPF Only', 'EPF + NPS', 'Optimized'],
+      labels: ["No Planning", "EPF Only", "EPF + NPS", "Optimized"],
       datasets: [
         {
-          label: 'Annual Tax (₹ Lakhs)',
+          label: "Annual Tax (₹ Lakhs)",
           data: [withoutPlanning, withEPF, withNPS, optimized],
-          backgroundColor: 'rgba(239, 68, 68, 0.8)',
-          borderColor: 'rgb(239, 68, 68)',
-          borderWidth: 2
+          backgroundColor: "rgba(239, 68, 68, 0.8)",
+          borderColor: "rgb(239, 68, 68)",
+          borderWidth: 2,
         },
         {
-          label: 'Tax Saved (₹ Lakhs)',
-          data: [0, withoutPlanning - withEPF, withoutPlanning - withNPS, withoutPlanning - optimized],
-          backgroundColor: 'rgba(34, 197, 94, 0.8)',
-          borderColor: 'rgb(34, 197, 94)',
-          borderWidth: 2
-        }
-      ]
+          label: "Tax Saved (₹ Lakhs)",
+          data: [
+            0,
+            withoutPlanning - withEPF,
+            withoutPlanning - withNPS,
+            withoutPlanning - optimized,
+          ],
+          backgroundColor: "rgba(34, 197, 94, 0.8)",
+          borderColor: "rgb(34, 197, 94)",
+          borderWidth: 2,
+        },
+      ],
     };
   };
 
   const generateCorpusGrowthData = () => {
-    const years = Array.from({ length: calculations.yearsToRetirement }, (_, i) => currentAge + i);
-    const npsCorpus = years.map((_, i) => (calculations.requiredMonthlySIP * 0.4 * 12 * (i + 1) * 1.12) / 10000000);
-    const epfCorpus = years.map((_, i) => (calculations.requiredMonthlySIP * 0.6 * 12 * (i + 1) * 1.085) / 10000000);
+    const years = Array.from(
+      { length: calculations.yearsToRetirement },
+      (_, i) => currentAge + i
+    );
+    const npsCorpus = years.map(
+      (_, i) =>
+        (calculations.requiredMonthlySIP * 0.4 * 12 * (i + 1) * 1.12) / 10000000
+    );
+    const epfCorpus = years.map(
+      (_, i) =>
+        (calculations.requiredMonthlySIP * 0.6 * 12 * (i + 1) * 1.085) /
+        10000000
+    );
 
     return {
       labels: years,
       datasets: [
         {
-          label: 'NPS Corpus (₹ Cr)',
+          label: "NPS Corpus (₹ Cr)",
           data: npsCorpus,
-          borderColor: 'rgb(59, 130, 246)',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderColor: "rgb(59, 130, 246)",
+          backgroundColor: "rgba(59, 130, 246, 0.1)",
           fill: false,
-          tension: 0.1
+          tension: 0.1,
         },
         {
-          label: 'EPF Corpus (₹ Cr)',
+          label: "EPF Corpus (₹ Cr)",
           data: epfCorpus,
-          borderColor: 'rgb(34, 197, 94)',
-          backgroundColor: 'rgba(34, 197, 94, 0.1)',
+          borderColor: "rgb(34, 197, 94)",
+          backgroundColor: "rgba(34, 197, 94, 0.1)",
           fill: false,
-          tension: 0.1
-        }
-      ]
+          tension: 0.1,
+        },
+      ],
     };
   };
 
   // ---------- Scenario Data ----------
   const scenarioData = {
     base: {
-      name: 'Base Case',
+      name: "Base Case",
       corpus: `₹${calculations.requiredCorpus} Cr`,
       pension: `₹${calculations.monthlyPension}K`,
       tax: `₹${calculations.lifetimeTaxSavings} L`,
-      ratio: `${calculations.replacementRatio}%`
+      ratio: `${calculations.replacementRatio}%`,
     },
     aggressive: {
-      name: 'Aggressive',
+      name: "Aggressive",
       corpus: `₹${Math.round(calculations.requiredCorpus * 1.4 * 10) / 10} Cr`,
       pension: `₹${Math.round(calculations.monthlyPension * 1.4)}K`,
       tax: `₹${Math.round(calculations.lifetimeTaxSavings * 1.1 * 10) / 10} L`,
-      ratio: `${Math.min(calculations.replacementRatio * 1.3, 100)}%`
+      ratio: `${Math.min(calculations.replacementRatio * 1.3, 100)}%`,
     },
     conservative: {
-      name: 'Conservative',
+      name: "Conservative",
       corpus: `₹${Math.round(calculations.requiredCorpus * 0.7 * 10) / 10} Cr`,
       pension: `₹${Math.round(calculations.monthlyPension * 0.7)}K`,
       tax: `₹${Math.round(calculations.lifetimeTaxSavings * 0.8 * 10) / 10} L`,
-      ratio: `${Math.round(calculations.replacementRatio * 0.7)}%`
+      ratio: `${Math.round(calculations.replacementRatio * 0.7)}%`,
     },
     earlyRetirement: {
-      name: 'Early Retirement (55)',
+      name: "Early Retirement (55)",
       corpus: `₹${Math.round(calculations.requiredCorpus * 0.6 * 10) / 10} Cr`,
       pension: `₹${Math.round(calculations.monthlyPension * 0.6)}K`,
       tax: `₹${Math.round(calculations.lifetimeTaxSavings * 0.7 * 10) / 10} L`,
-      ratio: `${Math.round(calculations.replacementRatio * 0.6)}%`
-    }
+      ratio: `${Math.round(calculations.replacementRatio * 0.6)}%`,
+    },
   };
 
   const chartOptions = {
@@ -246,26 +289,26 @@ const DashboardPage = () => {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'bottom',
+        position: "bottom",
         labels: {
           usePointStyle: true,
-          padding: 20
-        }
-      }
+          padding: 20,
+        },
+      },
     },
     scales: {
       y: {
         beginAtZero: true,
         grid: {
-          color: 'rgba(0, 0, 0, 0.05)'
-        }
+          color: "rgba(0, 0, 0, 0.05)",
+        },
       },
       x: {
         grid: {
-          color: 'rgba(0, 0, 0, 0.05)'
-        }
-      }
-    }
+          color: "rgba(0, 0, 0, 0.05)",
+        },
+      },
+    },
   };
 
   const pieOptions = {
@@ -273,13 +316,13 @@ const DashboardPage = () => {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'bottom',
+        position: "bottom",
         labels: {
           usePointStyle: true,
-          padding: 15
-        }
-      }
-    }
+          padding: 15,
+        },
+      },
+    },
   };
 
   return (
@@ -300,7 +343,6 @@ const DashboardPage = () => {
               Personal Information
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-
               <div className="bg-white rounded-lg p-4 shadow-sm border-l-4 border-green-500">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Monthly Income (₹)
@@ -308,7 +350,9 @@ const DashboardPage = () => {
                 <input
                   type="number"
                   value={monthlyIncome}
-                  onChange={(e) => setMonthlyIncome(Number(e.target.value) || 0)}
+                  onChange={(e) =>
+                    setMonthlyIncome(Number(e.target.value) || 0)
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
               </div>
@@ -319,7 +363,9 @@ const DashboardPage = () => {
                 <input
                   type="number"
                   value={retirementAge}
-                  onChange={(e) => setRetirementAge(Number(e.target.value) || 60)}
+                  onChange={(e) =>
+                    setRetirementAge(Number(e.target.value) || 60)
+                  }
                   min="50"
                   max="70"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -332,7 +378,9 @@ const DashboardPage = () => {
                 <input
                   type="number"
                   value={retirementExpense}
-                  onChange={(e) => setRetirementExpense(Number(e.target.value) || 0)}
+                  onChange={(e) =>
+                    setRetirementExpense(Number(e.target.value) || 0)
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                 />
               </div>
@@ -356,63 +404,73 @@ const DashboardPage = () => {
           {/* KPI Dashboard */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-3">
             <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-4 shadow-md">
-              <div className="text-2xl font-bold text-center">₹{calculations.requiredCorpus}Cr</div>
-              <div className="text-blue-100 mt-1 text-sm text-center">Required Corpus</div>
+              <div className="text-2xl font-bold text-center">
+                ₹{calculations.requiredCorpus}Cr
+              </div>
+              <div className="text-blue-100 mt-1 text-sm text-center">
+                Required Corpus
+              </div>
             </div>
             <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl p-4 shadow-md">
-              <div className="text-2xl font-bold text-center">₹{calculations.monthlyPension}K</div>
-              <div className="text-green-100 mt-1 text-sm text-center">Monthly Pension</div>
+              <div className="text-2xl font-bold text-center">
+                ₹{calculations.monthlyPension}K
+              </div>
+              <div className="text-green-100 mt-1 text-sm text-center">
+                Monthly Pension
+              </div>
             </div>
             <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl p-4 shadow-md">
-              <div className="text-2xl font-bold text-center">{calculations.replacementRatio}%</div>
-              <div className="text-purple-100 mt-1 text-sm text-center">Income Replacement</div>
+              <div className="text-2xl font-bold text-center">
+                {calculations.replacementRatio}%
+              </div>
+              <div className="text-purple-100 mt-1 text-sm text-center">
+                Income Replacement
+              </div>
             </div>
             <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white rounded-xl p-4 shadow-md">
-              <div className="text-2xl font-bold text-center">₹{calculations.lifetimeTaxSavings}L</div>
-              <div className="text-yellow-100 mt-1 text-sm text-center">Tax Savings</div>
+              <div className="text-2xl font-bold text-center">
+                ₹{calculations.lifetimeTaxSavings}L
+              </div>
+              <div className="text-yellow-100 mt-1 text-sm text-center">
+                Tax Savings
+              </div>
             </div>
           </div>
-
 
           {/* Bento Grid Layout for Charts */}
           <div className="grid grid-cols-12 gap-4 mb-3 auto-rows-fr">
             {/* Income Triangle Chart - Large Card */}
-            <div className="col-span-12 lg:col-span-8 bg-gradient-to-br rounded-3xl shadow-xl p-8 border border-blue-200/50 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
-              <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                <span className="bg-gradient-to-br from-blue-500 to-blue-600 p-3 rounded-2xl mr-4 shadow-lg">📈</span>
-                Income Lifecycle Triangle
+            <div className="col-span-12 lg:col-span-6 bg-gradient-to-br rounded-3xl shadow-xl p-8 border border-blue-200/50 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+              <h3 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                <span className="bg-gradient-to-br from-blue-500 to-blue-600 p-2 rounded-xl mr-4 shadow-lg">
+                  📈
+                </span>
+                Retirement Corpus Projection
               </h3>
-              <div className="h-96 mb-4">
-                <Line data={generateIncomeTriangleData()} options={chartOptions} />
-              </div>
-              <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-5 border border-blue-200/30">
+              <RetirementChart />
+              <div className="bg-white/70 backdrop-blur-sm rounded-2xl border border-blue-200/30">
                 <p className="text-blue-800 text-sm leading-relaxed">
-                  <strong>AI Insight:</strong> Your income peaks around age {Math.round(retirementAge * 0.85)}
-                  and transitions to pension income at {retirementAge}. Plan maximum contributions during peak earning years.
+                  <strong>AI Insight:</strong> Your income peaks around age{" "}
+                  {Math.round(retirementAge * 0.85)}
+                  and transitions to pension income at {retirementAge}. Plan
+                  maximum contributions during peak earning years.
                 </p>
               </div>
             </div>
 
             {/* Optimal Retirement Age - Medium Card */}
-            <div className="col-span-12 lg:col-span-4 bg-gradient-to-br rounded-3xl shadow-xl p-6 border border-green-200/50 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
-              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                <span className="bg-gradient-to-br from-green-500 to-green-600 p-2 rounded-xl mr-3 shadow-lg">🎯</span>
-                Optimal Age
-              </h3>
+            <div className="col-span-12 lg:col-span-6 bg-gradient-to-br rounded-3xl shadow-xl p-6 border border-green-200/50 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
               <div className="h-64 mb-4">
-                <Bar data={generateBenefitAgeData()} options={chartOptions} />
-              </div>
-              <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-green-200/30">
-                <p className="text-green-800 text-xs leading-relaxed">
-                  <strong>AI:</strong> Age 62 provides maximum lifetime benefits. Each additional year increases corpus by 12-15%.
-                </p>
+                <PayoutComparison />
               </div>
             </div>
 
             {/* Payout Options - Medium Card */}
-            <div className="col-span-12 lg:col-span-6 bg-gradient-to-br rounded-3xl shadow-xl p-6 border border-purple-200/50 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+            <div className="col-span-12 lg:col-span-4 bg-gradient-to-br rounded-3xl shadow-xl p-6 border border-purple-200/50 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
               <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                <span className="bg-gradient-to-br from-purple-500 to-purple-600 p-2 rounded-xl mr-3 shadow-lg">💰</span>
+                <span className="bg-gradient-to-br from-purple-500 to-purple-600 p-2 rounded-xl mr-3 shadow-lg">
+                  💰
+                </span>
                 Payout Strategy Analysis
               </h3>
               <div className="h-72 mb-4">
@@ -420,7 +478,26 @@ const DashboardPage = () => {
               </div>
               <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-purple-200/30">
                 <p className="text-purple-800 text-sm leading-relaxed">
-                  <strong>AI Insight:</strong> 60% annuity + 40% lump-sum offers optimal tax efficiency and liquidity.
+                  <strong>AI Insight:</strong> 60% annuity + 40% lump-sum offers
+                  optimal tax efficiency and liquidity.
+                </p>
+              </div>
+            </div>
+
+            <div className="col-span-12 lg:col-span-8 bg-gradient-to-br rounded-3xl shadow-xl p-6 border border-green-200/50 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <span className="bg-gradient-to-br from-green-500 to-green-600 p-2 rounded-xl mr-3 shadow-lg">
+                  🎯
+                </span>
+                Optimal Retirement Age
+              </h3>
+              <div className="mb-4">
+                <RetirementSimulationChart />
+              </div>
+              <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-green-200/30">
+                <p className="text-green-800 text-xs leading-relaxed">
+                  <strong>AI:</strong> Age 62 provides maximum lifetime
+                  benefits. Each additional year increases corpus by 12-15%.
                 </p>
               </div>
             </div>
@@ -428,7 +505,9 @@ const DashboardPage = () => {
             {/* Tax Optimization - Medium Card */}
             <div className="col-span-12 lg:col-span-6 bg-gradient-to-br rounded-3xl shadow-xl p-6 border border-amber-200/50 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
               <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                <span className="bg-gradient-to-br from-amber-500 to-yellow-500 p-2 rounded-xl mr-3 shadow-lg">🛡️</span>
+                <span className="bg-gradient-to-br from-amber-500 to-yellow-500 p-2 rounded-xl mr-3 shadow-lg">
+                  🛡️
+                </span>
                 Tax Savings Strategy
               </h3>
               <div className="h-72 mb-4">
@@ -436,7 +515,9 @@ const DashboardPage = () => {
               </div>
               <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-amber-200/30">
                 <p className="text-amber-800 text-sm leading-relaxed">
-                  <strong>AI Insight:</strong> Save ₹{calculations.taxSavingsAnnual}K annually through strategic EPF, NPS, PPF planning.
+                  <strong>AI Insight:</strong> Save ₹
+                  {calculations.taxSavingsAnnual}K annually through strategic
+                  EPF, NPS, PPF planning.
                 </p>
               </div>
             </div>
@@ -444,16 +525,22 @@ const DashboardPage = () => {
             {/* Corpus Growth Chart - Full Width */}
             <div className="col-span-12 bg-gradient-to-br  rounded-3xl shadow-xl p-8 border border-teal-200/50 hover:shadow-2xl transition-all duration-300 hover:scale-[1.01]">
               <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                <span className="bg-gradient-to-br from-teal-500 to-cyan-600 p-3 rounded-2xl mr-4 shadow-lg">🌱</span>
+                <span className="bg-gradient-to-br from-teal-500 to-cyan-600 p-3 rounded-2xl mr-4 shadow-lg">
+                  🌱
+                </span>
                 Pension Corpus Growth Projection
               </h3>
               <div className="h-80 mb-4">
-                <Line data={generateCorpusGrowthData()} options={chartOptions} />
+                <Line
+                  data={generateCorpusGrowthData()}
+                  options={chartOptions}
+                />
               </div>
               <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-5 border border-teal-200/30">
                 <p className="text-teal-800 text-sm leading-relaxed">
-                  <strong>AI Insight:</strong> Your corpus grows exponentially through compound interest.
-                  The last 10 years contribute 50% of your total retirement corpus. Start early for maximum benefit!
+                  <strong>AI Insight:</strong> Your corpus grows exponentially
+                  through compound interest. The last 10 years contribute 50% of
+                  your total retirement corpus. Start early for maximum benefit!
                 </p>
               </div>
             </div>
@@ -471,10 +558,11 @@ const DashboardPage = () => {
                 <button
                   key={key}
                   onClick={() => setActiveScenario(key)}
-                  className={`px-4 py-2 rounded-full font-medium transition-all ${activeScenario === key
-                    ? 'bg-indigo-600 text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                  className={`px-4 py-2 rounded-full font-medium transition-all ${
+                    activeScenario === key
+                      ? "bg-indigo-600 text-white shadow-lg"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
                 >
                   {scenario.name}
                 </button>
@@ -483,25 +571,33 @@ const DashboardPage = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                <div className="text-sm text-blue-600 font-medium">Final Corpus</div>
+                <div className="text-sm text-blue-600 font-medium">
+                  Final Corpus
+                </div>
                 <div className="text-2xl font-bold text-blue-800">
                   {scenarioData[activeScenario].corpus}
                 </div>
               </div>
               <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                <div className="text-sm text-green-600 font-medium">Monthly Pension</div>
+                <div className="text-sm text-green-600 font-medium">
+                  Monthly Pension
+                </div>
                 <div className="text-2xl font-bold text-green-800">
                   {scenarioData[activeScenario].pension}
                 </div>
               </div>
               <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-                <div className="text-sm text-purple-600 font-medium">Tax Savings</div>
+                <div className="text-sm text-purple-600 font-medium">
+                  Tax Savings
+                </div>
                 <div className="text-2xl font-bold text-purple-800">
                   {scenarioData[activeScenario].tax}
                 </div>
               </div>
               <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
-                <div className="text-sm text-yellow-600 font-medium">Replacement Ratio</div>
+                <div className="text-sm text-yellow-600 font-medium">
+                  Replacement Ratio
+                </div>
                 <div className="text-2xl font-bold text-yellow-800">
                   {scenarioData[activeScenario].ratio}
                 </div>
@@ -510,11 +606,15 @@ const DashboardPage = () => {
 
             <div className="bg-indigo-50 rounded-lg p-4 mt-6">
               <p className="text-sm text-indigo-800">
-                <strong>AI Insight:</strong> The {scenarioData[activeScenario].name} scenario
-                {activeScenario === 'aggressive' ? 'offers higher returns with increased market risk. Consider this if you have high risk tolerance.' :
-                  activeScenario === 'conservative' ? 'prioritizes capital protection over growth. Suitable for risk-averse investors.' :
-                    activeScenario === 'earlyRetirement' ? 'requires higher monthly contributions but offers more leisure years.' :
-                      'provides balanced growth with moderate risk. Recommended for most individuals.'}
+                <strong>AI Insight:</strong> The{" "}
+                {scenarioData[activeScenario].name} scenario
+                {activeScenario === "aggressive"
+                  ? "offers higher returns with increased market risk. Consider this if you have high risk tolerance."
+                  : activeScenario === "conservative"
+                  ? "prioritizes capital protection over growth. Suitable for risk-averse investors."
+                  : activeScenario === "earlyRetirement"
+                  ? "requires higher monthly contributions but offers more leisure years."
+                  : "provides balanced growth with moderate risk. Recommended for most individuals."}
               </p>
             </div>
           </div>
