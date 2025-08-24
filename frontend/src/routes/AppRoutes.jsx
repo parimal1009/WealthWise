@@ -14,6 +14,7 @@ import ParentComponent from "../components/main/ParentComponent";
 import ChatPage from "../pages/ChatPage";
 import Dashboard from "../pages/DashboardPage";
 import LearnPage from "../pages/LearnPage";
+import FinancePage from "../pages/FinancePage";
 import { useAuth } from "../context/AuthContext";
 import { setUserData } from "../redux/slices/userDataSlice";
 
@@ -79,6 +80,7 @@ function AppRoutes() {
           />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="learn" element={<LearnPage />} />
+          <Route path="finance" element={<FinancePage />} />
         </Route>
       </Routes>
     </div>
