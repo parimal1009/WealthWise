@@ -284,7 +284,8 @@ const DashboardPage = () => {
               </div>
             </div>
 
-            <div className="rounded-3xl shadow-xl p-8 border border-blue-200/50 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+            <div className="rounded-3xl shadow-xl p-8 border border-blue-200/50 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] relative">
+              <ChartExplanationIcon chartType="breakEven" />
               <h3 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
                 <span className="bg-gradient-to-br from-blue-500 to-blue-600 p-2 rounded-xl mr-4 shadow-lg">
                   📈
