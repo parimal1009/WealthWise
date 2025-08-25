@@ -2,11 +2,11 @@ import React from 'react';
 import { HelpCircle } from 'lucide-react';
 import { useCharacter } from './Character/CharacterProvider';
 
-const ChartExplanationIcon = ({ chartType, className = "" }) => {
+const ChartExplanationIcon = ({ chartType, userName = 'there', chartData = null, className = "" }) => {
   const { explainChart, characterState } = useCharacter();
 
   const handleClick = () => {
-    explainChart(chartType);
+    explainChart(chartType, userName, chartData);
   };
 
   // Check if this icon should be highlighted (during goodbye message)

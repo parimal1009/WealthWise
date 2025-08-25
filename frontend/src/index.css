@@ -148,4 +148,5 @@ body {
 }
 
 /* Import highlight styles */
-@import "./styles/highlight.css";
+@import './styles/highlight.css';
+@import './styles/breakEvenHighlight.css';

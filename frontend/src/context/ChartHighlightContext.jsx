@@ -18,6 +18,14 @@ export const ChartHighlightProvider = ({ children }) => {
       growthPhase: false,
       withdrawalPhase: false,
       reset: false
+    },
+    breakEven: {
+      allLines: false,
+      blueLine: false,
+      greenLine: false,
+      crossPoint: false,
+      stepUpSlider: false,
+      reset: false
     }
   });
 

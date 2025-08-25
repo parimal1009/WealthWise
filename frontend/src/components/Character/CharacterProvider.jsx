@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import { useChartHighlight } from '../../context/ChartHighlightContext';
 
 const CharacterContext = createContext();
@@ -22,8 +22,22 @@ export const CharacterProvider = ({ children }) => {
     messages: [],
     currentIndex: 0,
     highlightIcon: false,
-    calledViaChartIcon: false
+    calledViaChartIcon: false,
+    chartData: null
   });
+  
+  // Track user interactions for dynamic messaging
+  const [userInteractions, setUserInteractions] = useState({
+    hasIncreasedStepUp: false,
+    initialStepUp: null
+  });
+
+  const updateChartData = useCallback((newChartData) => {
+    setCharacterState(prev => ({
+      ...prev,
+      chartData: newChartData
+    }));
+  }, []);
 
   const showCharacter = ({ pose = 'greeting1', message, position = 'bottom-right', messages = [], currentIndex = 0 }) => {
     setCharacterState({
@@ -40,11 +54,45 @@ export const CharacterProvider = ({ children }) => {
     setCharacterState(prev => {
       if (prev.currentIndex < prev.messages.length - 1) {
         const newIndex = prev.currentIndex + 1;
-        const nextMsg = prev.messages[newIndex];
+        let nextMsg = prev.messages[newIndex];
+        
+        // For break-even chart, check if we need to dynamically update the next message
+        if (prev.messages[0]?.text.includes('Break Even') && prev.chartData?.breakEven) {
+          const breakEvenAge = prev.chartData.breakEven.age ? Math.round(prev.chartData.breakEven.age) : null;
+          const hasBreakEven = prev.chartData.breakEven && breakEvenAge !== null && breakEvenAge > 0;
+          const hasIncreasedStepUp = userInteractions.hasIncreasedStepUp;
+          
+          // If we're at the step-up slider message and user has increased step-up, jump to the appropriate message
+          if (prev.currentIndex === 6 && hasIncreasedStepUp && hasBreakEven) {
+            // Jump to the "Great! I see you've increased the step-up" message
+            const dynamicMessages = [
+              { pose: 'explain_right1', text: `Great! I see you've increased the step-up. Notice how the Green line (Annuity) now rises faster.`, highlight: 'greenLine' },
+              { pose: 'point_left1', text: `At around age ${breakEvenAge}, the Green line crosses above the Blue line: this is the break-even point, shown with a red dot on the chart.`, highlight: 'crossPoint' },
+              { pose: 'explain_left1', text: `That's the Break-even point. Beyond this age, Annuity gives you more total value than Lump Sum.`, highlight: 'crossPoint' },
+              { pose: 'greeting1', text: `So with step-ups, Annuity can eventually outperform Lump Sum, rewarding those who live longer!` }
+            ];
+            
+            // Update messages array with dynamic content
+            const updatedMessages = [...prev.messages.slice(0, 7), ...dynamicMessages];
+            nextMsg = dynamicMessages[0];
+            
+            return {
+              ...prev,
+              messages: updatedMessages,
+              pose: nextMsg.pose,
+              message: nextMsg.text,
+              position: nextMsg.position || prev.position,
+              size: nextMsg.size || prev.size,
+              currentIndex: 7 // Jump to the first dynamic message
+            };
+          }
+        }
         
         // Handle highlighting for the new message
         if (nextMsg.highlight) {
-          highlightElement('retirementChart', nextMsg.highlight, true);
+          const chartType = prev.messages[0].text.includes('Break Even') ? 'breakEven' : 'retirementChart';
+          resetHighlights(chartType);
+          highlightElement(chartType, nextMsg.highlight, true);
         }
         
         return {
@@ -68,7 +116,11 @@ export const CharacterProvider = ({ children }) => {
         
         // Handle highlighting for the previous message
         if (prevMsg.highlight) {
-          highlightElement('retirementChart', prevMsg.highlight, true);
+          const chartType = prev.messages[0].text.includes('Break Even') ? 'breakEven' : 'retirementChart';
+          // Reset all highlights first
+          resetHighlights(chartType);
+          // Then apply the new highlight
+          highlightElement(chartType, prevMsg.highlight, true);
         }
         
         return {
@@ -86,7 +138,11 @@ export const CharacterProvider = ({ children }) => {
 
   const hideCharacter = () => {
     // Reset all highlights when hiding character
-    resetHighlights('retirementChart');
+    setCharacterState(prev => {
+      const chartType = prev.messages[0]?.text.includes('Break Even') ? 'breakEven' : 'retirementChart';
+      resetHighlights(chartType);
+      return prev;
+    });
     
     // Small delay to ensure character is visible before showing goodbye message
     setTimeout(() => {
@@ -142,12 +198,12 @@ export const CharacterProvider = ({ children }) => {
     });
   };
 
-  const explainChart = (chartType) => {
-    const userName = 'Chief'; // Could be passed from context
+  const explainChart = (chartType, userName = 'Chief', chartData = null) => {
     let messages = [];
 
     // Reset highlights first
-    resetHighlights('retirementChart');
+    resetHighlights(chartType === 'breakEven' ? 'breakEven' : 'retirementChart');
+
 
     switch (chartType) {
       case 'retirementCorpus':
@@ -170,43 +226,63 @@ export const CharacterProvider = ({ children }) => {
       case 'payoutStrategy':
         messages = [
           { pose: 'greeting1', text: `${userName}, let me break down these payout strategies for you!` },
-          { pose: 'explain_right1', text: `100% Annuity gives you maximum guaranteed income but no lump sum flexibility.` },
-          { pose: 'point_left1', text: `60% Annuity + 40% Lump-sum offers the best balance of guaranteed income and tax efficiency.` },
-          { pose: 'explain_left1', text: `80% Lump-sum + 20% Annuity gives maximum flexibility but higher tax burden.` },
-          { pose: 'greeting1', text: `I recommend the 60-40 split for most people! 💰` }
         ];
         break;
-      case 'taxSavings':
+      case 'breakEven':
+        const breakEvenAge = chartData?.breakEven?.age ? Math.round(chartData.breakEven.age) : null;
+        const hasBreakEven = chartData?.breakEven && breakEvenAge !== null && breakEvenAge > 0;
+        const hasIncreasedStepUp = userInteractions.hasIncreasedStepUp;
+        
         messages = [
-          { pose: 'greeting1', text: `${userName}, let's look at how tax planning can save you money!` },
-          { pose: 'explain_right1', text: `Without planning, you pay full tax. But with EPF, you get basic tax savings.` },
-          { pose: 'point_left1', text: `Adding NPS to EPF gives you even more savings through additional deductions.` },
-          { pose: 'explain_left1', text: `An optimized strategy uses all available tax-saving instruments strategically.` },
-          { pose: 'greeting1', text: `Proper planning can save you lakhs over your career! 🛡️` }
+          { pose: 'greeting1', text: `Hey ${userName}! Let me explain this Break Even: Lump Sum vs Annuity chart for you.` },
+          { pose: 'explain_right1', text: `This chart compares two retirement payout strategies using real inflation-adjusted values.`, highlight: 'allLines' },
+          { pose: 'point_left1', text: `The Blue line shows the Lump Sum strategy: withdraw everything at once and invest it.`, highlight: 'blueLine' },
+          { pose: 'explain_left1', text: `It starts higher because you get a large amount upfront, and it compounds over time.`, highlight: 'blueLine' },
+          { pose: 'point_left1', text: `The Green line represents the Annuity strategy, where you receive periodic payments over time.`, highlight: 'greenLine' },
+          { pose: 'explain_right1', text: `Each annuity payment is received regularly, and the value accumulates more gradually compared to a lump sum.`, highlight: 'greenLine' },
+          { pose: 'point_left1', text: `The Annuity Step-up slider increases your annual annuity payments, similar to step-up options in pension schemes.`, highlight: 'stepUpSlider' }
         ];
+        
+        // Add dynamic messages based on break-even data
+        if (hasBreakEven) {
+          if (hasIncreasedStepUp) {
+            messages.push(
+              { pose: 'explain_right1', text: `Great! I see you've increased the step-up. Notice how the Green line (Annuity) now rises faster.`, highlight: 'greenLine' },
+              { pose: 'point_left1', text: `At around age ${breakEvenAge}, the Green line crosses above the Blue line: this is the break-even point, shown with a red dot on the chart.`, highlight: 'crossPoint' },
+              { pose: 'explain_left1', text: `That's the Break-even point. Beyond this age, Annuity gives you more total value than Lump Sum.`, highlight: 'crossPoint' },
+              { pose: 'greeting1', text: `So with step-ups, Annuity can eventually outperform Lump Sum, rewarding those who live longer!` }
+            );
+          } else {
+            messages.push(
+              { pose: 'point_left1', text: `I can see that at around age ${breakEvenAge}, the Green line crosses above the Blue line: this is the break-even point, shown with a red dot on the chart.`, highlight: 'crossPoint' },
+              { pose: 'explain_left1', text: `That's the Break-even point. Beyond this age, Annuity gives you more total value than Lump Sum.`, highlight: 'crossPoint' },
+              { pose: 'greeting1', text: `Try adjusting the step-up slider to see how it affects the break-even point timing!` }
+            );
+          }
+        } else {
+          messages.push(
+            { pose: 'explain_right1', text: `I notice that in this scenario, the Green line (Annuity) doesn't cross above the Blue line within the time frame shown.`, highlight: 'greenLine' },
+            { pose: 'point_left1', text: `This means the Lump Sum option provides more value throughout this period.`, highlight: 'blueLine' },
+            { pose: 'greeting1', text: `Remember, higher step-ups make annuity payments grow faster over time, which can create a crossing point!`, highlight: 'stepUpSlider' }
+          );
+        }
         break;
-      default:
-        messages = [
-          { pose: 'greeting1', text: `${userName}, I'm here to help explain any chart you need!` },
-          { pose: 'explain_left1', text: `Just click on the explanation icons next to the charts and I'll walk you through them.` }
-        ];
     }
-
-    // Apply initial highlight if present
-    if (messages[0].highlight) {
-      highlightElement('retirementChart', messages[0].highlight, true);
+    
+    if (messages.length > 0) {
+      setCharacterState(prev => ({
+        ...prev,
+        isVisible: true,
+        pose: messages[0].pose,
+        message: messages[0].text,
+        position: 'bottom-right',
+        messages: messages,
+        currentIndex: prev.calledViaChartIcon ? prev.currentIndex : 0, // Maintain position if already explaining
+        size: 'large',
+        calledViaChartIcon: true,
+        chartData: chartData // Store current chart data for dynamic updates
+      }));
     }
-
-    setCharacterState({
-      isVisible: true,
-      pose: messages[0].pose,
-      message: messages[0].text,
-      position: 'bottom-right',
-      messages: messages,
-      currentIndex: 0,
-      calledViaChartIcon: true,
-      highlightIcon: false
-    });
   };
 
   const value = {
@@ -216,7 +292,9 @@ export const CharacterProvider = ({ children }) => {
     nextMessage,
     previousMessage,
     callCharacterBack,
-    explainChart
+    explainChart,
+    setUserInteractions,
+    updateChartData
   };
 
   return (

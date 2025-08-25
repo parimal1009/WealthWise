@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   LineChart,
   Line,
@@ -11,6 +11,9 @@ import {
   Legend,
   Dot,
 } from "recharts";
+import { useCharacter } from '../Character/CharacterProvider';
+import ChartExplanationIcon from "../ChartExplanationIcon";
+import BreakEvenChartOverlay from "../BreakEvenChartOverlay";
 
 /**
  * Break-Even Visualizer: Lump Sum vs Annuity
@@ -91,9 +94,13 @@ function buildSeries({
       const tStar = t0 + clamp(frac, 0, 1) * (t1 - t0);
       const ageStar = startAge + tStar;
       breakEven = { year: tStar, age: ageStar };
+      console.log('Break-even calculated:', breakEven);
       break;
     }
   }
+  
+  console.log('Final breakEven:', breakEven, 'Data length:', data.length);
+  
 
   return { data, breakEven, rReal };
 }
@@ -131,6 +138,16 @@ export default function BreakEvenLumpSumVsAnnuity() {
   const [annuityEscalationPct, setAnnuityEscalationPct] = useState(0); // % p.a. step-up
   const [horizon, setHorizon] = useState(35); // years after retirement
   const [startAge, setStartAge] = useState(60);
+  
+  const { explainChart, characterState, setUserInteractions, updateChartData } = useCharacter();
+  const [initialStepUp] = useState(annuityEscalationPct);
+  
+  const handleStepUpChange = (newValue) => {
+    setAnnuityEscalationPct(newValue);
+    if (newValue > initialStepUp) {
+      setUserInteractions(prev => ({ ...prev, hasIncreasedStepUp: true }));
+    }
+  };
 
   const params = useMemo(
     () => ({
@@ -157,9 +174,26 @@ export default function BreakEvenLumpSumVsAnnuity() {
     () => buildSeries(params),
     [params]
   );
+  
+  console.log('Chart component breakEven:', breakEven);
+  
+  // Auto-update character explanation when break-even data changes
+  useEffect(() => {
+    if (characterState.isVisible && characterState.calledViaChartIcon && 
+        characterState.messages[0]?.text.includes('Break Even')) {
+      // Only update if break-even data actually changed meaningfully
+      const currentBreakEvenAge = breakEven?.age ? Math.round(breakEven.age * 10) / 10 : null;
+      const storedBreakEvenAge = characterState.chartData?.breakEven?.age ? Math.round(characterState.chartData.breakEven.age * 10) / 10 : null;
+      
+      if (currentBreakEvenAge !== storedBreakEvenAge) {
+        updateChartData({ breakEven: breakEven });
+      }
+    }
+  }, [breakEven?.age, characterState.isVisible, characterState.calledViaChartIcon, characterState.chartData?.breakEven?.age]);
 
   return (
     <div className="w-full max-w-6xl mx-auto">
+      <BreakEvenChartOverlay chartId="breakEven" breakEvenData={breakEven} />
       <div className="space-y-4">
         <header className="flex flex-col gap-4">
           <div>
@@ -212,7 +246,8 @@ export default function BreakEvenLumpSumVsAnnuity() {
               max={15}
               step={0.5}
               value={annuityEscalationPct}
-              onChange={setAnnuityEscalationPct}
+              onChange={handleStepUpChange}
+              id="break-even-step-up-slider"
             />
           </Card>
 
@@ -243,7 +278,13 @@ export default function BreakEvenLumpSumVsAnnuity() {
             />
           </Card>
         </section>
-        <div className="rounded-2xl border border-slate-200 p-4 bg-white shadow-sm">
+        <div className="rounded-2xl border border-slate-200 p-4 bg-white shadow-sm relative">
+          <ChartExplanationIcon 
+            chartType="breakEven" 
+            userName="there" 
+            chartData={{ breakEven: breakEven }} 
+            key={`${breakEven?.year || 'no-break'}-${annuityEscalationPct}`}
+          />
           <div className="flex items-center justify-between mb-3">
             <div>
               <h2 className="text-lg font-semibold">
@@ -266,7 +307,7 @@ export default function BreakEvenLumpSumVsAnnuity() {
             )}
           </div>
 
-          <div className="h-80">
+          <div className="h-80 relative">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
                 data={data}
@@ -284,6 +325,7 @@ export default function BreakEvenLumpSumVsAnnuity() {
                   strokeWidth={2}
                   dot={false}
                   stroke="#2563eb" // blue-600
+                  id="break-even-blue-line"
                 />
                 <Line
                   type="monotone"
@@ -292,6 +334,7 @@ export default function BreakEvenLumpSumVsAnnuity() {
                   strokeWidth={2}
                   dot={false}
                   stroke="#059669" // emerald-600
+                  id="break-even-green-line"
                 />
 
                 {breakEven && (
@@ -299,6 +342,7 @@ export default function BreakEvenLumpSumVsAnnuity() {
                     x={breakEven.year}
                     stroke="#f59e42" // orange-400
                     strokeDasharray="4 4"
+                    id="break-even-cross-point"
                     label={{
                       value: `BE ~ ${breakEven.year.toFixed(1)}y`,
                       position: "insideTop",
@@ -355,9 +399,9 @@ function Card({ title, children }) {
   );
 }
 
-function SliderWithNumber({ label, min, max, step, value, onChange }) {
+function SliderWithNumber({ label, min, max, step, value, onChange, id }) {
   return (
-    <div>
+    <div id={id}>
       <div className="flex items-center justify-between mb-1">
         <label className="text-sm text-slate-700">{label}</label>
         <div className="text-xs text-slate-500">
