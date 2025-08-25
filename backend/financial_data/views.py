@@ -658,16 +658,6 @@ def get_risk_profile(request):
 @permission_classes([IsAuthenticated])
 def get_stock_details(request):
     """Fetch user's stock holdings from Zerodha, format symbols, and get details via yfinance"""
-    print(f"🔍 Backend: get_stock_details called")
-    print(f"🔍 Backend: Request method: {request.method}")
-    print(f"🔍 Backend: Request headers: {dict(request.headers)}")
-    print(f"🔍 Backend: Request user: {request.user}")
-    print(f"🔍 Backend: User authenticated: {request.user.is_authenticated}")
-    print(f"🔍 Backend: User ID: {getattr(request.user, 'id', 'No ID')}")
-    print(f"🔍 Backend: User username: {getattr(request.user, 'username', 'No username')}")
-    print(f"🔍 Backend: Request data: {getattr(request, 'data', 'No data')}")
-    print(f"🔍 Backend: Request body: {getattr(request, 'body', 'No body')}")
-    
     try:
         # 1. Check if Zerodha account is linked
         try:
@@ -680,7 +670,7 @@ def get_stock_details(request):
                 "code": "ACCOUNT_NOT_LINKED",
                 "action_required": "Please connect your Zerodha account first"
             }, status=status.HTTP_404_NOT_FOUND)
-
+        print(f"ye hai Zerodha user: {zerodha_user}")
         # 2. Check if token is expired
         if is_token_expired(zerodha_user):
             zerodha_user.delete()
@@ -708,6 +698,7 @@ def get_stock_details(request):
         # 4. Process holdings: map symbols to yfinance format
         stock_symbols = []
         symbol_mapping = {}  # Store original -> yfinance mapping
+        holdings_data = {}  # Store holdings data for each symbol
         
         for holding in holdings_response:
             if holding['product'] == 'CNC':  # delivery holdings only
@@ -725,48 +716,37 @@ def get_stock_details(request):
                 stock_symbols.append(yfinance_symbol)
                 symbol_mapping[yfinance_symbol] = original_symbol
                 
-        print(f"🔍 Backend: Original symbols: {[holding['tradingsymbol'].upper() for holding in holdings_response if holding['product'] == 'CNC']}")
-        print(f"🔍 Backend: Mapped to yfinance symbols: {stock_symbols}")
-        print(f"🔍 Backend: Symbol mapping: {symbol_mapping}")
-        
+                # Store holdings data
+                holdings_data[yfinance_symbol] = {
+                    'quantity': holding['quantity'],
+                    'average_price': holding['average_price'],
+                    'last_price': holding['last_price'],
+                    'invested_amount': holding['quantity'] * holding['average_price'],
+                    'current_value': holding['quantity'] * holding['last_price']
+                }
         if not stock_symbols:
             print(f"🔍 Backend: No stock symbols found, returning empty response")
             return Response({"stocks": []})
-
-        print(f"🔍 Backend: Starting yfinance data fetch for {len(stock_symbols)} symbols")
         
         # 5. Fetch stock details from yfinance
         stocks_data = []
         for symbol in stock_symbols:
             try:
-                print(f"🔍 Backend: Fetching data for {symbol}")
                 ticker = yf.Ticker(symbol)
                 info = ticker.info
-                print(f"🔍 Backend: yfinance info keys for {symbol}: {list(info.keys())}")
-                print(f"🔍 Backend: yfinance info for {symbol}: {info}")
 
                 # Get original symbol for display
                 original_symbol = symbol_mapping.get(symbol, symbol)
                 
                 # Get live price using 1-minute interval data
                 try:
-                    print(f"🔍 Backend: Attempting to get live price for {symbol}")
                     live_price_data = ticker.history(period="1d", interval="1m").tail(1)
-                    print(f"🔍 Backend: Live price data shape for {symbol}: {live_price_data.shape if hasattr(live_price_data, 'shape') else 'No shape'}")
-                    print(f"🔍 Backend: Live price data for {symbol}: {live_price_data}")
-                    print(f"🔍 Backend: Live price data columns for {symbol}: {list(live_price_data.columns) if hasattr(live_price_data, 'columns') else 'No columns'}")
-                    print(f"🔍 Backend: Live price data index for {symbol}: {live_price_data.index if hasattr(live_price_data, 'index') else 'No index'}")
-                    
                     if not live_price_data.empty:
                         live_price = live_price_data["Close"].values[0]
-                        print(f"🔍 Backend: Live price for {symbol}: {live_price}")
-                        print(f"🔍 Backend: Live price type for {symbol}: {type(live_price)}")
                     else:
                         live_price = info.get("currentPrice")
-                        print(f"🔍 Backend: Using info currentPrice for {symbol}: {live_price}")
                 except Exception as e:
                     live_price = info.get("currentPrice")
-                    print(f"🔍 Backend: Error getting live price for {symbol}, using info: {e}")
                     import traceback
                     traceback.print_exc()
 
@@ -782,32 +762,36 @@ def get_stock_details(request):
                     "dayLow": info.get("dayLow"),
                     "fiftyTwoWeekHigh": info.get("fiftyTwoWeekHigh"),
                     "fiftyTwoWeekLow": info.get("fiftyTwoWeekLow"),
+                    # Investment data from holdings
+                    "quantity": holdings_data.get(symbol, {}).get('quantity', 0),
+                    "averagePrice": holdings_data.get(symbol, {}).get('average_price', 0),
+                    "investedAmount": holdings_data.get(symbol, {}).get('invested_amount', 0),
+                    "currentValue": holdings_data.get(symbol, {}).get('current_value', 0),
                 }
-                print(f"🔍 Backend: Stock info for {symbol} (original: {original_symbol}): {stock_info}")
-                print(f"🔍 Backend: Live price: {live_price}, Previous close: {info.get('previousClose')}")
-                print(f"🔍 Backend: Stock info keys: {list(stock_info.keys())}")
-                print(f"🔍 Backend: Stock info values: {list(stock_info.values())}")
-                print(f"🔍 Backend: Stock info currentPrice type: {type(stock_info.get('currentPrice'))}")
-                print(f"🔍 Backend: Stock info currentPrice value: {stock_info.get('currentPrice')}")
                 stocks_data.append(stock_info)
             except Exception as e:
                 print(f"⚠️ yfinance error for {symbol}: {e}")
                 import traceback
                 traceback.print_exc()
         
-        print(f"🔍 Backend: Total stocks data collected: {len(stocks_data)}")
-        print(f"🔍 Backend: Final response data: {{'stocks': {stocks_data}}}")
-        print(f"🔍 Backend: Response structure: {{'stocks': [{len(stocks_data)} items]}}")
-        
         # Log each stock's data structure
         for i, stock in enumerate(stocks_data):
-            print(f"🔍 Backend: Stock {i}: symbol={stock.get('symbol')}, originalSymbol={stock.get('originalSymbol')}, currentPrice={stock.get('currentPrice')}")
-            print(f"🔍 Backend: Stock {i} full data: {stock}")
-            print(f"🔍 Backend: Stock {i} keys: {list(stock.keys())}")
-            print(f"🔍 Backend: Stock {i} currentPrice type: {type(stock.get('currentPrice'))}")
             print(f"🔍 Backend: Stock {i} currentPrice value: {stock.get('currentPrice')}")
 
-        return Response({"stocks": stocks_data})
+        # Calculate portfolio totals
+        total_invested_amount = sum(stock.get('investedAmount', 0) for stock in stocks_data)
+        total_current_value = sum(stock.get('currentValue', 0) for stock in stocks_data)
+        total_quantity = sum(stock.get('quantity', 0) for stock in stocks_data)
+
+        return Response({
+            "stocks": stocks_data,
+            "portfolio_summary": {
+                "total_invested_amount": total_invested_amount,
+                "total_current_value": total_current_value,
+                "total_quantity": total_quantity,
+                "total_stocks": len(stocks_data)
+            }
+        })
 
     except Exception as e:
         print(f"❌ Error in get_stock_details: {str(e)}")
