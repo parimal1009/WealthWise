@@ -1,37 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Line } from 'react-chartjs-2';
-import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend,
-    Filler,
-} from 'chart.js';
-import { BarChart3, Info, Loader2, TrendingUp, TrendingDown, DollarSign, Building2, Calendar, X, ExternalLink } from 'lucide-react';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
+import { BarChart3, Info, Loader2, TrendingUp, TrendingDown, IndianRupee, Building2, Calendar, X, ExternalLink } from 'lucide-react';
+import stocksData from "../../public/data/stocks_data.json";
+import predictedData from "../../public/data/predicted_price.json";
 
 // Register ChartJS components
-ChartJS.register(
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend,
-    Filler
-);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
 const FinancePage = () => {
     const [userStocks, setUserStocks] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [stockCharts, setStockCharts] = useState({});
     const [portfolioValue, setPortfolioValue] = useState(0);
-    const [selectedPeriod, setSelectedPeriod] = useState('7d');
+    const [totalInvestedAmount, setTotalInvestedAmount] = useState(0);
     const [selectedStock, setSelectedStock] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -65,16 +47,19 @@ const FinancePage = () => {
             const result = await response.json();
             setUserStocks(result.stocks || []);
 
-            // Calculate total portfolio value
-            const totalValue = result.stocks?.reduce((sum, stock) => {
-                return sum + (stock.currentPrice || 0);
-            }, 0) || 0;
-            setPortfolioValue(totalValue);
-
-            // Fetch historical data for charts
-            if (result.stocks && result.stocks.length > 0) {
-                fetchStockCharts(result.stocks);
+            // Set portfolio summary data
+            if (result.portfolio_summary) {
+                setTotalInvestedAmount(result.portfolio_summary.total_invested_amount || 0);
+                setPortfolioValue(result.portfolio_summary.total_current_value || 0);
+            } else {
+                // Fallback calculation for backward compatibility
+                const totalValue = result.stocks?.reduce((sum, stock) => {
+                    return sum + (stock.currentPrice || 0);
+                }, 0) || 0;
+                setPortfolioValue(totalValue);
             }
+
+            // Historical chart data now sourced from local JSON only
 
         } catch (error) {
             setError(error.message);
@@ -83,67 +68,16 @@ const FinancePage = () => {
         }
     };
 
-    // Fetch historical data for stock charts
-    const fetchStockCharts = async (stocks) => {
-        try {
-            const symbols = stocks.map(stock => stock.originalSymbol || stock.symbol);
-
-            let token = localStorage.getItem("token");
-            if (!token) {
-                const cookies = document.cookie.split(';');
-                const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('token='));
-                if (tokenCookie) token = tokenCookie.split('=')[1];
-            }
-
-            const headers = { "Content-Type": "application/json" };
-            if (token) headers["Authorization"] = `Bearer ${token}`;
-
-            const response = await fetch("http://localhost:8000/api/financial/stocks/", {
-                method: "POST",
-                headers,
-                credentials: 'include',
-                body: JSON.stringify({ symbols }),
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                const chartData = data.data || {};
-                setStockCharts(chartData);
-            }
-        } catch (error) {
-            console.error("Error fetching stock charts:", error);
-        }
-    };
+    // Backend chart fetching removed; charts now read from local stocks_data.json
 
     // Load user stocks on component mount
     useEffect(() => {
         fetchUserStocks();
     }, []);
 
-    // Refetch chart data when period changes
-    useEffect(() => {
-        if (userStocks.length > 0 && Object.keys(stockCharts).length > 0) {
-            const hasDataForPeriod = userStocks.some(stock => {
-                const chartKey = stock.originalSymbol || stock.symbol;
-                return stockCharts[chartKey] && stockCharts[chartKey][selectedPeriod];
-            });
+    // Removed selected period logic tied to backend charts
 
-            if (!hasDataForPeriod) {
-                fetchStockCharts(userStocks);
-            }
-        }
-    }, [selectedPeriod]);
 
-    // Format currency
-    const formatCurrency = (value) => {
-        if (!value) return 'N/A';
-        return new Intl.NumberFormat('en-IN', {
-            style: 'currency',
-            currency: 'INR',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-        }).format(value);
-    };
 
     // Format percentage
     const formatPercentage = (current, previous) => {
@@ -158,35 +92,33 @@ const FinancePage = () => {
         return current >= previous ? 'text-green-600' : 'text-red-600';
     };
 
-    // Create chart data for a stock
-    const createChartData = (symbol, stockData, period) => {
-        if (!stockData || !stockData[period]) {
-            return null;
+    // Resolve a time series from local JSON for a given stock's symbol
+    const getLocalSeriesForStock = (stock) => {
+        const raw = stock.originalSymbol || stock.symbol || '';
+        const base = (raw || '').trim();
+        const baseUpper = base.toUpperCase();
+        const baseNoSuffix = baseUpper.replace(/\.(NS|BO)$/i, '');
+
+        const candidates = [
+            base,
+            baseUpper,
+            `${baseNoSuffix}.NS`,
+            `${baseNoSuffix}.BO`,
+            baseNoSuffix,
+        ];
+
+        for (const key of candidates) {
+            if (stocksData[key]) return { key, series: stocksData[key] };
         }
 
-        const periodData = stockData[period];
-        if (!periodData.history) {
-            return null;
-        }
+        // Final fallback: try to find a key that starts with baseNoSuffix
+        const fuzzyKey = Object.keys(stocksData).find(k => k.toUpperCase().startsWith(baseNoSuffix));
+        if (fuzzyKey) return { key: fuzzyKey, series: stocksData[fuzzyKey] };
 
-        const isPositive = periodData.current_price >= periodData.history[0];
-
-        return {
-            labels: periodData.dates || [],
-            datasets: [
-                {
-                    label: `${symbol} (${period})`,
-                    data: periodData.history || [],
-                    borderColor: isPositive ? '#10b981' : '#ef4444',
-                    backgroundColor: isPositive ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 0,
-                    pointHoverRadius: 4,
-                },
-            ],
-        };
+        return null;
     };
+
+    // Removed unused createChartData; chart uses local JSON directly
 
     // Open stock modal
     const openStockModal = (stock) => {
@@ -201,8 +133,8 @@ const FinancePage = () => {
     };
 
     return (
-        <div className="w-full h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 overflow-y-auto">
-            <div className="w-full max-w-none p-8">
+        <div className="w-[80%] h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 overflow-y-auto">
+            <div className="w-full max-w-none p-6 overflow-y-auto" >
                 {/* Header */}
                 <div className="mb-8 flex items-center gap-3">
                     <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
@@ -232,27 +164,44 @@ const FinancePage = () => {
                         </button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                         <div className="bg-gradient-to-br from-green-50 to-emerald-100 p-4 rounded-xl border border-green-200">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-green-500 rounded-lg">
-                                    <DollarSign className="w-5 h-5 text-white" />
+                                    <IndianRupee className="w-5 h-5 text-white" />
                                 </div>
                                 <div>
                                     <p className="text-sm text-green-600 font-medium">Total Value</p>
-                                    <p className="text-xl font-bold text-green-800">{formatCurrency(portfolioValue)}</p>
+                                    <p className="text-xl font-bold text-green-800">₹{portfolioValue?.toFixed(2)}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-gradient-to-br from-orange-50 to-amber-100 p-4 rounded-xl border border-orange-200">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-orange-500 rounded-lg">
+                                    <TrendingUp className="w-5 h-5 text-white" />
+                                </div>
+                                <div>
+                                    <p className="text-sm text-orange-600 font-medium">Invested Amount</p>
+                                    <p className="text-xl font-bold text-orange-800">₹{totalInvestedAmount?.toFixed(2)}</p>
                                 </div>
                             </div>
                         </div>
 
                         <div className="bg-gradient-to-br from-blue-50 to-indigo-100 p-4 rounded-xl border border-blue-200">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-500 rounded-lg">
-                                    <Building2 className="w-5 h-5 text-white" />
+                                <div className={`p-2 rounded-lg ${portfolioValue >= totalInvestedAmount ? 'bg-green-500' : 'bg-red-500'}`}>
+                                    <TrendingUp className={`w-5 h-5 text-white ${portfolioValue < totalInvestedAmount ? 'rotate-180' : ''}`} />
                                 </div>
                                 <div>
-                                    <p className="text-sm text-blue-600 font-medium">Stocks</p>
-                                    <p className="text-xl font-bold text-blue-800">{userStocks.length}</p>
+                                    <p className="text-sm text-blue-600 font-medium">Profit/Loss</p>
+                                    <p className={`text-xl font-bold ${portfolioValue >= totalInvestedAmount ? 'text-green-800' : 'text-red-800'}`}>
+                                        {portfolioValue >= totalInvestedAmount ? '+' : ''}₹{(portfolioValue - totalInvestedAmount).toFixed(2)}
+                                    </p>
+                                    <p className={`text-xs font-medium ${portfolioValue >= totalInvestedAmount ? 'text-green-600' : 'text-red-600'}`}>
+                                        {portfolioValue >= totalInvestedAmount ? '+' : ''}{((portfolioValue - totalInvestedAmount) / totalInvestedAmount * 100).toFixed(2)}%
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -301,9 +250,9 @@ const FinancePage = () => {
                                     onClick={() => openStockModal(stock)}
                                 >
                                     {/* Stock Header */}
-                                    <div className="flex items-start justify-between mb-4">
+                                    <div className="flex items-start justify-between mb-4 gap-4">
                                         <div className="flex-1">
-                                            <h3 className="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                                            <h3 className="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors ">
                                                 {stock.longName}
                                             </h3>
                                             <p className="text-lg text-slate-600 font-mono">{stock.originalSymbol || stock.symbol}</p>
@@ -324,14 +273,77 @@ const FinancePage = () => {
                                     {/* Quick Stats */}
                                     <div className="grid grid-cols-2 gap-3 mb-4">
                                         <div className="bg-slate-50 p-3 rounded-lg">
-                                            <p className="text-xs text-slate-500 font-medium">Day High</p>
-                                            <p className="text-sm font-semibold text-slate-700">{stock.dayHigh}</p>
+                                            <p className="text-xs text-slate-500 font-medium">Quantity</p>
+                                            <p className="text-sm font-semibold text-slate-700">{stock.quantity || 'N/A'}</p>
                                         </div>
                                         <div className="bg-slate-50 p-3 rounded-lg">
-                                            <p className="text-xs text-slate-500 font-medium">Day Low</p>
-                                            <p className="text-sm font-semibold text-slate-700">{stock.dayLow}</p>
+                                            <p className="text-xs text-slate-500 font-medium">Invested</p>
+                                            <p className="text-sm font-semibold text-slate-700">₹{stock.investedAmount?.toFixed(2) || 'N/A'}</p>
                                         </div>
                                     </div>
+
+                                    {/* Profit/Loss for this stock */}
+                                    {stock.investedAmount && stock.currentValue && (
+                                        <div className="mb-4 p-3 rounded-lg bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs text-slate-500 font-medium">P&L</span>
+                                                <span className={`text-sm font-semibold ${stock.currentValue >= stock.investedAmount ? 'text-green-600' : 'text-red-600'}`}>
+                                                    {stock.currentValue >= stock.investedAmount ? '+' : ''}₹{(stock.currentValue - stock.investedAmount).toFixed(2)}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center justify-between mt-1">
+                                                <span className="text-xs text-slate-500">Return</span>
+                                                <span className={`text-sm font-semibold ${stock.currentValue >= stock.investedAmount ? 'text-green-600' : 'text-red-600'}`}>
+                                                    {stock.currentValue >= stock.investedAmount ? '+' : ''}{((stock.currentValue - stock.investedAmount) / stock.investedAmount * 100).toFixed(2)}%
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Mini Chart from local JSON */}
+                                    {(() => {
+                                        const chartKey = stock.originalSymbol || stock.symbol;
+                                        const series = stocksData[chartKey];
+                                        if (!series || series.length === 0) return null;
+
+                                        const dates = series.map((d) => d.Date.split(" ")[0]);
+                                        const prices = series.map((d) => d.Close);
+                                        const isPositive = prices[prices.length - 1] >= prices[0];
+
+                                        const miniChartData = {
+                                            labels: dates,
+                                            datasets: [
+                                                {
+                                                    label: `${chartKey} Closing Price`,
+                                                    data: prices,
+                                                    borderColor: isPositive ? '#10b981' : '#ef4444',
+                                                    backgroundColor: isPositive ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                                    fill: true,
+                                                    tension: 0.4,
+                                                    pointRadius: 0,
+                                                    pointHoverRadius: 2,
+                                                },
+                                            ],
+                                        };
+
+                                        return (
+                                            <div className="h-28">
+                                                <Line
+                                                    data={miniChartData}
+                                                    options={{
+                                                        responsive: true,
+                                                        maintainAspectRatio: false,
+                                                        plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
+                                                        scales: {
+                                                            x: { display: false },
+                                                            y: { display: false },
+                                                        },
+                                                        elements: { line: { borderWidth: 2 } },
+                                                    }}
+                                                />
+                                            </div>
+                                        );
+                                    })()}
 
                                     {/* Click Indicator */}
                                     <div className="flex items-center justify-center text-blue-600 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
@@ -403,20 +415,20 @@ const FinancePage = () => {
                                         <h3 className="text-lg font-semibold text-slate-900 mb-4">Key Metrics</h3>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <p className="text-sm text-slate-500 font-medium">Previous Close</p>
-                                                <p className="text-lg font-semibold text-slate-700">{formatCurrency(selectedStock.previousClose)}</p>
+                                                <p className="text-sm text-slate-500 font-medium">Quantity</p>
+                                                <p className="text-lg font-semibold text-slate-700">{selectedStock.quantity || 'N/A'}</p>
                                             </div>
                                             <div>
-                                                <p className="text-sm text-slate-500 font-medium">Market Cap</p>
-                                                <p className="text-lg font-semibold text-slate-700">{formatCurrency(selectedStock.marketCap)}</p>
+                                                <p className="text-sm text-slate-500 font-medium">Average Price</p>
+                                                <p className="text-lg font-semibold text-slate-700">₹{selectedStock.averagePrice?.toFixed(2) || 'N/A'}</p>
                                             </div>
                                             <div>
-                                                <p className="text-sm text-slate-500 font-medium">Day High</p>
-                                                <p className="text-lg font-semibold text-slate-700">{formatCurrency(selectedStock.dayHigh)}</p>
+                                                <p className="text-sm text-slate-500 font-medium">Invested Amount</p>
+                                                <p className="text-lg font-semibold text-slate-700">₹{selectedStock.investedAmount?.toFixed(2) || 'N/A'}</p>
                                             </div>
                                             <div>
-                                                <p className="text-sm text-slate-500 font-medium">Day Low</p>
-                                                <p className="text-lg font-semibold text-slate-700">{formatCurrency(selectedStock.dayLow)}</p>
+                                                <p className="text-sm text-slate-500 font-medium">Current Value</p>
+                                                <p className="text-lg font-semibold text-slate-700">₹{selectedStock.currentValue?.toFixed(2) || 'N/A'}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -427,7 +439,7 @@ const FinancePage = () => {
                                         <div className="space-y-3">
                                             <div className="flex items-center justify-between">
                                                 <span className="text-sm text-slate-600">Low</span>
-                                                <span className="text-lg font-semibold text-red-600">{formatCurrency(selectedStock.fiftyTwoWeekLow)}</span>
+                                                <span className="text-lg font-semibold text-red-600">{selectedStock.fiftyTwoWeekLow}</span>
                                             </div>
                                             <div className="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
                                                 <div
@@ -439,33 +451,22 @@ const FinancePage = () => {
                                             </div>
                                             <div className="flex items-center justify-between">
                                                 <span className="text-sm text-slate-600">High</span>
-                                                <span className="text-lg font-semibold text-green-600">{formatCurrency(selectedStock.fiftyTwoWeekHigh)}</span>
+                                                <span className="text-lg font-semibold text-green-600">{selectedStock.fiftyTwoWeekHigh}</span>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Performance Summary */}
-                                    {(() => {
-                                        const chartKey = selectedStock.originalSymbol || selectedStock.symbol;
-                                        const hasChartData = stockCharts[chartKey] && stockCharts[chartKey][selectedPeriod];
+                                    <div className="bg-slate-50 rounded-xl p-6 mt-6">
+                                        <h3 className="text-lg font-semibold text-slate-900 mb-4">Predicted Price</h3>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-md text-slate-600">Q4' 25</span>
+                                            <span className="text-lg font-semibold text-blue-600">
+                                                ₹{predictedData[selectedStock.symbol]?.[0]?.Close || "N/A"}
+                                            </span>
+                                        </div>
+                                    </div>
 
-                                        return hasChartData ? (
-                                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div className="text-center">
-                                                        <p className="text-sm text-blue-600 font-medium">Total Return</p>
-                                                        <p className={`text-2xl font-bold ${stockCharts[chartKey][selectedPeriod].total_return >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                            {stockCharts[chartKey][selectedPeriod].total_return >= 0 ? '+' : ''}{stockCharts[chartKey][selectedPeriod].total_return}%
-                                                        </p>
-                                                    </div>
-                                                    <div className="text-center">
-                                                        <p className="text-sm text-blue-600 font-medium">Volatility</p>
-                                                        <p className="text-2xl font-bold text-blue-800">{stockCharts[chartKey][selectedPeriod].volatility}%</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ) : null;
-                                    })()}
+                                    {/* Performance Summary removed; backend-derived metrics no longer used */}
                                 </div>
 
                                 {/* Right Column - Chart */}
@@ -474,61 +475,70 @@ const FinancePage = () => {
                                     <div className="bg-white border border-slate-200 rounded-xl p-6">
                                         <h3 className="text-lg font-semibold text-slate-900 mb-4">Price Chart</h3>
                                         {(() => {
-                                            const chartKey = selectedStock.originalSymbol || selectedStock.symbol;
+                                            const resolved = getLocalSeriesForStock(selectedStock);
+                                            if (resolved && resolved.series && resolved.series.length > 0) {
+                                                const dates = resolved.series.map((d) => String(d.Date).split(" ")[0]);
+                                                const prices = resolved.series.map((d) => d.Close);
 
-                                            if (stockCharts[chartKey] && stockCharts[chartKey][selectedPeriod]) {
-                                                const chartData = createChartData(chartKey, stockCharts[chartKey], selectedPeriod);
+                                                const chartData = {
+                                                    labels: dates,
+                                                    datasets: [
+                                                        {
+                                                            label: `${resolved.key} Closing Price`,
+                                                            data: prices,
+                                                            borderColor: "#3b82f6",
+                                                            backgroundColor: "rgba(59, 130, 246, 0.1)",
+                                                            fill: true,
+                                                            tension: 0.4,
+                                                            pointRadius: 0,
+                                                            pointHoverRadius: 4,
+                                                        },
+                                                    ],
+                                                };
 
-                                                if (chartData) {
-                                                    return (
-                                                        <div className="h-80">
-                                                            <Line
-                                                                data={chartData}
-                                                                options={{
-                                                                    responsive: true,
-                                                                    maintainAspectRatio: false,
-                                                                    plugins: {
-                                                                        legend: { display: false },
-                                                                        tooltip: {
-                                                                            mode: 'index',
-                                                                            intersect: false,
-                                                                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                                                                            titleColor: 'white',
-                                                                            bodyColor: 'white',
-                                                                        },
+                                                return (
+                                                    <div className="h-80">
+                                                        <Line
+                                                            data={chartData}
+                                                            options={{
+                                                                responsive: true,
+                                                                maintainAspectRatio: false,
+                                                                plugins: {
+                                                                    legend: { display: false },
+                                                                    tooltip: {
+                                                                        mode: "index",
+                                                                        intersect: false,
+                                                                        backgroundColor: "rgba(0, 0, 0, 0.8)",
+                                                                        titleColor: "white",
+                                                                        bodyColor: "white",
                                                                     },
-                                                                    scales: {
-                                                                        x: {
-                                                                            grid: { color: 'rgba(0,0,0,0.1)' },
-                                                                            ticks: { color: '#64748b' }
-                                                                        },
-                                                                        y: {
-                                                                            grid: { color: 'rgba(0,0,0,0.1)' },
-                                                                            ticks: { color: '#64748b' }
-                                                                        },
+                                                                },
+                                                                scales: {
+                                                                    x: {
+                                                                        grid: { color: "rgba(0,0,0,0.1)" },
+                                                                        ticks: { color: "#64748b" },
                                                                     },
-                                                                    elements: {
-                                                                        point: {
-                                                                            hoverRadius: 6,
-                                                                        },
+                                                                    y: {
+                                                                        grid: { color: "rgba(0,0,0,0.1)" },
+                                                                        ticks: { color: "#64748b" },
                                                                     },
-                                                                }}
-                                                            />
-                                                        </div>
-                                                    );
-                                                }
+                                                                },
+                                                            }}
+                                                        />
+                                                    </div>
+                                                );
                                             }
 
                                             return (
                                                 <div className="h-80 flex items-center justify-center bg-slate-50 rounded-lg">
                                                     <div className="text-center">
-                                                        <Loader2 className="w-8 h-8 animate-spin text-slate-400 mx-auto mb-2" />
-                                                        <p className="text-slate-500">Chart loading...</p>
-                                                        <p className="text-xs text-slate-400 mt-1">Period: {selectedPeriod}</p>
+                                                        <X className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                                                        <p className="text-slate-500">No chart data found in local file for this symbol.</p>
                                                     </div>
                                                 </div>
                                             );
                                         })()}
+
                                     </div>
 
                                     {/* Additional Info */}
