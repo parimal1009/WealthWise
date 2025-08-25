@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   LineChart,
   Line,
@@ -11,6 +11,9 @@ import {
   Legend,
   Dot,
 } from "recharts";
+import { useCharacter } from '../Character/CharacterProvider';
+import ChartExplanationIcon from "../ChartExplanationIcon";
+import BreakEvenChartOverlay from "../BreakEvenChartOverlay";
 
 /**
  * Break-Even Visualizer: Lump Sum vs Annuity
@@ -91,9 +94,13 @@ function buildSeries({
       const tStar = t0 + clamp(frac, 0, 1) * (t1 - t0);
       const ageStar = startAge + tStar;
       breakEven = { year: tStar, age: ageStar };
+      console.log('Break-even calculated:', breakEven);
       break;
     }
   }
+  
+  console.log('Final breakEven:', breakEven, 'Data length:', data.length);
+  
 
   return { data, breakEven, rReal };
 }
@@ -131,6 +138,17 @@ export default function BreakEvenLumpSumVsAnnuity() {
   const [annuityEscalationPct, setAnnuityEscalationPct] = useState(0); // % p.a. step-up
   const [horizon, setHorizon] = useState(35); // years after retirement
   const [startAge, setStartAge] = useState(60);
+  
+  const { explainChart, characterState, setUserInteractions, updateChartData } = useCharacter();
+  const [initialStepUp] = useState(annuityEscalationPct);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  
+  const handleStepUpChange = (newValue) => {
+    setAnnuityEscalationPct(newValue);
+    if (newValue > initialStepUp) {
+      setUserInteractions(prev => ({ ...prev, hasIncreasedStepUp: true }));
+    }
+  };
 
   const params = useMemo(
     () => ({
@@ -157,9 +175,37 @@ export default function BreakEvenLumpSumVsAnnuity() {
     () => buildSeries(params),
     [params]
   );
+  
+  console.log('Chart component breakEven:', breakEven);
+  
+  // Auto-update character explanation when break-even data changes
+  useEffect(() => {
+    if (characterState.isVisible && characterState.calledViaChartIcon && 
+        characterState.messages[0]?.text.includes('Break Even')) {
+      // Only update if break-even data actually changed meaningfully
+      const currentBreakEvenAge = breakEven?.age ? Math.round(breakEven.age * 10) / 10 : null;
+      const storedBreakEvenAge = characterState.chartData?.breakEven?.age ? Math.round(characterState.chartData.breakEven.age * 10) / 10 : null;
+      
+      if (currentBreakEvenAge !== storedBreakEvenAge) {
+        updateChartData({ breakEven: breakEven });
+      }
+    }
+  }, [breakEven?.age, characterState.isVisible, characterState.calledViaChartIcon, characterState.chartData?.breakEven?.age]);
+
+  // Auto-open dropdown when character mentions step-up slider
+  useEffect(() => {
+    if (characterState.isVisible && characterState.calledViaChartIcon && 
+        characterState.messages[0]?.text.includes('Break Even')) {
+      const currentMessage = characterState.messages[characterState.currentIndex];
+      if (currentMessage?.text.includes('Annuity Step-up slider') && !dropdownOpen) {
+        setDropdownOpen(true);
+      }
+    }
+  }, [characterState.currentIndex, characterState.isVisible, characterState.calledViaChartIcon, dropdownOpen]);
 
   return (
     <div className="w-full max-w-6xl mx-auto">
+      <BreakEvenChartOverlay chartId="breakEven" breakEvenData={breakEven} />
       <div className="space-y-4">
         <header className="flex flex-col gap-4">
           <div>
@@ -168,82 +214,27 @@ export default function BreakEvenLumpSumVsAnnuity() {
               <b>{(rReal * 100).toFixed(2)}%</b>
             </p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm bg-slate-50 p-3 rounded-2xl border border-slate-200">
-            <div>
-              <div className="text-slate-500">Lump Sum</div>
-              <div className="font-semibold">{inr.format(params.lumpSum)}</div>
-            </div>
-            <div>
-              <div className="text-slate-500">Annuity / yr</div>
-              <div className="font-semibold">{inr.format(params.annuity)}</div>
-            </div>
-            <div>
-              <div className="text-slate-500">Nominal Return</div>
-              <div className="font-semibold">{nominalReturnPct}%</div>
-            </div>
-            <div>
-              <div className="text-slate-500">Inflation</div>
-              <div className="font-semibold">{inflationPct}%</div>
-            </div>
-          </div>
         </header>
         {/* Controls */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card title="Lump Sum & Annuity">
-            <SliderWithNumber
-              label="Lump Sum (₹)"
-              min={100000}
-              max={10000000}
-              step={50000}
-              value={lumpSum}
-              onChange={setLumpSum}
-            />
-            <SliderWithNumber
-              label="Annuity per Year (₹)"
-              min={50000}
-              max={1000000}
-              step={10000}
-              value={annuity}
-              onChange={setAnnuity}
-            />
-            <SliderWithNumber
-              label="Annuity Step-up (% / yr)"
-              min={0}
-              max={15}
-              step={0.5}
-              value={annuityEscalationPct}
-              onChange={setAnnuityEscalationPct}
-            />
-          </Card>
-
-          <Card title="Rates & Horizon">
-            <SliderWithNumber
-              label="Nominal Return (% / yr)"
-              min={-5}
-              max={20}
-              step={0.25}
-              value={nominalReturnPct}
-              onChange={setNominalReturnPct}
-            />
-            <SliderWithNumber
-              label="Inflation (% / yr)"
-              min={0}
-              max={12}
-              step={0.25}
-              value={inflationPct}
-              onChange={setInflationPct}
-            />
-            <SliderWithNumber
-              label="Retirement Age (years)"
-              min={40}
-              max={75}
-              step={1}
-              value={startAge}
-              onChange={setStartAge}
-            />
-          </Card>
+        <section className="mb-4">
+          <DropdownControls 
+            lumpSum={lumpSum}
+            setLumpSum={setLumpSum}
+            annuity={annuity}
+            setAnnuity={setAnnuity}
+            annuityEscalationPct={annuityEscalationPct}
+            handleStepUpChange={handleStepUpChange}
+            nominalReturnPct={nominalReturnPct}
+            setNominalReturnPct={setNominalReturnPct}
+            inflationPct={inflationPct}
+            setInflationPct={setInflationPct}
+            startAge={startAge}
+            setStartAge={setStartAge}
+            isOpen={dropdownOpen}
+            setIsOpen={setDropdownOpen}
+          />
         </section>
-        <div className="rounded-2xl border border-slate-200 p-4 bg-white shadow-sm">
+        <div className="rounded-2xl border border-slate-200 p-4 bg-white shadow-sm relative">
           <div className="flex items-center justify-between mb-3">
             <div>
               <h2 className="text-lg font-semibold">
@@ -254,19 +245,21 @@ export default function BreakEvenLumpSumVsAnnuity() {
                 invested at the real return.
               </p>
             </div>
-            {breakEven ? (
-              <div className="text-sm bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full border border-emerald-200">
-                Break-even at ~ <b>{breakEven.year.toFixed(1)}</b> yrs (age{" "}
-                <b>{breakEven.age.toFixed(1)}</b>)
-              </div>
-            ) : (
-              <div className="text-sm bg-amber-50 text-amber-700 px-3 py-1.5 rounded-full border border-amber-200">
-                No break-even within horizon
-              </div>
-            )}
+            <div className="flex items-center gap-3">
+              {breakEven ? (
+                <div className="text-sm bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full border border-emerald-200">
+                  Break-even at ~ <b>{breakEven.year.toFixed(1)}</b> yrs (age{" "}
+                  <b>{breakEven.age.toFixed(1)}</b>)
+                </div>
+              ) : (
+                <div className="text-sm bg-amber-50 text-amber-700 px-3 py-1.5 rounded-full border border-amber-200">
+                  No break-even within horizon
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="h-80">
+          <div className="h-80 relative">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
                 data={data}
@@ -284,6 +277,7 @@ export default function BreakEvenLumpSumVsAnnuity() {
                   strokeWidth={2}
                   dot={false}
                   stroke="#2563eb" // blue-600
+                  id="break-even-blue-line"
                 />
                 <Line
                   type="monotone"
@@ -292,6 +286,7 @@ export default function BreakEvenLumpSumVsAnnuity() {
                   strokeWidth={2}
                   dot={false}
                   stroke="#059669" // emerald-600
+                  id="break-even-green-line"
                 />
 
                 {breakEven && (
@@ -299,6 +294,7 @@ export default function BreakEvenLumpSumVsAnnuity() {
                     x={breakEven.year}
                     stroke="#f59e42" // orange-400
                     strokeDasharray="4 4"
+                    id="break-even-cross-point"
                     label={{
                       value: `BE ~ ${breakEven.year.toFixed(1)}y`,
                       position: "insideTop",
@@ -310,40 +306,105 @@ export default function BreakEvenLumpSumVsAnnuity() {
             </ResponsiveContainer>
           </div>
         </div>
-        {/* Explainer */}
-        <div className="text-sm text-slate-600 leading-relaxed bg-slate-50 border border-slate-200 rounded-2xl p-4">
-          <h3 className="font-semibold mb-1">How this chart works</h3>
-          <ul className="list-disc pl-5 space-y-1">
-            <li>
-              All values are in <b>real (inflation-adjusted)</b> rupees. We
-              convert your nominal return and inflation to an implied{" "}
-              <b>real return</b>.
-            </li>
-            <li>
-              <b>Lump Sum line</b>: invests the entire amount at the real
-              return.
-            </li>
-            <li>
-              <b>Annuity line</b>: each yearly payment is invested immediately;
-              if you set a step-up %, the nominal payment grows annually, and we
-              deflate it to real before investing.
-            </li>
-            <li>
-              <b>Break-even</b> is when the annuity’s invested value catches up
-              with the lump sum’s invested value.
-            </li>
-            <li>
-              If there is no crossing within the selected horizon, we show “No
-              break-even within horizon”.
-            </li>
-          </ul>
-        </div>
       </div>
     </div>
   );
 }
 
 // ---------- Small UI primitives ----------
+function DropdownControls({ 
+  lumpSum, setLumpSum, 
+  annuity, setAnnuity, 
+  annuityEscalationPct, handleStepUpChange,
+  nominalReturnPct, setNominalReturnPct,
+  inflationPct, setInflationPct,
+  startAge, setStartAge,
+  isOpen, setIsOpen
+}) {
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between px-4 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm hover:bg-slate-50 transition-colors"
+      >
+        <span className="text-sm font-medium text-slate-700">Adjust Parameters</span>
+        <svg 
+          className={`w-4 h-4 text-slate-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      
+      {isOpen && (
+        <div className="mt-2 bg-white border border-slate-200 rounded-2xl shadow-lg p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-slate-700">Lump Sum & Annuity</h3>
+              <SliderWithNumber
+                label="Lump Sum (₹)"
+                min={100000}
+                max={10000000}
+                step={50000}
+                value={lumpSum}
+                onChange={setLumpSum}
+              />
+              <SliderWithNumber
+                label="Annuity per Year (₹)"
+                min={50000}
+                max={1000000}
+                step={10000}
+                value={annuity}
+                onChange={setAnnuity}
+              />
+              <SliderWithNumber
+                label="Annuity Step-up (% / yr)"
+                min={0}
+                max={15}
+                step={0.5}
+                value={annuityEscalationPct}
+                onChange={handleStepUpChange}
+                id="break-even-step-up-slider"
+              />
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-slate-700">Rates & Horizon</h3>
+              <SliderWithNumber
+                label="Nominal Return (% / yr)"
+                min={-5}
+                max={20}
+                step={0.25}
+                value={nominalReturnPct}
+                onChange={setNominalReturnPct}
+              />
+              <SliderWithNumber
+                label="Inflation (% / yr)"
+                min={0}
+                max={12}
+                step={0.25}
+                value={inflationPct}
+                onChange={setInflationPct}
+              />
+              <SliderWithNumber
+                label="Retirement Age (years)"
+                min={40}
+                max={75}
+                step={1}
+                value={startAge}
+                onChange={setStartAge}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Card({ title, children }) {
   return (
     <div className="rounded-2xl border border-slate-200 p-4 bg-white shadow-sm">
@@ -355,9 +416,9 @@ function Card({ title, children }) {
   );
 }
 
-function SliderWithNumber({ label, min, max, step, value, onChange }) {
+function SliderWithNumber({ label, min, max, step, value, onChange, id }) {
   return (
-    <div>
+    <div id={id}>
       <div className="flex items-center justify-between mb-1">
         <label className="text-sm text-slate-700">{label}</label>
         <div className="text-xs text-slate-500">

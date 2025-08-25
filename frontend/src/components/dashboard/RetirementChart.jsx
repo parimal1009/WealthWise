@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import * as Chart from "chart.js";
 import { useSelector } from "react-redux";
+import ChartOverlay from "../ChartOverlay";
 
 // Register Chart.js components
 Chart.Chart.register(
@@ -200,8 +201,10 @@ const RetirementChart = ({
 
   return (
     <div className="w-full max-w-6xl mx-auto bg-white">
-      <div className="bg-gray-50 p-4 rounded-lg" style={{ height: "500px" }}>
+      {/* Chart */}
+      <div className="bg-gray-50 p-4 rounded-lg relative" style={{ height: "500px" }}>
         <canvas ref={chartRef}></canvas>
+        <ChartOverlay chartId="retirementChart" chartInstance={chartInstance} />
       </div>
     </div>
   );

@@ -24,7 +24,7 @@ const WelcomeComponent = ({ onAction }) => {
     // Show goodbye messages
     const goodbyeMessages = [
       { pose: 'greeting1', text: 'Awesome! You\'ll automatically be guided to the next step.', position: 'bottom-right' },
-      { pose: 'greeting1', text: 'Bye!', position: 'bottom-right' }
+      { pose: 'explain_left1', text: 'You can call me anytime by pressing the button below!', position: 'bottom-right' }
     ];
 
     showCharacter({
