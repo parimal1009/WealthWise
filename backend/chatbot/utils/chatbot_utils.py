@@ -3,6 +3,8 @@ import asyncio
 import json
 import tempfile
 import uuid
+import requests
+import re
 from typing import List, Dict, Any, Optional
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langchain_core.runnables import RunnableSequence
@@ -16,6 +18,7 @@ from chatbot.prompts import (
     ANSWER_USER_QUERY_PROMPT,
     INTERPRETER_USER_REQUEST,
     EXTRACT_USER_INFO_PROMPT,
+    SEARCH_QUERY_GENERATOR_PROMPT,
 )
 from chatbot.utils.text_utils import extract_json_from_text
 
@@ -106,6 +109,13 @@ class ChatBot:
             response = "Please upload a PDF document to extract your information."
             self._save_message_to_history(response, "assistant")
             return response
+
+        # Handle resource requests - search for external resources
+        if intent.get("category") == "RESOURCE_REQUEST":
+            topic = intent.get("topic", user_message)
+            resources = self._search_external_resources(topic)
+            self._save_message_to_history(f"Found resources for: {topic}", "assistant")
+            return resources
 
         # Handle questions or general queries - process PDF for RAG if needed
         if intent.get("category") in ["QUESTION", "GENERAL"]:
@@ -477,3 +487,300 @@ class ChatBot:
             except (OSError, FileNotFoundError):
                 pass
             return "Sorry, I encountered an error while processing your document. Please make sure it's a valid PDF file."
+
+    def _search_external_resources(self, topic: str) -> Dict[str, Any]:
+        """
+        Search for external resources (YouTube videos and blog articles) on the given topic.
+
+        Args:
+            topic: The topic to search for
+
+        Returns:
+            Dictionary containing search results with videos and articles
+        """
+        try:
+            # Generate optimized search queries
+            search_queries = self._generate_search_queries(topic)
+
+            resources = {
+                "topic": topic,
+                "youtube_videos": [],
+                "blog_articles": [],
+                "message": f"Here are some educational resources about {topic}:",
+            }
+
+            # Search YouTube videos
+            if search_queries.get("youtube_query"):
+                youtube_results = self._search_youtube(search_queries["youtube_query"])
+                resources["youtube_videos"] = youtube_results
+
+            # Search for blog articles
+            if search_queries.get("blog_query"):
+                blog_results = self._search_google_articles(
+                    search_queries["blog_query"]
+                )
+                resources["blog_articles"] = blog_results
+
+            return resources
+
+        except Exception as e:
+            print(f"Error searching external resources: {e}")
+            return {
+                "topic": topic,
+                "youtube_videos": [],
+                "blog_articles": [],
+                "message": "I encountered an issue while searching for resources. Please try again later.",
+                "error": str(e),
+            }
+
+    def _generate_search_queries(self, topic: str) -> Dict[str, str]:
+        """
+        Generate optimized search queries for the given topic.
+
+        Args:
+            topic: The topic to generate queries for
+
+        Returns:
+            Dictionary with optimized search queries
+        """
+        try:
+            llm = ChatGoogleGenerativeAI(
+                google_api_key=GOOGLE_API_KEY,
+                model="gemini-2.5-flash",
+                temperature=0.3,
+            )
+
+            prompt = SEARCH_QUERY_GENERATOR_PROMPT.format(topic=topic)
+            response = llm.invoke(prompt)
+
+            queries = extract_json_from_text(response.content)
+            return (
+                queries
+                if queries
+                else {
+                    "youtube_query": f"{topic} explained",
+                    "blog_query": f"{topic} guide tutorial",
+                }
+            )
+
+        except Exception as e:
+            print(f"Error generating search queries: {e}")
+            return {
+                "youtube_query": f"{topic} explained",
+                "blog_query": f"{topic} guide tutorial",
+            }
+
+    def _search_youtube(self, query: str, max_results: int = 5) -> List[Dict[str, str]]:
+        """
+        Search YouTube for videos related to the query.
+
+        Args:
+            query: Search query
+            max_results: Maximum number of results to return
+
+        Returns:
+            List of video information dictionaries
+        """
+        try:
+            # Use YouTube Data API if available, otherwise use a simple search approach
+            youtube_api_key = os.getenv("YOUTUBE_API_KEY")
+
+            if youtube_api_key:
+                return self._search_youtube_api(query, youtube_api_key, max_results)
+            else:
+                # Fallback: return structured search suggestions
+                return self._generate_youtube_suggestions(query, max_results)
+
+        except Exception as e:
+            print(f"Error searching YouTube: {e}")
+            return []
+
+    def _search_youtube_api(
+        self, query: str, api_key: str, max_results: int
+    ) -> List[Dict[str, str]]:
+        """
+        Search YouTube using the official API.
+
+        Args:
+            query: Search query
+            api_key: YouTube Data API key
+            max_results: Maximum number of results
+
+        Returns:
+            List of video information
+        """
+        try:
+            url = "https://www.googleapis.com/youtube/v3/search"
+            params = {
+                "part": "snippet",
+                "q": query,
+                "type": "video",
+                "maxResults": max_results,
+                "key": api_key,
+                "order": "relevance",
+            }
+
+            response = requests.get(url, params=params, timeout=10)
+            response.raise_for_status()
+
+            data = response.json()
+            videos = []
+
+            for item in data.get("items", []):
+                video_info = {
+                    "title": item["snippet"]["title"],
+                    "description": (
+                        item["snippet"]["description"][:200] + "..."
+                        if len(item["snippet"]["description"]) > 200
+                        else item["snippet"]["description"]
+                    ),
+                    "video_id": item["id"]["videoId"],
+                    "url": f"https://www.youtube.com/watch?v={item['id']['videoId']}",
+                    "thumbnail": item["snippet"]["thumbnails"]["medium"]["url"],
+                    "channel": item["snippet"]["channelTitle"],
+                }
+                videos.append(video_info)
+
+            return videos
+
+        except Exception as e:
+            print(f"Error with YouTube API search: {e}")
+            return []
+
+    def _generate_youtube_suggestions(
+        self, query: str, max_results: int
+    ) -> List[Dict[str, str]]:
+        """
+        Generate YouTube search suggestions when API is not available.
+
+        Args:
+            query: Search query
+            max_results: Maximum number of suggestions
+
+        Returns:
+            List of search suggestions
+        """
+        suggestions = [
+            {
+                "title": f"Search YouTube for: {query}",
+                "description": "Click to search YouTube for educational videos on this topic",
+                "url": f"https://www.youtube.com/results?search_query={query.replace(' ', '+')}",
+                "type": "search_link",
+            }
+        ]
+        return suggestions
+
+    def _search_google_articles(
+        self, query: str, max_results: int = 5
+    ) -> List[Dict[str, str]]:
+        """
+        Search for blog articles and educational content using Google Custom Search.
+
+        Args:
+            query: Search query
+            max_results: Maximum number of results
+
+        Returns:
+            List of article information
+        """
+        try:
+            google_api_key = os.getenv("GOOGLE_SEARCH_API_KEY")
+            google_cse_id = os.getenv("GOOGLE_CSE_ID")
+
+            if google_api_key and google_cse_id:
+                return self._search_google_api(
+                    query, google_api_key, google_cse_id, max_results
+                )
+            else:
+                # Fallback: return structured search suggestions
+                return self._generate_google_suggestions(query, max_results)
+
+        except Exception as e:
+            print(f"Error searching Google articles: {e}")
+            return []
+
+    def _search_google_api(
+        self, query: str, api_key: str, cse_id: str, max_results: int
+    ) -> List[Dict[str, str]]:
+        """
+        Search using Google Custom Search API.
+
+        Args:
+            query: Search query
+            api_key: Google API key
+            cse_id: Custom Search Engine ID
+            max_results: Maximum number of results
+
+        Returns:
+            List of search results
+        """
+        try:
+            url = "https://www.googleapis.com/customsearch/v1"
+            params = {"key": api_key, "cx": cse_id, "q": query, "num": max_results}
+
+            response = requests.get(url, params=params, timeout=10)
+            response.raise_for_status()
+
+            data = response.json()
+            articles = []
+
+            for item in data.get("items", []):
+                article_info = {
+                    "title": item["title"],
+                    "description": (
+                        item.get("snippet", "")[:300] + "..."
+                        if len(item.get("snippet", "")) > 300
+                        else item.get("snippet", "")
+                    ),
+                    "url": item["link"],
+                    "source": self._extract_domain(item["link"]),
+                }
+                articles.append(article_info)
+
+            return articles
+
+        except Exception as e:
+            print(f"Error with Google API search: {e}")
+            return []
+
+    def _generate_google_suggestions(
+        self, query: str, max_results: int
+    ) -> List[Dict[str, str]]:
+        """
+        Generate Google search suggestions when API is not available.
+
+        Args:
+            query: Search query
+            max_results: Maximum number of suggestions
+
+        Returns:
+            List of search suggestions
+        """
+        suggestions = [
+            {
+                "title": f"Search Google for: {query}",
+                "description": "Click to search Google for articles and guides on this topic",
+                "url": f"https://www.google.com/search?q={query.replace(' ', '+')}",
+                "source": "Google Search",
+                "type": "search_link",
+            }
+        ]
+        return suggestions
+
+    def _extract_domain(self, url: str) -> str:
+        """
+        Extract domain name from URL.
+
+        Args:
+            url: Full URL
+
+        Returns:
+            Domain name
+        """
+        try:
+            import re
+
+            domain_match = re.search(r"https?://(?:www\.)?([^/]+)", url)
+            return domain_match.group(1) if domain_match else "Unknown"
+        except Exception:
+            return "Unknown"

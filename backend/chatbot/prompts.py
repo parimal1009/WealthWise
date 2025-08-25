@@ -15,6 +15,10 @@ Carefully interpret the user_message and Classify the request into ONE of the fo
    - The user is asking a question. 
    - Example: "What is the best payout option?" 
 
+3. RESOURCE_REQUEST
+   - The user explicitly asks for external resources, learning materials, videos, or blogs.
+   - Example: "Can you give me resources about NPS vs EPF?", "Show me videos about retirement planning", "I want to learn more about pension schemes"
+
 4. EXTRACT_USER_INFO_FROM_DOCUMENT  
    - The user explicitly requests extracting their personal information from the uploaded document.  
    - Example: "Extract my details from this document"
@@ -25,7 +29,8 @@ Carefully interpret the user_message and Classify the request into ONE of the fo
 
 Output your classification in JSON format as:
 {{
-  "category": "<one_of_the_three_categories>",
+  "category": "<one_of_the_categories>",
+  "topic": "<if RESOURCE_REQUEST, extract the main topic they want to learn about>"
 }}
 
 Note: Do not reply anything other than the json.
@@ -131,5 +136,29 @@ Response format:
 {{
   "field_name": "extracted_value",
   ...
+}}
+"""
+
+SEARCH_QUERY_GENERATOR_PROMPT = """
+You are an expert at generating search queries for educational content about pensions and financial planning.
+
+User's topic request: "{topic}"
+
+Generate 2-3 specific search queries that would help find the best educational content about this topic:
+1. One query optimized for YouTube videos
+2. One query optimized for blog articles/websites
+3. One additional specific query if needed
+
+Focus on:
+- Indian pension schemes (NPS, EPF, OPS) when relevant
+- Retirement planning in Indian context
+- Financial literacy and planning
+- Clear, educational content suitable for beginners to intermediate learners
+
+Return your response as JSON:
+{{
+  "youtube_query": "specific search query for YouTube",
+  "blog_query": "specific search query for blogs/articles",
+  "additional_query": "optional additional specific query"
 }}
 """

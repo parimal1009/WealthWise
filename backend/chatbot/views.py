@@ -32,10 +32,19 @@ def chat_with_bot(request):
         response = bot.reply(user_message=user_message, file=uploaded_file)
 
         extracted_user_data = None
+        external_resources = None
+
         try:
             if isinstance(response, dict):
-                extracted_user_data = response
-                response = f"I have extracted these information from your document ```json {extracted_user_data}```"
+                # Check if it's extracted user data or external resources
+                if "youtube_videos" in response or "blog_articles" in response:
+                    external_resources = response
+                    response = response.get(
+                        "message", "Here are some resources for you:"
+                    )
+                else:
+                    extracted_user_data = response
+                    response = f"I have extracted these information from your document ```json {extracted_user_data}```"
         except Exception:
             pass
 
@@ -45,6 +54,7 @@ def chat_with_bot(request):
                 "chat_id": chat_id,
                 "user_id": user_id,
                 "extracted_user_data": extracted_user_data,
+                "external_resources": external_resources,
                 "bot_reply": response,
             }
         )

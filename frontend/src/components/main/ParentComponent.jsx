@@ -46,15 +46,15 @@ const ParentComponentContent = ({ userData }) => {
       </div>
 
       {/* Character Companion */}
-      {/* <CharacterCompanion
+      <CharacterCompanion
         characterState={characterState}
         onClose={hideCharacter}
         onNext={nextMessage}
         onPrevious={previousMessage}
-      /> */}
+      />
 
       {/* Call Cass Button */}
-      {/* <CallCassButton /> */}
+      <CallCassButton />
     </div>
   );
 };

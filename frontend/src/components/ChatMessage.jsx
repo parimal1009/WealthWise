@@ -10,6 +10,7 @@ import RecommendationComponent from "./chat/RecommendationComponent";
 import QuickActionsComponent from "./chat/QuickActionsComponent";
 import DemoComponent from "./chat/DemoComponent";
 import LifeExpectancyFormComponent from "./chat/LifeExpectancyFormComponent";
+import ExternalResources from "./ExternalResources";
 import Markdown from "react-markdown";
 
 const ChatMessage = ({
@@ -124,6 +125,13 @@ const ChatMessage = ({
         {/* Render interactive components */}
         {message.component && (
           <div className="form-slide-in">{renderComponent()}</div>
+        )}
+
+        {/* External Resources */}
+        {message.external_resources && (
+          <div className="mt-3">
+            <ExternalResources resources={message.external_resources} />
+          </div>
         )}
 
         {/* Timestamp */}

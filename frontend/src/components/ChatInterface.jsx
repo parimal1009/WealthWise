@@ -127,6 +127,7 @@ const ChatInterface = ({ scenarios, setScenarios }) => {
         type: "bot",
         content: result.bot_reply || "No response received",
         timestamp: new Date(),
+        external_resources: result.external_resources || null,
       };
 
       setMessages((prev) => [...prev, botMessage]);
