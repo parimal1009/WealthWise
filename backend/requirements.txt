@@ -13,3 +13,7 @@ pinecone
 langchain-community>=0.0.20
 langchain-google-genai>=1.0.0
 pypdf>=3.17.0
+yfinance
+pandas
+numpy
+scikit-learn

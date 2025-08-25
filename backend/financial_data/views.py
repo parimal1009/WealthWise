@@ -14,6 +14,8 @@ from .models import RiskProfile
 from .stocks_list import stocks
 from django.utils import timezone
 from datetime import datetime, timedelta
+import yfinance as yf
+import json
 
 from config import KITE_API_KEY, KITE_API_SECRET
 
@@ -143,8 +145,7 @@ def kite_callback(request):
                 'order_types': profile.get('order_types', []),
                 'exchanges': profile.get('exchanges', [])
             }
-        )
-        
+        )        
         if not created:
             # Update existing user
             zerodha_user.access_token = access_token
@@ -158,8 +159,7 @@ def kite_callback(request):
             zerodha_user.exchanges = profile.get('exchanges', [])
             zerodha_user.save()
         
-        print(f"Zerodha user {'created' if created else 'updated'} successfully")
-        
+        print(f"Zerodha user {'created' if created else 'updated'} successfully")        
         return Response({
             "message": "Login successful",
             "access_token": access_token,
@@ -198,11 +198,14 @@ def kite_callback(request):
 @permission_classes([IsAuthenticated])
 def kite_profile(request):
     """Get Zerodha user profile"""
+    print(f"🔍 Backend: kite_profile called for user: {request.user.username}")
     try:
         # Get access token from stored user data
         try:
             zerodha_user = ZerodhaUser.objects.get(user=request.user)
+            print(f"🔍 Backend: Found Zerodha user in database: {zerodha_user.user_name}")
         except ZerodhaUser.DoesNotExist:
+            print(f"🔍 Backend: No Zerodha user found in database for: {request.user.username}")
             return Response({
                 "error": "Zerodha account not linked",
                 "code": "ACCOUNT_NOT_LINKED",
@@ -211,6 +214,7 @@ def kite_profile(request):
         
         # Check if token is expired
         if is_token_expired(zerodha_user):
+            print(f"🔍 Backend: Token expired for user: {request.user.username}")
             zerodha_user.delete()
             return Response({
                 "error": "Zerodha session has expired",
@@ -219,12 +223,16 @@ def kite_profile(request):
             }, status=status.HTTP_401_UNAUTHORIZED)
         
         try:
+            print(f"🔍 Backend: Setting access token and fetching profile for user: {request.user.username}")
             kite.set_access_token(zerodha_user.access_token)
             profile = kite.profile()
+            print(f"🔍 Backend: Successfully fetched profile: {profile}")
             return Response(profile)
         except Exception as e:
+            print(f"🔍 Backend: Error fetching profile: {str(e)}")
             # Handle token error
             if handle_token_error(zerodha_user, str(e)):
+                print(f"🔍 Backend: Token error detected in profile fetch, clearing user data")
                 return Response({
                     "error": "Zerodha session has expired",
                     "code": "SESSION_EXPIRED",
@@ -233,6 +241,7 @@ def kite_profile(request):
             raise e
         
     except Exception as e:
+        print(f"🔍 Backend: Error in kite_profile: {str(e)}")
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['DELETE'])
@@ -401,7 +410,10 @@ def calculate_risk_tolerance(request):
                         current_value = holding['quantity'] * holding['last_price']
                         stock_holdings[symbol] = current_value
                         total_stock_value += current_value
-                
+                stock_symbols = list(stock_holdings.keys())
+                yfinance_symbols = [symbol + ".NS" for symbol in stock_symbols]
+                print(f"Stock symbols from zerodha: {yfinance_symbols}")
+                print(f"Total stock value from zerodha: {total_stock_value}")
             except Exception as e:
                 # Handle token error
                 if handle_token_error(zerodha_user, str(e)):
@@ -518,6 +530,114 @@ def calculate_risk_tolerance(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+def get_user_stock_holdings(request):
+    """Get user's Zerodha stock holdings and format them for yfinance analysis"""
+    print(f"🔍 Backend: get_user_stock_holdings called for user: {request.user.username}")
+    try:
+        # Check if user has Zerodha account linked
+        try:
+            zerodha_user = ZerodhaUser.objects.get(user=request.user)
+            print(f"🔍 Backend: Found Zerodha user: {zerodha_user.user_name}")
+        except ZerodhaUser.DoesNotExist:
+            print(f"🔍 Backend: No Zerodha account found for user: {request.user.username}")
+            return Response({
+                "error": "Zerodha account not linked",
+                "code": "ACCOUNT_NOT_LINKED",
+                "action_required": "Please connect your Zerodha account first"
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Check if token is expired
+        if is_token_expired(zerodha_user):
+            print(f"🔍 Backend: Token expired for user: {request.user.username}")
+            zerodha_user.delete()
+            return Response({
+                "error": "Zerodha session has expired",
+                "code": "SESSION_EXPIRED",
+                "action_required": "Please reconnect your Zerodha account"
+            }, status=status.HTTP_401_UNAUTHORIZED)
+        
+        try:
+            # Set access token
+            print(f"🔍 Backend: Setting access token for user: {request.user.username}")
+            kite.set_access_token(zerodha_user.access_token)
+            
+            # Fetch stock holdings from Zerodha
+            print(f"🔍 Backend: Fetching holdings from Zerodha API...")
+            holdings_response = kite.holdings()
+            print(f"🔍 Backend: Raw holdings response length: {len(holdings_response)}")
+            
+            stock_holdings = []
+            stock_details = {}
+            
+            for holding in holdings_response:
+                print(f"🔍 Backend: Processing holding: {holding}")
+                if holding['product'] == 'CNC':  # Only consider delivery holdings
+                    symbol = holding['tradingsymbol']
+                    quantity = holding['quantity']
+                    last_price = holding['last_price']
+                    current_value = quantity * last_price
+                    
+                    # Format symbol: uppercase + .NS suffix
+                    formatted_symbol = f"{symbol.upper()}.NS"
+                    
+                    print(f"🔍 Backend: Formatted symbol: {symbol} -> {formatted_symbol}")
+                    print(f"🔍 Backend: Quantity: {quantity}, Price: {last_price}, Value: {current_value}")
+                    
+                    stock_holdings.append(formatted_symbol)
+                    stock_details[formatted_symbol] = {
+                        'original_symbol': symbol,
+                        'quantity': quantity,
+                        'last_price': last_price,
+                        'current_value': current_value,
+                        'exchange': holding.get('exchange', 'NSE')
+                    }
+            
+            print(f"🔍 Backend: Final stock holdings: {stock_holdings}")
+            print(f"🔍 Backend: Stock details: {stock_details}")
+            
+            if not stock_holdings:
+                print(f"🔍 Backend: No stock holdings found for user: {request.user.username}")
+                return Response({
+                    "message": "No stock holdings found in your Zerodha account",
+                    "stock_symbols": [],
+                    "stock_details": {},
+                    "total_holdings": 0
+                })
+            
+            total_portfolio_value = sum(detail['current_value'] for detail in stock_details.values())
+            print(f"🔍 Backend: Total portfolio value: {total_portfolio_value}")
+            
+            response_data = {
+                "message": "Stock holdings fetched successfully",
+                "stock_symbols": stock_holdings,
+                "stock_details": stock_details,
+                "total_holdings": len(stock_holdings),
+                "total_portfolio_value": total_portfolio_value
+            }
+            
+            print(f"🔍 Backend: Sending response: {response_data}")
+            return Response(response_data)
+            
+        except Exception as e:
+            print(f"🔍 Backend: Error in Zerodha API call: {str(e)}")
+            # Handle token error
+            if handle_token_error(zerodha_user, str(e)):
+                print(f"🔍 Backend: Token error detected, clearing user data")
+                return Response({
+                    "error": "Zerodha session has expired",
+                    "code": "SESSION_EXPIRED",
+                    "action_required": "Please reconnect your Zerodha account"
+                }, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({"error": f"Failed to fetch stock holdings: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    except Exception as e:
+        print(f"🔍 Backend: Error in get_user_stock_holdings: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_risk_profile(request):
     """Get user's risk profile"""
     try:
@@ -533,3 +653,284 @@ def get_risk_profile(request):
         })
     except RiskProfile.DoesNotExist:
         return Response({"error": "Risk profile not calculated yet"}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_stock_details(request):
+    """Fetch user's stock holdings from Zerodha, format symbols, and get details via yfinance"""
+    print(f"🔍 Backend: get_stock_details called")
+    print(f"🔍 Backend: Request method: {request.method}")
+    print(f"🔍 Backend: Request headers: {dict(request.headers)}")
+    print(f"🔍 Backend: Request user: {request.user}")
+    print(f"🔍 Backend: User authenticated: {request.user.is_authenticated}")
+    print(f"🔍 Backend: User ID: {getattr(request.user, 'id', 'No ID')}")
+    print(f"🔍 Backend: User username: {getattr(request.user, 'username', 'No username')}")
+    print(f"🔍 Backend: Request data: {getattr(request, 'data', 'No data')}")
+    print(f"🔍 Backend: Request body: {getattr(request, 'body', 'No body')}")
+    
+    try:
+        # 1. Check if Zerodha account is linked
+        try:
+            zerodha_user = ZerodhaUser.objects.get(user=request.user)
+            print(f"🔍 Backend: Found Zerodha user: {zerodha_user.user_name}")
+        except ZerodhaUser.DoesNotExist:
+            print(f"🔍 Backend: No Zerodha account found for user: {request.user.username}")
+            return Response({
+                "error": "Zerodha account not linked",
+                "code": "ACCOUNT_NOT_LINKED",
+                "action_required": "Please connect your Zerodha account first"
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        # 2. Check if token is expired
+        if is_token_expired(zerodha_user):
+            zerodha_user.delete()
+            return Response({
+                "error": "Zerodha session has expired",
+                "code": "SESSION_EXPIRED",
+                "action_required": "Please reconnect your Zerodha account"
+            }, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 3. Fetch stock holdings from Zerodha
+        try:
+            kite.set_access_token(zerodha_user.access_token)
+            holdings_response = kite.holdings()
+        except Exception as e:
+            if handle_token_error(zerodha_user, str(e)):
+                return Response({
+                    "error": "Zerodha session has expired",
+                    "code": "SESSION_EXPIRED",
+                    "action_required": "Please reconnect your Zerodha account"
+                }, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({"error": f"Failed to fetch holdings: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        print(f"🔍 Backend: Holdings response length: {len(holdings_response)}")
+        
+        # 4. Process holdings: map symbols to yfinance format
+        stock_symbols = []
+        symbol_mapping = {}  # Store original -> yfinance mapping
+        
+        for holding in holdings_response:
+            if holding['product'] == 'CNC':  # delivery holdings only
+                original_symbol = holding['tradingsymbol'].upper()
+                
+                # Apply symbol mapping rules
+                if original_symbol == "ONEPOINT-BE":
+                    yfinance_symbol = "ONEPOINT.NS"
+                elif original_symbol == "VIVANTA":
+                    yfinance_symbol = "VIVANTA.BO"
+                else:
+                    # Default: add .NS suffix
+                    yfinance_symbol = original_symbol + ".NS"
+                
+                stock_symbols.append(yfinance_symbol)
+                symbol_mapping[yfinance_symbol] = original_symbol
+                
+        print(f"🔍 Backend: Original symbols: {[holding['tradingsymbol'].upper() for holding in holdings_response if holding['product'] == 'CNC']}")
+        print(f"🔍 Backend: Mapped to yfinance symbols: {stock_symbols}")
+        print(f"🔍 Backend: Symbol mapping: {symbol_mapping}")
+        
+        if not stock_symbols:
+            print(f"🔍 Backend: No stock symbols found, returning empty response")
+            return Response({"stocks": []})
+
+        print(f"🔍 Backend: Starting yfinance data fetch for {len(stock_symbols)} symbols")
+        
+        # 5. Fetch stock details from yfinance
+        stocks_data = []
+        for symbol in stock_symbols:
+            try:
+                print(f"🔍 Backend: Fetching data for {symbol}")
+                ticker = yf.Ticker(symbol)
+                info = ticker.info
+                print(f"🔍 Backend: yfinance info keys for {symbol}: {list(info.keys())}")
+                print(f"🔍 Backend: yfinance info for {symbol}: {info}")
+
+                # Get original symbol for display
+                original_symbol = symbol_mapping.get(symbol, symbol)
+                
+                # Get live price using 1-minute interval data
+                try:
+                    print(f"🔍 Backend: Attempting to get live price for {symbol}")
+                    live_price_data = ticker.history(period="1d", interval="1m").tail(1)
+                    print(f"🔍 Backend: Live price data shape for {symbol}: {live_price_data.shape if hasattr(live_price_data, 'shape') else 'No shape'}")
+                    print(f"🔍 Backend: Live price data for {symbol}: {live_price_data}")
+                    print(f"🔍 Backend: Live price data columns for {symbol}: {list(live_price_data.columns) if hasattr(live_price_data, 'columns') else 'No columns'}")
+                    print(f"🔍 Backend: Live price data index for {symbol}: {live_price_data.index if hasattr(live_price_data, 'index') else 'No index'}")
+                    
+                    if not live_price_data.empty:
+                        live_price = live_price_data["Close"].values[0]
+                        print(f"🔍 Backend: Live price for {symbol}: {live_price}")
+                        print(f"🔍 Backend: Live price type for {symbol}: {type(live_price)}")
+                    else:
+                        live_price = info.get("currentPrice")
+                        print(f"🔍 Backend: Using info currentPrice for {symbol}: {live_price}")
+                except Exception as e:
+                    live_price = info.get("currentPrice")
+                    print(f"🔍 Backend: Error getting live price for {symbol}, using info: {e}")
+                    import traceback
+                    traceback.print_exc()
+
+                stock_info = {
+                    "symbol": symbol,  # yfinance symbol for API calls
+                    "originalSymbol": original_symbol,  # original symbol for display
+                    "longName": info.get("longName", original_symbol),
+                    "sector": info.get("sector", "N/A"),
+                    "currentPrice": live_price,
+                    "previousClose": info.get("previousClose"),
+                    "marketCap": info.get("marketCap"),
+                    "dayHigh": info.get("dayHigh"),
+                    "dayLow": info.get("dayLow"),
+                    "fiftyTwoWeekHigh": info.get("fiftyTwoWeekHigh"),
+                    "fiftyTwoWeekLow": info.get("fiftyTwoWeekLow"),
+                }
+                print(f"🔍 Backend: Stock info for {symbol} (original: {original_symbol}): {stock_info}")
+                print(f"🔍 Backend: Live price: {live_price}, Previous close: {info.get('previousClose')}")
+                print(f"🔍 Backend: Stock info keys: {list(stock_info.keys())}")
+                print(f"🔍 Backend: Stock info values: {list(stock_info.values())}")
+                print(f"🔍 Backend: Stock info currentPrice type: {type(stock_info.get('currentPrice'))}")
+                print(f"🔍 Backend: Stock info currentPrice value: {stock_info.get('currentPrice')}")
+                stocks_data.append(stock_info)
+            except Exception as e:
+                print(f"⚠️ yfinance error for {symbol}: {e}")
+                import traceback
+                traceback.print_exc()
+        
+        print(f"🔍 Backend: Total stocks data collected: {len(stocks_data)}")
+        print(f"🔍 Backend: Final response data: {{'stocks': {stocks_data}}}")
+        print(f"🔍 Backend: Response structure: {{'stocks': [{len(stocks_data)} items]}}")
+        
+        # Log each stock's data structure
+        for i, stock in enumerate(stocks_data):
+            print(f"🔍 Backend: Stock {i}: symbol={stock.get('symbol')}, originalSymbol={stock.get('originalSymbol')}, currentPrice={stock.get('currentPrice')}")
+            print(f"🔍 Backend: Stock {i} full data: {stock}")
+            print(f"🔍 Backend: Stock {i} keys: {list(stock.keys())}")
+            print(f"🔍 Backend: Stock {i} currentPrice type: {type(stock.get('currentPrice'))}")
+            print(f"🔍 Backend: Stock {i} currentPrice value: {stock.get('currentPrice')}")
+
+        return Response({"stocks": stocks_data})
+
+    except Exception as e:
+        print(f"❌ Error in get_stock_details: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def test_auth(request):
+    """Test endpoint to verify authentication is working"""
+    return Response({
+        "message": "Authentication successful",
+        "user": request.user.username,
+        "user_id": request.user.id,
+        "authenticated": request.user.is_authenticated
+    })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def get_stock_data(request):
+    """Fetch historical stock data for charts with multiple time periods"""
+    try:
+        print(f"🔍 Backend: get_stock_data called for user: {request.user.username}")
+        stock_symbols = request.data.get("symbols", [])
+        print(f"🔍 Backend: Requested symbols: {stock_symbols}")
+        print(f"🔍 Backend: Request data: {request.data}")
+        print(f"🔍 Backend: Request body: {request.body}")
+
+        stock_data = {}
+        for symbol in stock_symbols:
+            try:
+                print(f"🔍 Backend: Fetching chart data for {symbol}")
+                stock = yf.Ticker(symbol)
+                
+                # Fetch data for different time periods
+                periods = {
+                    "7d": "7d",
+                    "1mo": "1mo", 
+                    "3mo": "3mo",
+                    "6mo": "6mo",
+                    "1y": "1y",
+                    "2y": "2y",
+                    "5y": "5y"
+                }
+                
+                period_data = {}
+                
+                for period_name, period_value in periods.items():
+                    try:
+                        print(f"🔍 Backend: Fetching {period_name} data for {symbol}")
+                        hist = stock.history(period=period_value)
+                        
+                        if not hist.empty:
+                            # Get live price using 1-minute interval data for consistency
+                            try:
+                                print(f"🔍 Backend: Attempting to get live price for {period_name} chart {symbol}")
+                                live_price_data = stock.history(period="1d", interval="1m").tail(1)
+                                
+                                if not live_price_data.empty:
+                                    live_price = live_price_data["Close"].values[0]
+                                    print(f"🔍 Backend: Live price for {period_name} chart {symbol}: {live_price}")
+                                else:
+                                    live_price = hist["Close"].iloc[-1]
+                                    print(f"🔍 Backend: Using last close for {period_name} chart {symbol}: {live_price}")
+                            except Exception as e:
+                                live_price = hist["Close"].iloc[-1]
+                                print(f"🔍 Backend: Error getting live price for {period_name} chart {symbol}, using last close: {e}")
+                            
+                            # Calculate performance metrics
+                            start_price = hist["Close"].iloc[0]
+                            end_price = hist["Close"].iloc[-1]
+                            total_return = ((end_price - start_price) / start_price) * 100
+                            
+                            # Calculate volatility (standard deviation of returns)
+                            returns = hist["Close"].pct_change().dropna()
+                            volatility = returns.std() * 100
+                            
+                            period_data[period_name] = {
+                                "current_price": live_price,
+                                "history": hist["Close"].tolist(),
+                                "dates": hist.index.strftime("%Y-%m-%d").tolist(),
+                                "start_price": start_price,
+                                "end_price": end_price,
+                                "total_return": round(total_return, 2),
+                                "volatility": round(volatility, 2),
+                                "data_points": len(hist)
+                            }
+                            
+                            print(f"🔍 Backend: {period_name} data for {symbol}: {len(hist)} data points, return: {total_return:.2f}%, volatility: {volatility:.2f}%")
+                        else:
+                            print(f"⚠️ Backend: No {period_name} historical data for {symbol}")
+                            
+                    except Exception as e:
+                        print(f"⚠️ Backend: Error fetching {period_name} data for {symbol}: {e}")
+                        import traceback
+                        traceback.print_exc()
+                
+                if period_data:
+                    stock_data[symbol] = period_data
+                    print(f"🔍 Backend: Chart data collected for {symbol}: {list(period_data.keys())}")
+                else:
+                    print(f"⚠️ Backend: No chart data collected for {symbol}")
+                    
+            except Exception as e:
+                print(f"⚠️ Backend: Error fetching chart data for {symbol}: {e}")
+                import traceback
+                traceback.print_exc()
+
+        print(f"🔍 Backend: Total chart data collected: {len(stock_data)} symbols")
+        print(f"🔍 Backend: Chart data structure: {stock_data}")
+        
+        # Log detailed chart data for each symbol
+        for symbol, data in stock_data.items():
+            print(f"🔍 Backend: Chart data for {symbol}: {list(data.keys())} periods available")
+            for period, period_info in data.items():
+                print(f"🔍 Backend: {period} data for {symbol}: {period_info.get('data_points', 0)} points, return: {period_info.get('total_return', 0)}%, volatility: {period_info.get('volatility', 0)}%")
+        
+        return Response({"data": stock_data})
+        
+    except Exception as e:
+        print(f"❌ Backend: Error in get_stock_data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
