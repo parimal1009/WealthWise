@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import * as Chart from "chart.js";
+import { useSelector } from "react-redux";
 import ChartOverlay from "../ChartOverlay";
 
 // Register Chart.js components
@@ -15,7 +16,6 @@ Chart.Chart.register(
 
 const RetirementChart = ({
   currentAge = 25,
-  retirementAge = 60,
   lifeExpectancy = 85,
   initialSavings = 200000,
   annualContribution = 10000,
@@ -25,6 +25,9 @@ const RetirementChart = ({
 }) => {
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
+  const { userData } = useSelector((state) => state.userData);
+  currentAge = userData.age || currentAge;
+  const { retirementAge } = useSelector((state) => state.dashboardData);
 
   // Flexible calculator for different assumptions
   const calculateRetirementData = (

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import {
   Chart as ChartJS,
@@ -16,7 +16,17 @@ import { Line, Bar, Doughnut } from "react-chartjs-2";
 import RetirementChart from "../components/dashboard/RetirementChart";
 import RetirementSimulationChart from "../components/dashboard/RetirementSimulationChart";
 import PayoutComparison from "../components/dashboard/PayoutComparison";
-import HybridPayoutChart from "../components/dashboard/HybridPayoutOptions";
+import BreakEvenChart from "../components/dashboard/BreakEvenChart";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  setMonthlyContribution,
+  setRetirementAge,
+  setRetirementExpense,
+  setLifestyle,
+  setActiveScenario,
+  setCurrentAge,
+} from "../redux/slices/dashboardSlice";
+import InflationPredictionChart from "../components/dashboard/InflationPredictionChart";
 import ChartExplanationIcon from "../components/ChartExplanationIcon";
 
 ChartJS.register(
@@ -33,17 +43,28 @@ ChartJS.register(
 
 const DashboardPage = () => {
   const { user } = useAuth();
+  const { userData } = useSelector((state) => state.userData);
+  const dispatch = useDispatch();
+  const {
+    currentAge,
+    monthlyIncome,
+    monthlyContribution,
+    retirementAge,
+    lifeExpectancy,
+    retirementExpense,
+    lifestyle,
+    taxBracket,
+    inflationRate,
+    activeScenario,
+  } = useSelector((state) => state.dashboardData);
 
-  // ---------- KPI States ----------
-  const [currentAge, setCurrentAge] = useState(30);
-  const [monthlyIncome, setMonthlyIncome] = useState(105000);
-  const [retirementAge, setRetirementAge] = useState(62);
-  const [lifeExpectancy, setLifeExpectancy] = useState(78);
-  const [retirementExpense, setRetirementExpense] = useState(60000);
-  const [lifestyle, setLifestyle] = useState("Comfortable");
-  const [inflationRate, setInflationRate] = useState(6);
-  const [taxBracket, setTaxBracket] = useState(30);
-  const [activeScenario, setActiveScenario] = useState("base");
+  useEffect(() => {
+    dispatch(setCurrentAge(Number(userData.age || 30)));
+    dispatch(setRetirementAge(Number(userData.plannedRetirementAge || 60)));
+    dispatch(
+      setRetirementExpense(Number(userData.monthlyRetirementExpense || 45000))
+    );
+  }, []);
 
   // ---------- Dynamic Calculations ----------
   const calculations = useMemo(() => {
@@ -51,9 +72,11 @@ const DashboardPage = () => {
     const retirementYears = lifeExpectancy - retirementAge;
     const annualIncome = monthlyIncome * 12;
 
+    console.log(yearsToRetirement);
+
     // Calculate corpus needed
     const futureValueExpense =
-      retirementExpense * Math.pow(1 + inflationRate / 100, yearsToRetirement);
+      retirementExpense * Math.pow(1 + inflationRate, yearsToRetirement);
     const requiredCorpus =
       (futureValueExpense * 12 * retirementYears) /
       Math.pow(1.06, yearsToRetirement);
@@ -93,167 +116,6 @@ const DashboardPage = () => {
     taxBracket,
   ]);
 
-  // ---------- Chart Data Generation ----------
-  const generateIncomeTriangleData = () => {
-    const ages = Array.from(
-      { length: lifeExpectancy - currentAge },
-      (_, i) => currentAge + i
-    );
-    const incomes = ages.map((age) => {
-      if (age < retirementAge) {
-        // Growing income until retirement
-        const growthFactor = Math.min(1 + (age - currentAge) * 0.05, 2.5);
-        return monthlyIncome * growthFactor;
-      } else {
-        // Pension income after retirement
-        return (
-          calculations.monthlyPension *
-          1000 *
-          Math.pow(0.98, age - retirementAge)
-        );
-      }
-    });
-
-    return {
-      labels: ages,
-      datasets: [
-        {
-          label: "Monthly Income (₹)",
-          data: incomes,
-          borderColor: "rgb(59, 130, 246)",
-          backgroundColor: "rgba(59, 130, 246, 0.1)",
-          fill: true,
-          tension: 0.4,
-          pointRadius: 1,
-        },
-      ],
-    };
-  };
-
-  const generateBenefitAgeData = () => {
-    const retirementAges = [58, 60, 62, 65, 67];
-    const benefits = retirementAges.map((age) => {
-      const workingYears = age - currentAge;
-      const retirementYears = lifeExpectancy - age;
-      const corpus = calculations.requiredMonthlySIP * 12 * workingYears * 1.5;
-      return Math.round(corpus / 100000) / 10; // In Crores
-    });
-
-    return {
-      labels: retirementAges.map((age) => `Age ${age}`),
-      datasets: [
-        {
-          label: "Lifetime Benefits (₹ Crores)",
-          data: benefits,
-          backgroundColor: benefits.map((_, idx) =>
-            idx === 2 ? "rgba(34, 197, 94, 0.8)" : "rgba(59, 130, 246, 0.8)"
-          ),
-          borderColor: benefits.map((_, idx) =>
-            idx === 2 ? "rgb(34, 197, 94)" : "rgb(59, 130, 246)"
-          ),
-          borderWidth: 2,
-        },
-      ],
-    };
-  };
-
-  const generatePayoutData = () => {
-    const baseValue = calculations.requiredCorpus;
-    return {
-      labels: [
-        "100% Annuity",
-        "60% Annuity + 40% Lump-sum",
-        "80% Lump-sum + 20% Annuity",
-      ],
-      datasets: [
-        {
-          data: [baseValue * 1.1, baseValue * 1.2, baseValue * 0.9],
-          backgroundColor: [
-            "rgba(59, 130, 246, 0.8)",
-            "rgba(34, 197, 94, 0.8)",
-            "rgba(251, 191, 36, 0.8)",
-          ],
-          borderColor: [
-            "rgb(59, 130, 246)",
-            "rgb(34, 197, 94)",
-            "rgb(251, 191, 36)",
-          ],
-          borderWidth: 2,
-        },
-      ],
-    };
-  };
-
-  const generateTaxSavingsData = () => {
-    const withoutPlanning = (monthlyIncome * 12 * (taxBracket / 100)) / 100000;
-    const withEPF = withoutPlanning * 0.85;
-    const withNPS = withoutPlanning * 0.7;
-    const optimized = withoutPlanning * 0.55;
-
-    return {
-      labels: ["No Planning", "EPF Only", "EPF + NPS", "Optimized"],
-      datasets: [
-        {
-          label: "Annual Tax (₹ Lakhs)",
-          data: [withoutPlanning, withEPF, withNPS, optimized],
-          backgroundColor: "rgba(239, 68, 68, 0.8)",
-          borderColor: "rgb(239, 68, 68)",
-          borderWidth: 2,
-        },
-        {
-          label: "Tax Saved (₹ Lakhs)",
-          data: [
-            0,
-            withoutPlanning - withEPF,
-            withoutPlanning - withNPS,
-            withoutPlanning - optimized,
-          ],
-          backgroundColor: "rgba(34, 197, 94, 0.8)",
-          borderColor: "rgb(34, 197, 94)",
-          borderWidth: 2,
-        },
-      ],
-    };
-  };
-
-  const generateCorpusGrowthData = () => {
-    const years = Array.from(
-      { length: calculations.yearsToRetirement },
-      (_, i) => currentAge + i
-    );
-    const npsCorpus = years.map(
-      (_, i) =>
-        (calculations.requiredMonthlySIP * 0.4 * 12 * (i + 1) * 1.12) / 10000000
-    );
-    const epfCorpus = years.map(
-      (_, i) =>
-        (calculations.requiredMonthlySIP * 0.6 * 12 * (i + 1) * 1.085) /
-        10000000
-    );
-
-    return {
-      labels: years,
-      datasets: [
-        {
-          label: "NPS Corpus (₹ Cr)",
-          data: npsCorpus,
-          borderColor: "rgb(59, 130, 246)",
-          backgroundColor: "rgba(59, 130, 246, 0.1)",
-          fill: false,
-          tension: 0.1,
-        },
-        {
-          label: "EPF Corpus (₹ Cr)",
-          data: epfCorpus,
-          borderColor: "rgb(34, 197, 94)",
-          backgroundColor: "rgba(34, 197, 94, 0.1)",
-          fill: false,
-          tension: 0.1,
-        },
-      ],
-    };
-  };
-
   // ---------- Scenario Data ----------
   const scenarioData = {
     base: {
@@ -286,51 +148,10 @@ const DashboardPage = () => {
     },
   };
 
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "bottom",
-        labels: {
-          usePointStyle: true,
-          padding: 20,
-        },
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        grid: {
-          color: "rgba(0, 0, 0, 0.05)",
-        },
-      },
-      x: {
-        grid: {
-          color: "rgba(0, 0, 0, 0.05)",
-        },
-      },
-    },
-  };
-
-  const pieOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "bottom",
-        labels: {
-          usePointStyle: true,
-          padding: 15,
-        },
-      },
-    },
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 py-8 flex-1 overflow-y-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="">
+        <div>
           {/* Header */}
           <div className="text-left mb-2">
             <h1 className="text-3xl font-bold bg-gradient-to-r  text-black bg-clip-text mb-4">
@@ -347,13 +168,15 @@ const DashboardPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-white rounded-lg p-4 shadow-sm border-l-4 border-green-500">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Monthly Income (₹)
+                  Monthly Contribution (₹)
                 </label>
                 <input
                   type="number"
-                  value={monthlyIncome}
+                  value={monthlyContribution}
                   onChange={(e) =>
-                    setMonthlyIncome(Number(e.target.value) || 0)
+                    dispatch(
+                      setMonthlyContribution(Number(e.target.value) || 0)
+                    )
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
@@ -366,7 +189,7 @@ const DashboardPage = () => {
                   type="number"
                   value={retirementAge}
                   onChange={(e) =>
-                    setRetirementAge(Number(e.target.value) || 60)
+                    dispatch(setRetirementAge(Number(e.target.value) || 60))
                   }
                   min="50"
                   max="70"
@@ -381,7 +204,7 @@ const DashboardPage = () => {
                   type="number"
                   value={retirementExpense}
                   onChange={(e) =>
-                    setRetirementExpense(Number(e.target.value) || 0)
+                    dispatch(setRetirementExpense(Number(e.target.value) || 0))
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                 />
@@ -392,7 +215,7 @@ const DashboardPage = () => {
                 </label>
                 <select
                   value={lifestyle}
-                  onChange={(e) => setLifestyle(e.target.value)}
+                  onChange={(e) => dispatch(setLifestyle(e.target.value))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 >
                   <option value="Minimalistic">Minimalistic</option>
@@ -451,7 +274,6 @@ const DashboardPage = () => {
                 Retirement Corpus Projection
               </h3>
               <RetirementChart />
-              <HybridPayoutChart />
               <div className="bg-white/70 backdrop-blur-sm rounded-2xl border border-blue-200/30">
                 <p className="text-blue-800 text-sm leading-relaxed">
                   <strong>AI Insight:</strong> Your income peaks around age{" "}
@@ -460,6 +282,19 @@ const DashboardPage = () => {
                   maximum contributions during peak earning years.
                 </p>
               </div>
+            </div>
+
+            <div className="rounded-3xl shadow-xl p-8 border border-blue-200/50 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+              <h3 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                <span className="bg-gradient-to-br from-blue-500 to-blue-600 p-2 rounded-xl mr-4 shadow-lg">
+                  📈
+                </span>
+                Break Even: Lump Sum vs Annuity
+              </h3>
+              <p className="text-slate-600">
+                Inflation-adjusted, compounding analysis in real terms.
+              </p>
+              <BreakEvenChart />
             </div>
 
             {/* Optimal Retirement Age - Medium Card */}
@@ -474,6 +309,8 @@ const DashboardPage = () => {
                 <PayoutComparison />
               </div>
             </div>
+
+            <InflationPredictionChart />
 
             <div className="rounded-3xl shadow-xl p-6 border border-green-200/50 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
               <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
@@ -505,7 +342,7 @@ const DashboardPage = () => {
               {Object.entries(scenarioData).map(([key, scenario]) => (
                 <button
                   key={key}
-                  onClick={() => setActiveScenario(key)}
+                  onClick={() => dispatch(setActiveScenario(key))}
                   className={`px-4 py-2 rounded-full font-medium transition-all ${
                     activeScenario === key
                       ? "bg-indigo-600 text-white shadow-lg"

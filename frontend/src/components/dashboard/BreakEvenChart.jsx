@@ -159,17 +159,11 @@ export default function BreakEvenLumpSumVsAnnuity() {
   );
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-4 md:p-6">
+    <div className="w-full max-w-6xl mx-auto">
       <div className="space-y-4">
-        <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        <header className="flex flex-col gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
-              Break-Even: Lump Sum vs Annuity
-            </h1>
-            <p className="text-slate-600">
-              Inflation-adjusted, compounding analysis in real terms.
-            </p>
-            <p className="text-slate-500 text-sm mt-1">
+            <p className="text-slate-500 text-sm">
               Real return r = (1 + nominal) / (1 + inflation) − 1 ⇒{" "}
               <b>{(rReal * 100).toFixed(2)}%</b>
             </p>
@@ -193,14 +187,13 @@ export default function BreakEvenLumpSumVsAnnuity() {
             </div>
           </div>
         </header>
-
         {/* Controls */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card title="Lump Sum & Annuity">
             <SliderWithNumber
               label="Lump Sum (₹)"
               min={100000}
-              max={50000000}
+              max={10000000}
               step={50000}
               value={lumpSum}
               onChange={setLumpSum}
@@ -208,7 +201,7 @@ export default function BreakEvenLumpSumVsAnnuity() {
             <SliderWithNumber
               label="Annuity per Year (₹)"
               min={50000}
-              max={5000000}
+              max={1000000}
               step={10000}
               value={annuity}
               onChange={setAnnuity}
@@ -241,14 +234,6 @@ export default function BreakEvenLumpSumVsAnnuity() {
               onChange={setInflationPct}
             />
             <SliderWithNumber
-              label="Horizon (years after retirement)"
-              min={5}
-              max={60}
-              step={1}
-              value={horizon}
-              onChange={setHorizon}
-            />
-            <SliderWithNumber
               label="Retirement Age (years)"
               min={40}
               max={75}
@@ -258,8 +243,6 @@ export default function BreakEvenLumpSumVsAnnuity() {
             />
           </Card>
         </section>
-
-        {/* Chart */}
         <div className="rounded-2xl border border-slate-200 p-4 bg-white shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -300,6 +283,7 @@ export default function BreakEvenLumpSumVsAnnuity() {
                   name="Lump Sum (real FV)"
                   strokeWidth={2}
                   dot={false}
+                  stroke="#2563eb" // blue-600
                 />
                 <Line
                   type="monotone"
@@ -307,11 +291,13 @@ export default function BreakEvenLumpSumVsAnnuity() {
                   name="Annuity (real FV)"
                   strokeWidth={2}
                   dot={false}
+                  stroke="#059669" // emerald-600
                 />
 
                 {breakEven && (
                   <ReferenceLine
                     x={breakEven.year}
+                    stroke="#f59e42" // orange-400
                     strokeDasharray="4 4"
                     label={{
                       value: `BE ~ ${breakEven.year.toFixed(1)}y`,
@@ -324,7 +310,6 @@ export default function BreakEvenLumpSumVsAnnuity() {
             </ResponsiveContainer>
           </div>
         </div>
-
         {/* Explainer */}
         <div className="text-sm text-slate-600 leading-relaxed bg-slate-50 border border-slate-200 rounded-2xl p-4">
           <h3 className="font-semibold mb-1">How this chart works</h3>

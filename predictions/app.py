@@ -45,7 +45,7 @@ def get_life_expectancy(data: LifeExpectancyInput):
     return {"predicted_life_expectancy": round(float(prediction), 2)}
 
 
-@app.post("/predict_inflation")
+@app.post("/predict-inflation")
 def get_inflation_data(req: YearRequest):
     future_dates, forecast = predict_inflation(req.year)
 
@@ -56,4 +56,5 @@ def get_inflation_data(req: YearRequest):
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run("app:app", host="0.0.0.0", port=5000, reload=True)

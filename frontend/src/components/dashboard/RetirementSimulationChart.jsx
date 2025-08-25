@@ -1,4 +1,5 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
+import { useSelector } from "react-redux";
 
 const HeatMapCell = ({ value, maxValue, minValue, label, highlight }) => {
   const intensity = (value - minValue) / (maxValue - minValue);
@@ -27,25 +28,28 @@ const HeatMapCell = ({ value, maxValue, minValue, label, highlight }) => {
 };
 
 const RetirementHeatmap = ({
-  currentAge = 31,
-  lifeExpectancy = 80,
+  currentAge = 51,
+  lifeExpectancy = 75,
   annualReturnRate = 0.05,
-  viewMode = "utility", // utility | corpus | yearsLeft
 }) => {
   // calculate scores
+  const { userData } = useSelector((state) => state.userData);
+  lifeExpectancy = userData.predictedLifeExpectancy || lifeExpectancy;
+  currentAge = userData.age || currentAge;
+  const minAge = Math.max(51, currentAge);
   const scores = useMemo(() => {
     let result = [];
-    for (let age = currentAge; age <= lifeExpectancy; age++) {
+    for (let age = minAge; age <= lifeExpectancy; age++) {
       let yearsLeft = lifeExpectancy - age;
-      let corpus = Math.pow(1 + annualReturnRate, age - currentAge);
+      let corpus = Math.pow(1 + annualReturnRate, age - minAge);
       let utility = corpus * yearsLeft;
       result.push({ age, yearsLeft, corpus, utility });
     }
     return result;
-  }, [currentAge, lifeExpectancy, annualReturnRate]);
+  }, [minAge, lifeExpectancy, annualReturnRate]);
 
-  // normalize values
-  const values = scores.map((s) => s[viewMode]);
+  // normalize values (utility only)
+  const values = scores.map((s) => s.utility);
   const minValue = Math.min(...values);
   const maxValue = Math.max(...values);
 
@@ -83,7 +87,7 @@ const RetirementHeatmap = ({
         {scores.map((item) => (
           <HeatMapCell
             key={item.age}
-            value={item[viewMode]}
+            value={item.utility}
             maxValue={maxValue}
             minValue={minValue}
             label={item.age}
