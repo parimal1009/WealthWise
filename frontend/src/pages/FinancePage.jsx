@@ -4,6 +4,7 @@ import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement
 import { BarChart3, Info, Loader2, TrendingUp, TrendingDown, IndianRupee, Building2, Calendar, X, ExternalLink } from 'lucide-react';
 import stocksData from "../../public/data/stocks_data.json";
 import predictedData from "../../public/data/predicted_price.json";
+import { API_BASE_URL } from '../utils/constants';
 
 // Register ChartJS components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
@@ -33,7 +34,7 @@ const FinancePage = () => {
             const headers = { "Content-Type": "application/json" };
             if (token) headers["Authorization"] = `Bearer ${token}`;
 
-            const response = await fetch('http://localhost:8000/api/financial/stocks/details/', {
+            const response = await fetch(`${API_BASE_URL}/api/financial/stocks/details/`, {
                 method: 'GET',
                 headers,
                 credentials: 'include',
