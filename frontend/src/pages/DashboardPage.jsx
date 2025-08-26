@@ -227,7 +227,7 @@ const DashboardPage = () => {
           </div>
 
           {/* KPI Dashboard */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-3">
+          {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-3">
             <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-4 shadow-md">
               <div className="text-2xl font-bold text-center">
                 ₹{calculations.requiredCorpus}Cr
@@ -260,7 +260,7 @@ const DashboardPage = () => {
                 Tax Savings
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Bento Grid Layout for Charts */}
           <div className="flex flex-col gap-4 mb-3">
@@ -344,11 +344,10 @@ const DashboardPage = () => {
                 <button
                   key={key}
                   onClick={() => dispatch(setActiveScenario(key))}
-                  className={`px-4 py-2 rounded-full font-medium transition-all ${
-                    activeScenario === key
+                  className={`px-4 py-2 rounded-full font-medium transition-all ${activeScenario === key
                       ? "bg-indigo-600 text-white shadow-lg"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
+                    }`}
                 >
                   {scenario.name}
                 </button>
@@ -397,10 +396,10 @@ const DashboardPage = () => {
                 {activeScenario === "aggressive"
                   ? "offers higher returns with increased market risk. Consider this if you have high risk tolerance."
                   : activeScenario === "conservative"
-                  ? "prioritizes capital protection over growth. Suitable for risk-averse investors."
-                  : activeScenario === "earlyRetirement"
-                  ? "requires higher monthly contributions but offers more leisure years."
-                  : "provides balanced growth with moderate risk. Recommended for most individuals."}
+                    ? "prioritizes capital protection over growth. Suitable for risk-averse investors."
+                    : activeScenario === "earlyRetirement"
+                      ? "requires higher monthly contributions but offers more leisure years."
+                      : "provides balanced growth with moderate risk. Recommended for most individuals."}
               </p>
             </div>
           </div>
