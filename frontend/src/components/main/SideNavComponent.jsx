@@ -1,5 +1,5 @@
 import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { User, Home, MessageCircle, BookOpen, Settings, Banknote } from "lucide-react";
 import { APP_NAME } from "../../utils/constants";
 import { useAuth } from "../../context/AuthContext";
@@ -7,6 +7,7 @@ const SideNavComponent = ({ onNavClick }) => {
   const { userData } = useSelector((state) => state.userData);
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const navItems = [
     { name: "Dashboard", path: "dashboard", icon: <Home className="w-5 h-5" />, },
     { name: "Chat", path: "home", icon: <MessageCircle className="w-5 h-5" /> },
@@ -15,6 +16,15 @@ const SideNavComponent = ({ onNavClick }) => {
   ];
 
   const hasAvatar = userData.avatar && userData.avatar.trim() !== "";
+
+  // Function to check if a nav item is active
+  const isActiveTab = (path) => {
+    const currentPath = location.pathname;
+    if (path === "home") {
+      return currentPath === "/home";
+    }
+    return currentPath === `/home/${path}`;
+  };
 
   const handleLogout = () => {
     logout();
@@ -74,16 +84,23 @@ const SideNavComponent = ({ onNavClick }) => {
       {/* Navigation Section */}
       <nav className="p-6">
         <ul className="space-y-3">
-          {navItems.map((item, idx) => (
-            <li
-              key={idx}
-              onClick={() => onNavClick(item.path)}
-              className="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-700 cursor-pointer transition"
-            >
-              {item.icon}
-              <span className="text-sm font-medium">{item.name}</span>
-            </li>
-          ))}
+          {navItems.map((item, idx) => {
+            const isActive = isActiveTab(item.path);
+            return (
+              <li
+                key={idx}
+                onClick={() => onNavClick(item.path)}
+                className={`flex items-center space-x-3 px-3 py-2 rounded-lg cursor-pointer transition ${
+                  isActive
+                    ? "bg-blue-100 text-blue-700"
+                    : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                }`}
+              >
+                {item.icon}
+                <span className="text-sm font-medium">{item.name}</span>
+              </li>
+            );
+          })}
           <li
             onClick={() => navigate("/profile#settings")}
             className="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-700 cursor-pointer transition"
