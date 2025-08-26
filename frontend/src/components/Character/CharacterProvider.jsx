@@ -67,7 +67,7 @@ export const CharacterProvider = ({ children }) => {
             // Jump to the "Great! I see you've increased the step-up" message
             const dynamicMessages = [
               { pose: 'explain_right1', text: `Great! I see you've increased the step-up. Notice how the Green line (Annuity) now rises faster.`, highlight: 'greenLine' },
-              { pose: 'point_left1', text: `At around age ${breakEvenAge}, the Green line crosses above the Blue line: this is the break-even point, shown with a red dot on the chart.`, highlight: 'crossPoint' },
+              { pose: 'point_left1', text: `At around age ${breakEvenAge}, the Green line crosses above the Blue line: this is the break-even point, intersection.`, highlight: 'crossPoint' },
               { pose: 'explain_left1', text: `That's the Break-even point. Beyond this age, Annuity gives you more total value than Lump Sum.`, highlight: 'crossPoint' },
               { pose: 'greeting1', text: `So with step-ups, Annuity can eventually outperform Lump Sum, rewarding those who live longer!` }
             ];
@@ -216,9 +216,9 @@ export const CharacterProvider = ({ children }) => {
           { pose: 'point_left1', text: `Notice that each curve has a peak – that's the point where your retirement corpus is at its highest, just before withdrawals start to reduce it.`, highlight: 'curvePeaks' },
           { pose: 'explain_left1', text: `There are two key phases: Growth phase (before retirement) and Withdrawal phase (after retirement).`, highlight: 'bothPhases' },
           { pose: 'explain_right1', text: `Notice how the Withdrawal phase shows the corpus declining as you use it for retirement expenses.`, highlight: 'withdrawalPhase' },
-          { pose: 'explain_left1', text: `Now here's the key difference – in the Green line, even after your lifetime there's money left over.`, highlight: 'greenLineEnd' },
-          { pose: 'explain_right1', text: `In the Red line, the money actually runs out before your lifetime ends, which is why it touches the baseline early.`, highlight: 'redLineEnd' },
-          { pose: 'explain_left1', text: `And the Blue line sits right in the middle – the optimal balance where your corpus supports you throughout retirement.`, highlight: 'blueLineEnd' },
+          { pose: 'explain_left1', text: `Now here's the key difference – in the Green line, even after your lifetime there's money left over.`, highlight: 'greenLine' },
+          { pose: 'explain_right1', text: `In the Red line, the money actually runs out before your lifetime ends, which is why it touches the baseline early.`, highlight: 'redLine' },
+          { pose: 'explain_left1', text: `And the Blue line sits right in the middle – the optimal balance where your corpus supports you throughout retirement.`, highlight: 'blueLine' },
           { pose: 'greeting1', text: `Pro tip: The last 10 years before retirement contribute about 50% of your total corpus due to the power of compounding! 📈`, highlight: 'lastTenYears' },
           { pose: 'greeting1', text: `So in short – Blue is optimal, Green leaves extra, and Red means running out early. This helps you prepare for any future scenario! 🚀` }
         ];
@@ -248,13 +248,13 @@ export const CharacterProvider = ({ children }) => {
           if (hasIncreasedStepUp) {
             messages.push(
               { pose: 'explain_right1', text: `Great! I see you've increased the step-up. Notice how the Green line (Annuity) now rises faster.`, highlight: 'greenLine' },
-              { pose: 'point_left1', text: `At around age ${breakEvenAge}, the Green line crosses above the Blue line: this is the break-even point, shown with a red dot on the chart.`, highlight: 'crossPoint' },
+              { pose: 'point_left1', text: `At around age ${breakEvenAge}, the Green line crosses above the Blue line: this is the break-even point, intersection.`, highlight: 'crossPoint' },
               { pose: 'explain_left1', text: `That's the Break-even point. Beyond this age, Annuity gives you more total value than Lump Sum.`, highlight: 'crossPoint' },
               { pose: 'greeting1', text: `So with step-ups, Annuity can eventually outperform Lump Sum, rewarding those who live longer!` }
             );
           } else {
             messages.push(
-              { pose: 'point_left1', text: `I can see that at around age ${breakEvenAge}, the Green line crosses above the Blue line: this is the break-even point, shown with a red dot on the chart.`, highlight: 'crossPoint' },
+              { pose: 'point_left1', text: `I can see that at around age ${breakEvenAge}, the Green line crosses above the Blue line: this is the break-even point intersection.`, highlight: 'crossPoint' },
               { pose: 'explain_left1', text: `That's the Break-even point. Beyond this age, Annuity gives you more total value than Lump Sum.`, highlight: 'crossPoint' },
               { pose: 'greeting1', text: `Try adjusting the step-up slider to see how it affects the break-even point timing!` }
             );
