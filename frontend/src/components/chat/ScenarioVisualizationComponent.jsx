@@ -2,10 +2,10 @@ import { useState } from "react";
 import {
   TrendingUp,
   TrendingDown,
-  DollarSign,
   Shield,
   Eye,
   BarChart3,
+  Calendar,
 } from "lucide-react";
 
 const ScenarioVisualizationComponent = ({ scenarios, onAction }) => {
@@ -94,7 +94,7 @@ const ScenarioVisualizationComponent = ({ scenarios, onAction }) => {
 
             <div className="grid grid-cols-3 gap-4 mb-3">
               <div className="text-center p-2 bg-gray-50 rounded">
-                <DollarSign className="h-4 w-4 text-primary-600 mx-auto mb-1" />
+                <Calendar className="h-4 w-4 text-primary-600 mx-auto mb-1" />
                 <div className="text-sm font-semibold">
                   ₹{scenario.monthlyIncome.toLocaleString("en-IN")}
                 </div>

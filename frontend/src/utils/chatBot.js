@@ -9,6 +9,7 @@ export const generateBotResponse = async (
 ) => {
   const message = userMessage?.toLowerCase() || "";
 
+
   // Step 1: Basic Information
   if (
     message.includes("basic information") ||
@@ -228,9 +229,21 @@ export const generateBotResponse = async (
   const hasIncomeInfo = userData.currentSalary;
   const hasRetirementInfo =
     userData.plannedRetirementAge && userData.retirementLifestyle;
-  const hasHealthInfo = userData.height && userData.weight && userData.gender;
+  
+  // Fix: Check both userData AND formData for health info
+  const hasHealthInfo = 
+    (userData.height && userData.weight && userData.gender) || 
+    userData.isSkipped || 
+    userData.predictedLifeExpectancy ||
+    userData.formName === "life-expectancy-form" ||
+    // NEW: Also check if health data was just submitted in formData
+    (formData?.height && formData?.weight && formData?.gender) ||
+    formData?.isSkipped ||
+    formData?.predictedLifeExpectancy;
+    
   const hasRiskAnalysis =
     userData.mode === "zerodha" || userData.mode === "manual";
+
 
   // Progressive flow based on completion
   if (!hasBasicInfo) {
