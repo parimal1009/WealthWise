@@ -70,14 +70,65 @@ const RiskToleranceFormComponent = ({ onSubmit }) => {
     }
   };
 
-  const handleZerodhaConnect = async () => {
+  const handleZerodhaConnect = async (e) => {
     try {
+      e.preventDefault();
       setZerodhaStatus({ loading: true, error: null });
+      
+      // Store the current URL to redirect back after login
       const currentUrl = window.location.pathname + window.location.search;
       const loginUrl = await zerodhaService.getLoginUrl(currentUrl);
-
-      // Redirect to Zerodha login
-      window.location.href = loginUrl;
+      
+      // Calculate popup position to be centered
+      const width = 600;
+      const height = 700;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2.5;
+      
+      // Open popup window
+      const popup = window.open(
+        '',
+        'zerodha-login',
+        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=no`
+      );
+      
+      if (!popup) {
+        throw new Error('Popup was blocked. Please allow popups for this site.');
+      }
+      
+      // Set the URL after opening to avoid popup blockers
+      popup.location.href = loginUrl;
+      popup.focus();
+      
+      // Check for login completion every second
+      const checkLogin = setInterval(async () => {
+        try {
+          if (popup.closed) {
+            clearInterval(checkLogin);
+            // Check connection status after popup is closed
+            const status = await zerodhaService.checkConnectionStatus();
+            
+            // Update form data with the new connection status
+            setFormData(prev => ({
+              ...prev,
+              zerodhaConnected: status.connected,
+              zerodhaProfile: status.profile,
+            }));
+            
+            setZerodhaStatus({ loading: false, error: null });
+          }
+        } catch (error) {
+          clearInterval(checkLogin);
+          setZerodhaStatus({
+            loading: false,
+            error: error.message || 'Failed to verify connection status',
+          });
+        }
+      }, 1000);
+      
+      // Cleanup interval on component unmount
+      return () => clearInterval(checkLogin);
+      
     } catch (error) {
       setZerodhaStatus({
         loading: false,

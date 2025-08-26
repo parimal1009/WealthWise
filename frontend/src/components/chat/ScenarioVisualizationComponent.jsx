@@ -96,14 +96,14 @@ const ScenarioVisualizationComponent = ({ scenarios, onAction }) => {
               <div className="text-center p-2 bg-gray-50 rounded">
                 <Calendar className="h-4 w-4 text-primary-600 mx-auto mb-1" />
                 <div className="text-sm font-semibold">
-                  ₹{scenario.monthlyIncome.toLocaleString("en-IN")}
+                  ₹{(scenario.monthlyIncome * 40).toLocaleString("en-IN")}
                 </div>
                 <div className="text-xs text-gray-600">Monthly</div>
               </div>
               <div className="text-center p-2 bg-gray-50 rounded">
                 <Shield className="h-4 w-4 text-warning-600 mx-auto mb-1" />
                 <div className="text-sm font-semibold">
-                  ₹{scenario.taxImplication.toLocaleString("en-IN")}
+                  ₹{(scenario.taxImplication * 40).toLocaleString("en-IN")}
                 </div>
                 <div className="text-xs text-gray-600">Tax Impact</div>
               </div>

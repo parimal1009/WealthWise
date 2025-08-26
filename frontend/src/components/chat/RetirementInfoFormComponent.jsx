@@ -180,7 +180,7 @@ const RetirementInfoFormComponent = ({ onSubmit }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Expected Monthly Retirement Expense (₹) *
+              Current Monthly Retirement Expense (₹) *
             </label>
             <input
               type="number"
