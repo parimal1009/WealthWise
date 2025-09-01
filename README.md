@@ -3,6 +3,8 @@
 
 An AI-assisted, privacy-first platform that helps retirees and near-retirees maximize their lifetime pension benefits through smart scenario modeling, optimization, and plain-language guidance.
 
+![WealthWise Screenshot](https://github.com/Parimalsinfianfo/assignment1/blob/main/Screenshot%202025-09-01%20214026.png)
+
 ## 🌟 Features
 
 ### 📊 Financial Analytics
